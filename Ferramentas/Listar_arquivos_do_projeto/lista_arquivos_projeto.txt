@@ -1,20 +1,20 @@
 ================================================================================
 LISTAGEM COMPLETA DE ARQUIVOS DO PROJETO
 ================================================================================
-Gerado em: 29/07/2025 às 14:05:46
+Gerado em: 29/07/2025 às 15:32:53
 Diretório: C:\Users\Gilmar Pires\Desktop\Projetos\Gerenciador_Task
-Total de arquivos: 278
-Tamanho total: 2.75 MB
+Total de arquivos: 149
+Tamanho total: 4.93 MB
 ================================================================================
 
 RESUMO POR CATEGORIA:
 ----------------------------------------
-Codigo Fonte: 148 arquivos (1.03 MB)
-Configuracao: 21 arquivos (0.29 MB)
+Codigo Fonte: 92 arquivos (0.74 MB)
+Configuracao: 10 arquivos (3.47 MB)
 Documentacao: 17 arquivos (0.16 MB)
 Scripts Automacao: 27 arquivos (0.54 MB)
-Backups: 62 arquivos (0.67 MB)
-Outros: 3 arquivos (0.04 MB)
+Backups: 2 arquivos (0.01 MB)
+Outros: 1 arquivos (0.0 MB)
 
 ================================================================================
 CÓDIGO FONTE
@@ -26,41 +26,8 @@ CÓDIGO FONTE
 Ferramentas\Listar_arquivos_do_projeto\executar_listagem.py (0.002 MB)
 Ferramentas\Listar_arquivos_do_projeto\listar_arquivos.py (0.008 MB)
 analisar_mcp.py (0.003 MB)
-analyze_bombeiro_conformity.py (0.015 MB)
-analyze_sync_patterns.py (0.002 MB)
 buscar_funcao.py (0.002 MB)
-clean_profile_navigation.py (0.005 MB)
-complete_context.py (0.010 MB)
-complete_energy_fix.py (0.010 MB)
-complete_taskstore_fix.py (0.007 MB)
-debug_project.py (1034 bytes)
-finalize_energy_monitor.py (0.008 MB)
-fix_arquiteto_404.py (0.002 MB)
-fix_authstore.py (0.002 MB)
-fix_bombeiro_bugs.py (0.015 MB)
-fix_direct_syntax.py (0.002 MB)
-fix_duplicate.py (0.003 MB)
-fix_emergency.py (0.005 MB)
-fix_emergency_button.py (0.017 MB)
-fix_energy_race_condition.py (0.010 MB)
-fix_extra_brace.py (0.002 MB)
-fix_hydration_error.py (0.013 MB)
-fix_hydration_radical.py (0.008 MB)
-fix_import.py (0.002 MB)
-fix_infinite_loop_energy.py (0.011 MB)
-fix_navigation_buttons.py (0.008 MB)
-fix_navigation_header.py (0.002 MB)
-fix_navigation_routing.py (0.004 MB)
-fix_precise.py (0.002 MB)
-fix_profile_navigation.py (0.011 MB)
-fix_remaining_syntax.py (0.004 MB)
-fix_stores_sync.py (0.015 MB)
-fix_syntax_error.py (0.003 MB)
-fix_tasks.py (0.003 MB)
-fix_theme_hydration.py (0.008 MB)
-fix_typescript_syntax.py (0.005 MB)
-fix_zustand_migration.py (0.005 MB)
-improve_menu_layout.py (0.017 MB)
+cleanup_project.py (0.011 MB)
 mcp_server.py (0.027 MB)
 mcp_test.py (0.006 MB)
 next-env.d.ts (216 bytes)
@@ -68,14 +35,6 @@ next.config.js (531 bytes)
 postcss.config.js (164 bytes)
 public\hydration-debug.js (682 bytes)
 public\limpar-cache.html (0.004 MB)
-read_all_stores.py (767 bytes)
-read_critical.py (403 bytes)
-read_tasks.py (380 bytes)
-read_tasks_store.py (286 bytes)
-read_weekly_stats.py (0.003 MB)
-remove_duplicate_navigation.py (0.005 MB)
-run.py (0.008 MB)
-scan_restrictions.py (0.002 MB)
 scripts\Novo_visual_e_segurança_caixa_de_areia\Correção_Sandbox_Python_Rope.py (0.023 MB)
 scripts\Novo_visual_e_segurança_caixa_de_areia\Melhorias_visuais.py (0.013 MB)
 scripts\Novo_visual_e_segurança_caixa_de_areia\Novo_visual_caixa_de_areia.py (0.019 MB)
@@ -85,8 +44,6 @@ scripts\Novo_visual_e_segurança_caixa_de_areia\python sandbox_fix_syntax.py (0.
 scripts\Novo_visual_e_segurança_caixa_de_areia\python sandbox_layout_fix.py (0.044 MB)
 scripts\Novo_visual_e_segurança_caixa_de_areia\python sandbox_simplify_fix.py (0.026 MB)
 scripts\Novo_visual_e_segurança_caixa_de_areia\python surgical_tasksstore_fix.py (0.008 MB)
-search_refreshui.py (0.003 MB)
-separate_profile_settings.py (0.020 MB)
 setup_mcp.py (0.012 MB)
 src\app\(main)\arquiteto\page.tsx (0.002 MB)
 src\app\(main)\bombeiro\page.tsx (0.003 MB)
@@ -152,23 +109,10 @@ src\stores\tasksStore.ts (0.036 MB)
 src\stores\themeStore.ts (0.014 MB)
 src\styles\globals.css (0.009 MB)
 src\types\index.ts (0.002 MB)
-sync_usage_example.ts (1126 bytes)
 tailwind.config.js (1462 bytes)
-temp_mcp_test.js (74 bytes)
-temp_read.py (0.002 MB)
-temp_read_auth.py (660 bytes)
-temp_read_bombeiro_component.py (757 bytes)
-temp_read_bombeiro_page.py (392 bytes)
-temp_read_diretrizes.py (506 bytes)
-temp_read_package.py (906 bytes)
-temp_read_store.py (520 bytes)
-temp_read_taskitem.py (541 bytes)
-temp_read_types.py (308 bytes)
-test_component.py (0.006 MB)
-test_mcp.py (0.011 MB)
 teste_leitura.py (0.002 MB)
 
-Subtotal: 148 arquivos
+Subtotal: 92 arquivos
 
 ================================================================================
 ARQUIVOS DE CONFIGURAÇÃO
@@ -176,26 +120,15 @@ ARQUIVOS DE CONFIGURAÇÃO
 .critical_protocols_backup\backup_info.json (305 bytes)
 .eslintrc.json (403 bytes)
 Ferramentas\Listar_arquivos_do_projeto\manifest.yaml (252 bytes)
-cleanup_report.json (0.002 MB)
-complete_correction_report.json (587 bytes)
-correction_report.json (577 bytes)
-critical_cleanup_report.json (0.004 MB)
+cleanup_report_20250729_141606.json (3.205 MB)
 data\tasks.json (282 bytes)
-execution_report.json (799 bytes)
-hydration_fix_report.json (448 bytes)
-manifest.yaml (0.016 MB)
 mcp_config.json (583 bytes)
-merge_conflict_resolution_report.json (0.003 MB)
-merge_resolution_report.json (491 bytes)
 navigation_standardization_log.json (0.002 MB)
 package-lock.json (0.256 MB)
 package.json (1054 bytes)
-react_fix_report.json (728 bytes)
-refactor_execution_report.json (0.002 MB)
-route_cleanup_report.json (975 bytes)
 tsconfig.json (920 bytes)
 
-Subtotal: 21 arquivos
+Subtotal: 10 arquivos
 
 ================================================================================
 DOCUMENTAÇÃO
@@ -258,77 +191,15 @@ ARQUIVOS DE BACKUP
 ================================================================================
 .refactor_backups\BombeiroPage.tsx.backup_20250726_171534 (0.012 MB)
 .refactor_backups\page.tsx.backup_20250726_171534 (0.002 MB)
-src\app\(main)\arquiteto\page.tsx.backup_20250729_101502 (522 bytes)
-src\app\(main)\bombeiro\page.tsx.backup_20250726_165535 (1442 bytes)
-src\app\(main)\bombeiro\page.tsx.backup_20250726_170105 (1170 bytes)
-src\app\(main)\bombeiro\page.tsx.backup_20250729_101502 (365 bytes)
-src\app\(main)\bombeiro\page.tsx.backup_20250729_103358 (0.002 MB)
-src\app\(main)\caixa-de-areia\page.tsx.backup_20250729_101502 (412 bytes)
-src\app\(main)\caixa-de-areia\page.tsx.backup_20250729_103358 (0.002 MB)
-src\app\(main)\profile\page.tsx.backup (0.008 MB)
-src\app\(main)\profile\page.tsx.backup_20250727_112510 (0.005 MB)
-src\app\(main)\profile\page.tsx.backup_20250727_112928 (0.008 MB)
-src\app\(main)\profile\page.tsx.backup_20250729_092627 (0.008 MB)
-src\app\(main)\settings\page.tsx.backup (0.008 MB)
-src\app\layout.tsx.backup_20250726_170105 (0.002 MB)
-src\app\layout.tsx.backup_20250726_170424 (0.002 MB)
-src\components\CerebroCompativel.tsx.backup_20250727_105239 (0.009 MB)
-src\components\CerebroCompativel.tsx.backup_20250727_112928 (0.009 MB)
-src\components\CerebroCompativel.tsx.backup_20250729_092627 (0.009 MB)
-src\components\CerebroCompativel.tsx.backup_20250729_093421 (0.009 MB)
-src\components\auth\AuthMiddleware.tsx.backup_20250726_165535 (0.003 MB)
-src\components\bombeiro\BombeiroPage.tsx.backup_20250726_165535 (0.012 MB)
-src\components\bombeiro\BombeiroPage.tsx.backup_20250726_170105 (0.012 MB)
-src\components\bombeiro\BombeiroPageClient.tsx.backup_20250726_171856 (0.011 MB)
-src\components\bombeiro\BombeiroPageClient.tsx.backup_20250726_172737 (0.011 MB)
-src\components\bombeiro\BombeiroPageClient.tsx.backup_20250727_100005 (0.011 MB)
-src\components\bombeiro\BombeiroPageClient.tsx.backup_20250727_103723 (0.013 MB)
-src\components\bombeiro\BombeiroPageClient.tsx.backup_20250727_105239 (0.013 MB)
-src\components\bombeiro\BombeiroPageClient.tsx.backup_20250729_101502 (0.013 MB)
-src\components\bombeiro\BombeiroPageClient.tsx.backup_20250729_103358 (0.011 MB)
-src\components\bombeiro\BombeiroPageClient.tsx.backup_fix_20250729_103643 (0.011 MB)
-src\components\bombeiro\BombeiroPageClient.tsx.backup_fix_20250729_103708 (0.011 MB)
-src\components\bombeiro\PostponedTasksRoom.tsx.backup_20250727_103723 (0.002 MB)
-src\components\bombeiro\TaskItem.tsx.backup_20250726_145628 (0.009 MB)
-src\components\bombeiro\TaskItem.tsx.backup_20250727_103723 (0.010 MB)
-src\components\caixa-de-areia\CaixaDeAreiaPage.tsx.backup_20250729_101502 (0.019 MB)
-src\components\layout\Header.tsx.backup_20250729_101502 (0.002 MB)
-src\components\layout\Navigation.tsx.backup (0.002 MB)
-src\components\protocols\LowEnergyModal.tsx.backup_20250727_103723 (0.004 MB)
-src\components\providers\ThemeProvider.tsx.backup_20250726_165535 (1424 bytes)
-src\components\providers\ThemeProvider.tsx.backup_20250726_170424 (0.002 MB)
-src\components\shared\EnergyMonitor.tsx.backup_20250726_150839 (1464 bytes)
-src\hooks\useEnergyBudget.ts.backup_20250726_145628 (1324 bytes)
-src\hooks\useEnergyBudget.ts.backup_20250726_150407 (0.002 MB)
-src\stores\authStore.ts.backup_20250726_151507 (0.004 MB)
-src\stores\authStore.ts.backup_20250726_163955 (0.005 MB)
-src\stores\authStore.ts.backup_20250726_164953 (0.005 MB)
-src\stores\authStore.ts.backup_20250726_170105 (0.005 MB)
-src\stores\tasksStore.ts.backup_20250726_145628 (0.030 MB)
-src\stores\tasksStore.ts.backup_20250726_150407 (0.031 MB)
-src\stores\tasksStore.ts.backup_20250726_150654 (0.031 MB)
-src\stores\tasksStore.ts.backup_20250726_151507 (0.032 MB)
-src\stores\tasksStore.ts.backup_20250727_102547 (0.034 MB)
-src\stores\tasksStore.ts.backup_20250727_103723 (0.035 MB)
-src\stores\tasksStore.ts.backup_20250727_104027 (0.036 MB)
-src\stores\tasksStore.ts.backup_20250727_104347 (0.036 MB)
-src\stores\tasksStore.ts.backup_20250727_104718 (0.036 MB)
-src\stores\themeStore.ts.backup_20250726_151507 (0.014 MB)
-src\stores\themeStore.ts.backup_20250726_163955 (0.014 MB)
-src\stores\themeStore.ts.backup_20250726_165535 (0.014 MB)
-src\stores\themeStore.ts.backup_20250726_170424 (0.014 MB)
-src\stores\themeStore.ts.backup_final_20250726_164150 (0.014 MB)
 
-Subtotal: 62 arquivos
+Subtotal: 2 arquivos
 
 ================================================================================
 OUTROS ARQUIVOS
 ================================================================================
 .gitignore (630 bytes)
-src\components\caixa-de-areia\CaixaDeAreiaPage.tsx.corrupted_20250729_101908 (0.027 MB)
-src\components\caixa-de-areia\CaixaDeAreiaPage.tsx.corrupted_20250729_102138 (0.016 MB)
 
-Subtotal: 3 arquivos
+Subtotal: 1 arquivos
 
 ================================================================================
 FIM DA LISTAGEM

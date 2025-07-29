@@ -59,3 +59,53 @@ backup_*/
 # Temporary files
 .tmp/
 temp/
+
+# =================================================================
+# REGRAS ESPECÍFICAS DO PROJETO GERENCIADOR DE TAREFAS
+# =================================================================
+
+# Relatórios automáticos de limpeza (arquivos muito grandes)
+cleanup_report_*.json
+*_report_*.json
+
+# Arquivos de backup temporários
+*.backup
+*.backup_*
+.backup_*
+.refactor_backups/
+.critical_protocols_backup/
+
+# Logs de navegação e configurações temporárias
+navigation_*.json
+*_log.json
+execution_report.json
+
+# Arquivos temporários de execução de scripts
+*.temp.py
+temp_*.py
+test_*.py
+
+# Outputs de ferramentas de análise
+analysis_output/
+debug_output/
+
+# Cache de ferramentas Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Arquivos de configuração local específicos
+local_config.json
+.env.development
+.env.production
+
+# =================================================================
+# MANTÉM NO GIT (IMPORTANTES PARA COLABORAÇÃO):
+# - Documentação/ (essencial para o projeto)
+# - scripts/ (úteis para outros desenvolvedores) 
+# - Ferramentas/ (scripts de automação)
+# - src/ (código fonte)
+# - Configurações do projeto (package.json, tsconfig.json, etc.)
+# =================================================================
