@@ -1,0 +1,12 @@
+[
+  {
+    "id": 1,
+    "title": "Implementar autenticacao",
+    "description": "Sistema de login com JWT", 
+    "status": "pending",
+    "priority": "high",
+    "dueDate": "2025-08-01",
+    "createdAt": "2025-07-20T10:00:00.000Z",
+    "updatedAt": "2025-07-20T10:00:00.000Z"
+  }
+]

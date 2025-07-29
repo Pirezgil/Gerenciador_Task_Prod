@@ -1,0 +1,5 @@
+# Manifesto para o Listador de Arquivos do Projeto
+#
+# Especifique o diretório que você deseja listar.
+# O caminho do seu projeto "Gerenciador_Task" deve estar aqui.
+target_directory: "C:\\Users\\Gilmar Pires\\Desktop\\Projetos\\Gerenciador_Task"

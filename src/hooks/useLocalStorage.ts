@@ -1,0 +1,54 @@
+// ============================================================================
+// USE LOCAL STORAGE - Hook para persistência local
+// ============================================================================
+
+'use client';
+
+import { useState, useEffect } from 'react';
+import { storage } from '@/lib/utils';
+
+export function useLocalStorage<T>(key: string, defaultValue: T) {
+  const [value, setValue] = useState<T>(defaultValue);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    try {
+      const storedValue = storage.get(key, defaultValue);
+      setValue(storedValue);
+    } catch (error) {
+      console.warn(`Erro ao carregar ${key} do localStorage:`, error);
+      setValue(defaultValue);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [key, defaultValue]);
+
+  const updateValue = (newValue: T | ((prev: T) => T)) => {
+    try {
+      const valueToStore = typeof newValue === 'function' 
+        ? (newValue as (prev: T) => T)(value)
+        : newValue;
+      
+      setValue(valueToStore);
+      storage.set(key, valueToStore);
+    } catch (error) {
+      console.warn(`Erro ao salvar ${key} no localStorage:`, error);
+    }
+  };
+
+  const removeValue = () => {
+    try {
+      setValue(defaultValue);
+      storage.remove(key);
+    } catch (error) {
+      console.warn(`Erro ao remover ${key} do localStorage:`, error);
+    }
+  };
+
+  return {
+    value,
+    setValue: updateValue,
+    removeValue,
+    isLoading,
+  };
+}

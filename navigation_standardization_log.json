@@ -1,0 +1,57 @@
+{
+  "timestamp": "2025-07-29T10:15:02.259780",
+  "total_operations": 7,
+  "successful_operations": 7,
+  "dry_run": false,
+  "execution_log": [
+    {
+      "file": "src/components/layout/PageContext.tsx",
+      "action": "replace_content",
+      "file_created": true,
+      "timestamp": "2025-07-29T10:15:02.242385",
+      "success": true
+    },
+    {
+      "file": "src/components/layout/Header.tsx",
+      "action": "replace_content",
+      "file_created": false,
+      "timestamp": "2025-07-29T10:15:02.244970",
+      "success": true
+    },
+    {
+      "file": "src/components/bombeiro/BombeiroPageClient.tsx",
+      "action": "replace_section",
+      "file_created": false,
+      "timestamp": "2025-07-29T10:15:02.246658",
+      "success": true
+    },
+    {
+      "file": "src/app/(main)/bombeiro/page.tsx",
+      "action": "replace_content",
+      "file_created": false,
+      "timestamp": "2025-07-29T10:15:02.248308",
+      "success": true
+    },
+    {
+      "file": "src/components/caixa-de-areia/CaixaDeAreiaPage.tsx",
+      "action": "replace_section",
+      "file_created": false,
+      "timestamp": "2025-07-29T10:15:02.251065",
+      "success": true
+    },
+    {
+      "file": "src/app/(main)/caixa-de-areia/page.tsx",
+      "action": "replace_content",
+      "file_created": false,
+      "timestamp": "2025-07-29T10:15:02.254116",
+      "success": true
+    },
+    {
+      "file": "src/app/(main)/arquiteto/page.tsx",
+      "action": "replace_content",
+      "file_created": false,
+      "timestamp": "2025-07-29T10:15:02.255986",
+      "success": true
+    }
+  ]
+}

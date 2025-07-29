@@ -1,0 +1,439 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================================ */
+/* VARIÁVEIS CSS PARA SISTEMA DE TEMAS */
+/* ============================================================================ */
+
+:root {
+  /* Cores do tema (serão atualizadas dinamicamente) */
+  --theme-primary: #3b82f6;
+  --theme-secondary: #8b5cf6;
+  --theme-surface: #ffffff;
+  --theme-background: #f8fafc;
+  --theme-text: #1e293b;
+  --theme-text-secondary: #64748b;
+  --theme-border: #e2e8f0;
+  --theme-shadow: rgba(0, 0, 0, 0.1);
+  
+  /* Layout */
+  --theme-radius: 8px;
+  --theme-spacing: 1rem;
+  --theme-font: system-ui, -apple-system, sans-serif;
+  --theme-font-size: 16px;
+}
+
+/* Modo escuro */
+.theme-dark {
+  --theme-surface: #1e293b;
+  --theme-background: #0f172a;
+  --theme-text: #f1f5f9;
+  --theme-text-secondary: #94a3b8;
+  --theme-border: #334155;
+  --theme-shadow: rgba(0, 0, 0, 0.5);
+}
+
+/* ============================================================================ */
+/* CLASSES UTILITÁRIAS PARA TEMAS */
+/* ============================================================================ */
+
+.theme-surface {
+  background-color: var(--theme-surface);
+  color: var(--theme-text);
+}
+
+.theme-background {
+  background-color: var(--theme-background);
+}
+
+.theme-primary {
+  background-color: var(--theme-primary);
+}
+
+.theme-secondary {
+  background-color: var(--theme-secondary);
+}
+
+.theme-border {
+  border-color: var(--theme-border);
+}
+
+.theme-text {
+  color: var(--theme-text);
+}
+
+.theme-text-secondary {
+  color: var(--theme-text-secondary);
+}
+
+/* ============================================================================ */
+/* ANIMAÇÕES CONDICIONAIS */
+/* ============================================================================ */
+
+.theme-animations * {
+  transition: all 0.2s ease-in-out;
+}
+
+.theme-animations button:hover {
+  transform: translateY(-1px);
+}
+
+.theme-animations .card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px var(--theme-shadow);
+}
+
+/* ============================================================================ */
+/* GLASSMORPHISM CONDICIONAL */
+/* ============================================================================ */
+
+.theme-glassmorphism .glass {
+  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.theme-dark.theme-glassmorphism .glass {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(51, 65, 85, 0.3);
+}
+
+/* ============================================================================ */
+/* ESTILOS BASE EXISTENTES */
+/* ============================================================================ */
+
+html {
+  font-family: var(--theme-font);
+  font-size: var(--theme-font-size);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--theme-background);
+  color: var(--theme-text);
+  line-height: 1.6;
+}
+
+/* Scrollbar personalizada */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--theme-surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--theme-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--theme-text-secondary);
+}
+
+/* Focus styles */
+button:focus,
+input:focus,
+textarea:focus {
+  outline: 2px solid var(--theme-primary);
+  outline-offset: 2px;
+}
+
+/* Selection styles */
+::selection {
+  background-color: var(--theme-primary);
+  color: white;
+}
+
+/* Gradientes dinâmicos */
+.gradient-primary {
+  background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-secondary) 100%);
+}
+
+.gradient-surface {
+  background: linear-gradient(135deg, var(--theme-surface) 0%, var(--theme-background) 100%);
+}
+
+/* Cards adaptativos */
+.card {
+  background: var(--theme-surface);
+  border: 1px solid var(--theme-border);
+  border-radius: var(--theme-radius);
+  padding: var(--theme-spacing);
+  box-shadow: 0 4px 6px var(--theme-shadow);
+}
+
+/* Botões adaptativos */
+.btn-primary {
+  background: var(--theme-primary);
+  color: white;
+  border: none;
+  border-radius: var(--theme-radius);
+  padding: calc(var(--theme-spacing) * 0.5) var(--theme-spacing);
+  font-family: var(--theme-font);
+  font-size: var(--theme-font-size);
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.1);
+}
+
+.btn-secondary {
+  background: var(--theme-secondary);
+  color: white;
+  border: none;
+  border-radius: var(--theme-radius);
+  padding: calc(var(--theme-spacing) * 0.5) var(--theme-spacing);
+  font-family: var(--theme-font);
+  font-size: var(--theme-font-size);
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  filter: brightness(1.1);
+}
+
+/* Inputs adaptativos */
+.input {
+  background: var(--theme-surface);
+  border: 1px solid var(--theme-border);
+  border-radius: var(--theme-radius);
+  padding: calc(var(--theme-spacing) * 0.5);
+  color: var(--theme-text);
+  font-family: var(--theme-font);
+  font-size: var(--theme-font-size);
+}
+
+.input:focus {
+  border-color: var(--theme-primary);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Placeholders adaptativos */
+.input::placeholder {
+  color: var(--theme-text-secondary);
+}
+
+/* Texto responsivo para modo escuro */
+.theme-dark h1,
+.theme-dark h2,
+.theme-dark h3,
+.theme-dark h4,
+.theme-dark h5,
+.theme-dark h6 {
+  color: var(--theme-text);
+}
+
+.theme-dark p,
+.theme-dark span,
+.theme-dark div {
+  color: var(--theme-text);
+}
+
+/* Responsividade aprimorada */
+@media (max-width: 768px) {
+  :root {
+    --theme-spacing: 0.75rem;
+    --theme-font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --theme-spacing: 0.5rem;
+    --theme-font-size: 12px;
+  }
+}
+
+/* Prevenção de flash durante carregamento */
+.theme-loading {
+  visibility: hidden;
+}
+
+.theme-loaded {
+  visibility: visible;
+}
+
+/* Estados de hover adaptativos */
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px var(--theme-shadow);
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 20px var(--theme-primary);
+}
+
+/* Animações de entrada */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+/* Melhorias de acessibilidade */
+@media (prefers-reduced-motion: reduce) {
+  .theme-animations * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Dark mode media query automático */
+@media (prefers-color-scheme: dark) {
+  .theme-auto {
+    --theme-surface: #1e293b;
+    --theme-background: #0f172a;
+    --theme-text: #f1f5f9;
+    --theme-text-secondary: #94a3b8;
+    --theme-border: #334155;
+    --theme-shadow: rgba(0, 0, 0, 0.5);
+  }
+}
+
+
+/* ============================================================================ */
+/* DOPAMINE TREE ANIMATION - Estilos para Árvore de Conquistas */
+/* ============================================================================ */
+
+.tree-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tree-background {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.1) 0%,
+    rgba(16, 185, 129, 0.1) 50%,
+    rgba(34, 197, 94, 0.1) 100%
+  );
+  backdrop-filter: blur(8px);
+}
+
+.tree-svg {
+  filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.3));
+  transition: all 0.3s ease;
+}
+
+.tree-svg:hover {
+  transform: scale(1.02);
+}
+
+/* Animações de folhas */
+@keyframes leafGrow {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(180deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1) rotate(360deg);
+    opacity: 1;
+  }
+}
+
+@keyframes leafShimmer {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.3) drop-shadow(0 0 10px currentColor);
+  }
+}
+
+.tree-leaf {
+  animation: leafGrow 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.tree-leaf.new {
+  animation: leafGrow 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55),
+             leafShimmer 2s ease-in-out 0.8s;
+}
+
+/* Partículas de celebração */
+@keyframes particleFloat {
+  0% {
+    transform: translateY(0) scale(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-30px) scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-60px) scale(0);
+    opacity: 0;
+  }
+}
+
+.celebration-particle {
+  animation: particleFloat 2s ease-out forwards;
+}
+
+/* Efeito de brilho na árvore */
+@keyframes treeGlow {
+  0%, 100% {
+    filter: drop-shadow(0 0 20px rgba(34, 197, 94, 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 40px rgba(34, 197, 94, 0.6));
+  }
+}
+
+.tree-glow {
+  animation: treeGlow 3s ease-in-out;
+}
+
+/* Responsividade para árvore */
+@media (max-width: 768px) {
+  .tree-svg {
+    transform: scale(0.8);
+  }
+}
+
+@media (max-width: 480px) {
+  .tree-svg {
+    transform: scale(0.6);
+  }
+}
+
+/* Estados da árvore por idade */
+.tree-young {
+  filter: hue-rotate(60deg) brightness(1.1);
+}
+
+.tree-mature {
+  filter: hue-rotate(0deg) brightness(1);
+}
+
+.tree-ancient {
+  filter: hue-rotate(-20deg) brightness(1.2) drop-shadow(0 0 30px rgba(34, 197, 94, 0.4));
+}
