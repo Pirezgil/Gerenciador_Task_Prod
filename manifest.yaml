@@ -1,0 +1,599 @@
+version: 1.0
+metadata:
+  type: "sidebar_implementation"
+  description: "Implementação completa de sidebar lateral moderna"
+  timestamp: "2025-01-29T10:00:00Z"
+  author: "IA Programadora Especialista"
+  
+backup_files:
+  - "src/components/layout/Header.tsx"
+  - "src/components/layout/Navigation.tsx" 
+  - "src/app/(main)/layout.tsx"
+
+structure:
+  # 1. NOVO COMPONENTE: Sidebar Principal
+  - type: file
+    path: "src/components/layout/Sidebar.tsx"
+    content: |
+      'use client';
+      
+      // ============================================================================
+      // SIDEBAR - Navegação lateral moderna com design responsivo
+      // ============================================================================
+      
+      import React, { useState } from 'react';
+      import { motion, AnimatePresence } from 'framer-motion';
+      import { useRouter, usePathname } from 'next/navigation';
+      import { 
+        ChevronLeft, 
+        ChevronRight, 
+        Home,
+        Flame,
+        Building2,
+        Sandbox,
+        Settings,
+        User,
+        Menu,
+        X
+      } from 'lucide-react';
+      
+      interface SidebarProps {
+        className?: string;
+      }
+      
+      export function Sidebar({ className = '' }: SidebarProps) {
+        const router = useRouter();
+        const pathname = usePathname();
+        const [isCollapsed, setIsCollapsed] = useState(false);
+        const [isMobileOpen, setIsMobileOpen] = useState(false);
+      
+        const navigationItems = [
+          {
+            key: 'bombeiro',
+            label: 'Bombeiro',
+            description: 'Extintor de tarefas urgentes',
+            icon: Flame,
+            emoji: '🚒',
+            path: '/bombeiro',
+            color: 'from-red-500 to-orange-600',
+            bgColor: 'bg-red-50 hover:bg-red-100 border-red-200',
+            textColor: 'text-red-700',
+            iconColor: 'text-red-600'
+          },
+          {
+            key: 'arquiteto',
+            label: 'Arquiteto',
+            description: 'Construtor de projetos',
+            icon: Building2,
+            emoji: '🏗️',
+            path: '/arquiteto', 
+            color: 'from-purple-500 to-purple-600',
+            bgColor: 'bg-purple-50 hover:bg-purple-100 border-purple-200',
+            textColor: 'text-purple-700',
+            iconColor: 'text-purple-600'
+          },
+          {
+            key: 'caixa-de-areia',
+            label: 'Caixa de Areia',
+            description: 'Espaço criativo e experimental',
+            icon: Sandbox,
+            emoji: '🏖️',
+            path: '/caixa-de-areia',
+            color: 'from-amber-500 to-orange-500',
+            bgColor: 'bg-amber-50 hover:bg-amber-100 border-amber-200',
+            textColor: 'text-amber-700',
+            iconColor: 'text-amber-600'
+          }
+        ];
+      
+        const utilityItems = [
+          {
+            key: 'profile',
+            label: 'Perfil',
+            icon: User,
+            path: '/profile',
+            color: 'text-gray-600 hover:text-blue-600'
+          },
+          {
+            key: 'settings',
+            label: 'Configurações',
+            icon: Settings,
+            path: '/settings',
+            color: 'text-gray-600 hover:text-blue-600'
+          }
+        ];
+      
+        const handleNavigation = (path: string) => {
+          router.push(path);
+          setIsMobileOpen(false);
+        };
+      
+        const isActive = (path: string) => pathname === path;
+      
+        const sidebarVariants = {
+          expanded: { width: 280 },
+          collapsed: { width: 80 }
+        };
+      
+        const contentVariants = {
+          expanded: { opacity: 1, x: 0 },
+          collapsed: { opacity: 0, x: -20 }
+        };
+      
+        // Mobile Sidebar
+        const MobileSidebar = () => (
+          <>
+            {/* Mobile Toggle Button */}
+            <button
+              onClick={() => setIsMobileOpen(true)}
+              className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/50 hover:bg-white transition-all duration-200"
+            >
+              <Menu className="w-5 h-5 text-gray-700" />
+            </button>
+      
+            {/* Mobile Overlay */}
+            <AnimatePresence>
+              {isMobileOpen && (
+                <>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => setIsMobileOpen(false)}
+                    className="lg:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
+                  />
+                  
+                  <motion.div
+                    initial={{ x: -320 }}
+                    animate={{ x: 0 }}
+                    exit={{ x: -320 }}
+                    transition={{ type: "spring", damping: 20 }}
+                    className="lg:hidden fixed left-0 top-0 h-full w-80 bg-white/95 backdrop-blur-xl shadow-2xl z-50 border-r border-gray-200/50"
+                  >
+                    <div className="p-6">
+                      <div className="flex items-center justify-between mb-8">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                            <Home className="w-5 h-5 text-white" />
+                          </div>
+                          <div>
+                            <h2 className="font-bold text-gray-900">Cérebro-Compatível</h2>
+                            <p className="text-xs text-gray-500">Sistema Inteligente</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setIsMobileOpen(false)}
+                          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
+                          <X className="w-5 h-5 text-gray-500" />
+                        </button>
+                      </div>
+      
+                      {/* Mobile Navigation Items */}
+                      <div className="space-y-2">
+                        {navigationItems.map((item) => {
+                          const Icon = item.icon;
+                          const active = isActive(item.path);
+                          
+                          return (
+                            <motion.button
+                              key={item.key}
+                              onClick={() => handleNavigation(item.path)}
+                              className={`w-full p-4 rounded-xl border transition-all duration-200 text-left ${
+                                active 
+                                  ? `bg-gradient-to-r ${item.color} text-white shadow-lg` 
+                                  : item.bgColor
+                              }`}
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                            >
+                              <div className="flex items-center space-x-4">
+                                <div className={`p-2 rounded-lg ${active ? 'bg-white/20' : 'bg-white/50'}`}>
+                                  <Icon className={`w-5 h-5 ${active ? 'text-white' : item.iconColor}`} />
+                                </div>
+                                <div>
+                                  <div className={`font-semibold ${active ? 'text-white' : item.textColor}`}>
+                                    {item.emoji} {item.label}
+                                  </div>
+                                  <div className={`text-sm ${active ? 'text-white/80' : 'text-gray-500'}`}>
+                                    {item.description}
+                                  </div>
+                                </div>
+                              </div>
+                            </motion.button>
+                          );
+                        })}
+                      </div>
+      
+                      {/* Mobile Utility Items */}
+                      <div className="mt-8 pt-6 border-t border-gray-200/50">
+                        <div className="space-y-1">
+                          {utilityItems.map((item) => {
+                            const Icon = item.icon;
+                            return (
+                              <button
+                                key={item.key}
+                                onClick={() => handleNavigation(item.path)}
+                                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${item.color} hover:bg-gray-50`}
+                              >
+                                <Icon className="w-5 h-5" />
+                                <span className="font-medium">{item.label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </>
+        );
+      
+        // Desktop Sidebar
+        const DesktopSidebar = () => (
+          <motion.div
+            variants={sidebarVariants}
+            animate={isCollapsed ? 'collapsed' : 'expanded'}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className={`hidden lg:flex flex-col h-screen bg-white/90 backdrop-blur-xl border-r border-gray-200/50 shadow-xl ${className}`}
+          >
+            {/* Header */}
+            <div className="p-6 border-b border-gray-200/50">
+              <div className="flex items-center justify-between">
+                <AnimatePresence>
+                  {!isCollapsed && (
+                    <motion.div
+                      variants={contentVariants}
+                      initial="collapsed"
+                      animate="expanded"
+                      exit="collapsed"
+                      className="flex items-center space-x-3"
+                    >
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                        <Home className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <h2 className="font-bold text-gray-900">Cérebro-Compatível</h2>
+                        <p className="text-xs text-gray-500">Sistema Inteligente</p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                
+                <button
+                  onClick={() => setIsCollapsed(!isCollapsed)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors ml-auto"
+                >
+                  {isCollapsed ? (
+                    <ChevronRight className="w-4 h-4 text-gray-500" />
+                  ) : (
+                    <ChevronLeft className="w-4 h-4 text-gray-500" />
+                  )}
+                </button>
+              </div>
+            </div>
+      
+            {/* Navigation Items */}
+            <div className="flex-1 p-4 space-y-2">
+              {navigationItems.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(item.path);
+                
+                return (
+                  <motion.button
+                    key={item.key}
+                    onClick={() => handleNavigation(item.path)}
+                    className={`w-full p-4 rounded-xl border transition-all duration-200 text-left ${
+                      active 
+                        ? `bg-gradient-to-r ${item.color} text-white shadow-lg transform scale-105` 
+                        : item.bgColor
+                    }`}
+                    whileHover={{ scale: active ? 1.05 : 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    title={isCollapsed ? item.label : undefined}
+                  >
+                    <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-4'}`}>
+                      <div className={`p-2 rounded-lg ${active ? 'bg-white/20' : 'bg-white/50'}`}>
+                        <Icon className={`w-5 h-5 ${active ? 'text-white' : item.iconColor}`} />
+                      </div>
+                      
+                      <AnimatePresence>
+                        {!isCollapsed && (
+                          <motion.div
+                            variants={contentVariants}
+                            initial="collapsed"
+                            animate="expanded"
+                            exit="collapsed"
+                          >
+                            <div className={`font-semibold ${active ? 'text-white' : item.textColor}`}>
+                              {item.emoji} {item.label}
+                            </div>
+                            <div className={`text-sm ${active ? 'text-white/80' : 'text-gray-500'}`}>
+                              {item.description}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </motion.button>
+                );
+              })}
+            </div>
+      
+            {/* Utility Items */}
+            <div className="p-4 border-t border-gray-200/50">
+              <div className="space-y-1">
+                {utilityItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.key}
+                      onClick={() => handleNavigation(item.path)}
+                      className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} px-4 py-3 rounded-lg transition-all duration-200 ${item.color} hover:bg-gray-50`}
+                      title={isCollapsed ? item.label : undefined}
+                    >
+                      <Icon className="w-5 h-5" />
+                      <AnimatePresence>
+                        {!isCollapsed && (
+                          <motion.span
+                            variants={contentVariants}
+                            initial="collapsed"
+                            animate="expanded"
+                            exit="collapsed"
+                            className="font-medium"
+                          >
+                            {item.label}
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </motion.div>
+        );
+      
+        return (
+          <>
+            <MobileSidebar />
+            <DesktopSidebar />
+          </>
+        );
+      }
+
+  # 2. HEADER ATUALIZADO: Sem navegação horizontal
+  - type: file
+    path: "src/components/layout/Header.tsx"
+    content: |
+      'use client';
+      
+      // ============================================================================
+      // HEADER - Cabeçalho otimizado para trabalhar com Sidebar lateral
+      // ============================================================================
+      
+      import React from 'react';
+      import { usePageContext } from './PageContext';
+      
+      export function Header() {
+        const pageContext = usePageContext();
+        
+        const getGreeting = () => {
+          const hour = new Date().getHours();
+          if (hour < 12) return 'Bom dia';
+          if (hour < 18) return 'Boa tarde';
+          return 'Boa noite';
+        };
+      
+        const getThemeStyles = (theme: string) => {
+          const themes = {
+            blue: 'from-blue-500 to-blue-600',
+            orange: 'from-orange-500 to-red-500',
+            amber: 'from-amber-400 to-orange-500',
+            purple: 'from-purple-500 to-purple-600',
+            green: 'from-green-500 to-emerald-600'
+          };
+          return themes[theme as keyof typeof themes] || themes.blue;
+        };
+      
+        return (
+          <>
+            {/* Header Principal - Simplificado */}
+            <header className="bg-white/90 backdrop-blur-xl shadow-sm border-b border-white/20 lg:ml-0">
+              <div className="px-6 py-4 ml-0 lg:ml-4">
+                <div className="flex items-center justify-between">
+                  {/* Logo/Título - Oculto no mobile (sidebar tem) */}
+                  <div className="hidden lg:block">
+                    <div className="flex items-center space-x-3">
+                      <div>
+                        <h1 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                          Sistema Cérebro-Compatível
+                        </h1>
+                        <p className="text-sm text-gray-600">Organização inteligente para sua mente</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* User Info - Sempre visível */}
+                  <div className="flex items-center space-x-6 ml-auto">
+                    <div className="text-right">
+                      <div className="text-sm font-medium text-gray-700">
+                        {getGreeting()}, <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-semibold">João</span>! 👋
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {new Date().toLocaleDateString('pt-BR', { 
+                          weekday: 'long', 
+                          day: 'numeric', 
+                          month: 'long' 
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </header>
+            
+            {/* Contexto da Página - Aprimorado */}
+            {pageContext && (
+              <div className={`bg-gradient-to-r ${getThemeStyles(pageContext.theme)} border-t border-white/20`}>
+                <div className="px-6 py-5 ml-0 lg:ml-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      {pageContext.icon && (
+                        <div className="relative">
+                          <div className="absolute inset-0 bg-white/20 rounded-xl blur opacity-75"></div>
+                          <div className="relative p-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
+                            <span className="text-3xl">{pageContext.icon}</span>
+                          </div>
+                        </div>
+                      )}
+                      <div>
+                        <h2 className="text-2xl font-bold text-white">
+                          {pageContext.title}
+                        </h2>
+                        {pageContext.subtitle && (
+                          <p className="text-sm text-white/90 mt-1">
+                            {pageContext.subtitle}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {pageContext.actions && (
+                      <div className="flex items-center space-x-3">
+                        {pageContext.actions}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Stats - Aprimoradas */}
+                  {pageContext.stats && pageContext.stats.length > 0 && (
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+                      {pageContext.stats.map((stat, index) => (
+                        <div key={index} className="bg-white/15 backdrop-blur-sm rounded-xl border border-white/20 p-4 hover:bg-white/20 transition-all duration-200">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-xs text-white/80 font-medium uppercase tracking-wide">{stat.label}</p>
+                              <p className="text-2xl font-bold text-white mt-1">{stat.value}</p>
+                            </div>
+                            {stat.icon && (
+                              <span className="text-2xl opacity-90">{stat.icon}</span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
+        );
+      }
+
+  # 3. LAYOUT PRINCIPAL ATUALIZADO: Com Sidebar
+  - type: file
+    path: "src/app/(main)/layout.tsx"
+    content: |
+      // ============================================================================
+      // LAYOUT GRUPO (MAIN) - Layout com Sidebar lateral e Header otimizado
+      // ============================================================================
+      
+      import { Header } from '@/components/layout/Header';
+      import { Sidebar } from '@/components/layout/Sidebar';
+      
+      export default function MainLayout({
+        children,
+      }: {
+        children: React.ReactNode;
+      }) {
+        return (
+          <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/40 to-indigo-50/30 flex">
+            {/* Sidebar Lateral */}
+            <Sidebar />
+            
+            {/* Conteúdo Principal */}
+            <div className="flex-1 flex flex-col min-h-screen lg:ml-0">
+              <Header />
+              
+              {/* Área de Conteúdo */}
+              <main className="flex-1 overflow-auto">
+                <div className="p-6 ml-0 lg:ml-4">
+                  {children}
+                </div>
+              </main>
+            </div>
+          </div>
+        );
+      }
+
+  # 4. NAVEGAÇÃO ORIGINAL (BACKUP/FALLBACK)
+  - type: file
+    path: "src/components/layout/NavigationHorizontal.tsx"
+    content: |
+      'use client';
+      
+      // ============================================================================
+      // NAVIGATION HORIZONTAL - Backup da navegação original (caso precise reverter)
+      // ============================================================================
+      
+      import React from 'react';
+      import { motion } from 'framer-motion';
+      import { useRouter, usePathname } from 'next/navigation';
+      
+      export function NavigationHorizontal() {
+        const router = useRouter();
+        const pathname = usePathname();
+      
+        const pages = [
+          { key: 'bombeiro', label: '🏎️ Bombeiro', color: 'blue', path: '/bombeiro' },
+          { key: 'arquiteto', label: '🏗️ Arquiteto', color: 'purple', path: '/arquiteto' },
+          { key: 'caixa-de-areia', label: '🏖️ Caixa de Areia', color: 'amber', path: '/caixa-de-areia' }
+        ] as const;
+      
+        const getPageColors = (pageKey: string, isActive: boolean) => {
+          const colors = {
+            blue: isActive 
+              ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/25 transform scale-105'
+              : 'text-gray-600 hover:bg-blue-50 hover:text-blue-700',
+            purple: isActive 
+              ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/25 transform scale-105'
+              : 'text-gray-600 hover:bg-purple-50 hover:text-purple-700',
+            amber: isActive 
+              ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/25 transform scale-105'
+              : 'text-gray-600 hover:bg-amber-50 hover:text-amber-700',
+            green: isActive 
+              ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg shadow-green-500/25 transform scale-105'
+              : 'text-gray-600 hover:bg-green-50 hover:text-green-700',
+          };
+      
+          const page = pages.find(p => p.key === pageKey);
+          return page ? colors[page.color] : colors.blue;
+        };
+      
+        const handleNavigation = (path: string) => {
+          router.push(path);
+        };
+      
+        return (
+          <nav className="flex space-x-2 bg-gray-100/70 backdrop-blur-sm p-1.5 rounded-2xl">
+            {pages.map((page) => {
+              const isActive = pathname === page.path;
+              
+              return (
+                <motion.button
+                  key={page.key}
+                  onClick={() => handleNavigation(page.path)}
+                  className={`px-5 py-2.5 rounded-xl font-medium transition-all duration-300 ${getPageColors(page.key, isActive)}`}
+                  whileHover={{ scale: isActive ? 1.05 : 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  {page.label}
+                </motion.button>
+              );
+            })}
+          </nav>
+        );
+      }

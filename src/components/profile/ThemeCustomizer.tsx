@@ -4,7 +4,7 @@
 // THEME CUSTOMIZER - Personalização completa do tema
 // ============================================================================
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Palette, 
@@ -49,6 +49,19 @@ export function ThemeCustomizer() {
 
   const [activeSection, setActiveSection] = useState('presets');
   const [showPreview, setShowPreview] = useState(false);
+  
+  // Aplicar tema automaticamente quando houver mudanças
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // Force theme application on any change
+      if (typeof window !== 'undefined') {
+        const event = new CustomEvent('themeChanged', { detail: currentTheme });
+        window.dispatchEvent(event);
+      }
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [currentTheme]);
 
   const sections = [
     { id: 'presets', label: 'Predefinidos', icon: Palette },

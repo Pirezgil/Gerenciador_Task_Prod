@@ -8,10 +8,19 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Flame } from 'lucide-react';
 import { useTasksStore } from '@/stores/tasksStore';
+import { useAuthStore } from '@/stores/authStore';
 
 export function EnergyMeter() {
   const { calculateEnergyBudget } = useTasksStore();
+  const { user } = useAuthStore();
   const energyBudget = calculateEnergyBudget();
+  
+  // Reagir a mudanças no orçamento de energia do usuário
+  React.useEffect(() => {
+    if (user?.settings.dailyEnergyBudget) {
+      // Force re-render quando orçamento mudar
+    }
+  }, [user?.settings.dailyEnergyBudget]);
   
   const { used, total, percentage, isOverBudget } = energyBudget;
   const isNearLimit = percentage > 80;

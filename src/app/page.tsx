@@ -1,8 +1,6 @@
-import { CerebroCompativel } from '@/components/CerebroCompativel';
+import { redirect } from 'next/navigation';
 
 export default function HomePage() {
-  // TODO: Implementar autenticação adequada
-  // Por enquanto, vamos usar o middleware para controlar isso
-
-  return <CerebroCompativel />;
+  // Redirecionar para a página do Bombeiro para usar o novo sistema de sidebar
+  redirect('/bombeiro');
 }

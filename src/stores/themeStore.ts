@@ -220,10 +220,12 @@ export const useThemeStore = create<ThemeStore>()(
             updatedAt: new Date().toISOString(),
           };
           
-          // Aplicar tema ao documento
-          get().applyThemeToDocument(updatedTheme);
+          // Aplicar tema ao documento IMEDIATAMENTE
+          requestAnimationFrame(() => {
+            get().applyThemeToDocument(updatedTheme);
+          });
           
-        return { currentTheme: updatedTheme };
+          return { currentTheme: updatedTheme };
         });
       },
 

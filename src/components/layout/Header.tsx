@@ -1,15 +1,16 @@
 'use client';
 
 // ============================================================================
-// HEADER - Cabeçalho principal com navegação integrada e contexto de página
+// HEADER - Cabeçalho otimizado para trabalhar com Sidebar lateral
 // ============================================================================
 
 import React from 'react';
-import { Navigation } from './Navigation';
 import { usePageContext } from './PageContext';
+import { useAuthStore } from '@/stores/authStore';
 
 export function Header() {
   const pageContext = usePageContext();
+  const { user } = useAuthStore();
   
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -30,56 +31,62 @@ export function Header() {
   };
 
   return (
-    <header className="bg-white/80 backdrop-blur-xl shadow-sm border-b border-white/20 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-6 py-5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-8">
-            <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-                Cérebro-Compatível
-              </h1>
-              <p className="text-sm text-gray-600">Sistema inteligente para organizar sua mente</p>
-            </div>
-            <Navigation />
-          </div>
-          
-          <div className="flex items-center space-x-6">
-            <div className="text-right">
-              <div className="text-sm font-medium text-gray-700">
-                {getGreeting()}, <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-semibold">João</span>! 👋
+    <>
+      {/* Header Principal - Simplificado */}
+      <header className="bg-white/90 backdrop-blur-xl shadow-sm border-b border-white/20 lg:ml-0">
+        <div className="px-6 py-4 ml-0 lg:ml-4">
+          <div className="flex items-center justify-between">
+            {/* Logo/Título - Oculto no mobile (sidebar tem) */}
+            <div className="hidden lg:block">
+              <div className="flex items-center space-x-3">
+                <div>
+                  <h1 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                    Sistema Cérebro-Compatível
+                  </h1>
+                  <p className="text-sm text-gray-600">Organização inteligente para sua mente</p>
+                </div>
               </div>
-              <div className="text-xs text-gray-500 mt-1">
-                {new Date().toLocaleDateString('pt-BR', { 
-                  weekday: 'long', 
-                  day: 'numeric', 
-                  month: 'long' 
-                })}
+            </div>
+            
+            {/* User Info - Sempre visível */}
+            <div className="flex items-center space-x-6 ml-auto">
+              <div className="text-right">
+                <div className="text-sm font-medium text-gray-700">
+                  {getGreeting()}, <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-semibold">{user?.name || "Usuário"}</span>! 👋
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  {new Date().toLocaleDateString('pt-BR', { 
+                    weekday: 'long', 
+                    day: 'numeric', 
+                    month: 'long' 
+                  })}
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </header>
       
-      {/* Contexto da Página */}
+      {/* Contexto da Página - Aprimorado */}
       {pageContext && (
         <div className={`bg-gradient-to-r ${getThemeStyles(pageContext.theme)} border-t border-white/20`}>
-          <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="px-6 py-5 ml-0 lg:ml-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 {pageContext.icon && (
                   <div className="relative">
                     <div className="absolute inset-0 bg-white/20 rounded-xl blur opacity-75"></div>
-                    <div className="relative p-3 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
-                      <span className="text-2xl">{pageContext.icon}</span>
+                    <div className="relative p-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
+                      <span className="text-3xl">{pageContext.icon}</span>
                     </div>
                   </div>
                 )}
                 <div>
-                  <h2 className="text-xl font-bold text-white">
+                  <h2 className="text-2xl font-bold text-white">
                     {pageContext.title}
                   </h2>
                   {pageContext.subtitle && (
-                    <p className="text-sm text-white/80">
+                    <p className="text-sm text-white/90 mt-1">
                       {pageContext.subtitle}
                     </p>
                   )}
@@ -93,18 +100,18 @@ export function Header() {
               )}
             </div>
             
-            {/* Stats opcionais */}
+            {/* Stats - Aprimoradas */}
             {pageContext.stats && pageContext.stats.length > 0 && (
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
                 {pageContext.stats.map((stat, index) => (
-                  <div key={index} className="bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 p-3">
+                  <div key={index} className="bg-white/15 backdrop-blur-sm rounded-xl border border-white/20 p-4 hover:bg-white/20 transition-all duration-200">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-xs text-white/80 font-medium">{stat.label}</p>
-                        <p className="text-xl font-bold text-white">{stat.value}</p>
+                        <p className="text-xs text-white/80 font-medium uppercase tracking-wide">{stat.label}</p>
+                        <p className="text-2xl font-bold text-white mt-1">{stat.value}</p>
                       </div>
                       {stat.icon && (
-                        <span className="text-lg opacity-80">{stat.icon}</span>
+                        <span className="text-2xl opacity-90">{stat.icon}</span>
                       )}
                     </div>
                   </div>
@@ -114,6 +121,6 @@ export function Header() {
           </div>
         </div>
       )}
-    </header>
+    </>
   );
 }
