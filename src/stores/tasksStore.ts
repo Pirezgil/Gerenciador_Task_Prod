@@ -9,6 +9,10 @@ import { syncedUpdate } from '../lib/syncManager';
 // ============================================================================
 
 import { create } from 'zustand';
+import { useEnergyStore } from './energyStore';
+import type { EnergyBudget } from './energyStore';
+import { useModalsStore } from './modalsStore';
+
 import { useAuthStore } from './authStore';
 import { persist } from 'zustand/middleware';
 import type { 
@@ -61,11 +65,7 @@ interface TasksState {
   editingNote: string | null;
   
   // Estados de Modal
-  showCaptureModal: boolean;
-  showLowEnergyModal: boolean;
-  showDecompositionModal: Task | null;
-  showTransformModal: Note | null;
-  taskEditModal: TaskEditModalState;
+  // Estados de modal movidos para modalsStore.ts
   
   // Estados dos Protocolos Críticos
   showEmergencyModal: boolean;
@@ -156,43 +156,8 @@ interface TasksState {
   canAddTask: (energyPoints: number) => boolean;
   getRemainingEnergy: () => number;
   calculateEnergyBudget: () => EnergyBudget;
-  
-  // Actions - Sandbox Movível
-  convertNotesToMovable: () => void;
-  updateNotePosition: (noteId: string, x: number, y: number) => void;
-  updateNoteSize: (noteId: string, width: number, height: number) => void;
-  updateNoteZIndex: (noteId: string, zIndex: number) => void;
-  toggleNoteExpanded: (noteId: string) => void;
-  updateNoteColor: (noteId: string, color: string) => void;
-  selectNote: (noteId: string | null) => void;
 
-  // Actions - Layout Management
-  setLayoutMode: (mode: 'free' | 'grid' | 'list' | 'masonry') => void;
-  setSnapToGrid: (snap: boolean) => void;
-  setGridSize: (size: number) => void;
-  setShowGrid: (show: boolean) => void;
-  reorganizeNotes: (mode: 'free' | 'grid' | 'list' | 'masonry') => void;
-      
-  // Utilities
-  generateUniqueId: () => string;
-}
 
-const initialCaptureState: CaptureState = {
-  step: 'capture',
-  content: '',
-  type: '',
-  selectedDate: '',
-};
-
-const initialTaskEditModal: TaskEditModalState = {
-  isOpen: false,
-  task: null,
-  editData: {
-    description: '',
-    energyPoints: 3,
-    projectId: undefined,
-    comment: '',
-  },
 };
 
 export const useTasksStore = create<TasksState>()(
@@ -246,6 +211,35 @@ export const useTasksStore = create<TasksState>()(
         total: 12,
       },
       
+      
+      // Actions - Energia
+      canAddTask: (energyPoints) => {
+        const state = get();
+        const energyStore = useEnergyStore.getState();
+        const usedEnergy = state.todayTasks
+          .filter(task => task.status === 'pending' || task.status === 'done')
+          .reduce((sum, task) => sum + task.energyPoints, 0);
+        return energyStore.canPerformAction(energyPoints, usedEnergy);
+      },
+      
+      getRemainingEnergy: () => {
+        const state = get();
+        const energyStore = useEnergyStore.getState();
+        const usedEnergy = state.todayTasks
+          .filter(task => task.status === 'pending' || task.status === 'done')
+          .reduce((sum, task) => sum + task.energyPoints, 0);
+        return energyStore.getRemainingEnergy(usedEnergy);
+      },
+      
+      calculateEnergyBudget: () => {
+        const state = get();
+        const energyStore = useEnergyStore.getState();
+        const usedEnergy = state.todayTasks
+          .filter(task => task.status === 'pending' || task.status === 'done')
+          .reduce((sum, task) => sum + task.energyPoints, 0);
+        return energyStore.calculateBudget(usedEnergy);
+      },
+
       // Actions - Navegação
       setCurrentPage: (page) => set({ currentPage: page }),
       setSelectedProjectId: (id) => set({ selectedProjectId: id }),
@@ -254,49 +248,16 @@ export const useTasksStore = create<TasksState>()(
       addTaskToToday: (description, energyPoints, projectId) => {
         const state = get();
         
-        // Energia gerenciada pelo calculateEnergyBudget()
-        const canAdd = state.canAddTask(energyPoints);
-        
-        if (!canAdd) {
-          // PROTOCOLO DE INCÊNDIO: Orçamento cheio
-          state.triggerEmergencyModal({
-            description,
-            energyPoints,
-            projectId
-          });
-          return false;
-        }
-        
-        const project = projectId ? state.projects.find(p => p.id === projectId) : null;
-        const newTask: Task = {
-          id: state.generateUniqueId(),
-          userId: 'user1',
-          projectId,
-          description,
-          energyPoints,
-          status: "pending",
-          postponedCount: 0,
-          comments: [],
-          project: project ? { name: project.name, icon: project.icon } : undefined,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        
-        // Verificar se essa tarefa existe em postponed (restauração)
-        const existingPostponed = state.postponedTasks.find(t => 
-          t.description === description && t.energyPoints === energyPoints
-        );
-        
-        set(state => ({
-          todayTasks: [...state.todayTasks, newTask],
-          // Remover de postponed se for uma restauração
-          postponedTasks: existingPostponed 
-            ? state.postponedTasks.filter(t => t.id !== existingPostponed.id)
-            : state.postponedTasks
-        }));
-        
-        return true;
-      },
+        // Energia gerenciada pelo // Função movida para energyStore.ts
+calculateEnergyBudget: () => {
+  const energyStore = useEnergyStore.getState();
+  const state = get();
+  const usedEnergy = state.todayTasks
+    .filter(task => task.status === 'pending' || task.status === 'done')
+    .reduce((sum, task) => sum + task.energyPoints, 0);
+  return energyStore.calculateBudget(usedEnergy);
+},
+
       
       completeTask: (taskId) => {
         set(state => ({
@@ -312,58 +273,30 @@ export const useTasksStore = create<TasksState>()(
       postponeTask: (taskId, reason = 'manual') => {
         const state = get();
         
-        // Energia gerenciada pelo calculateEnergyBudget()
-        const task = state.todayTasks.find(t => t.id === taskId);
-        
-        if (!task) return;
-        
-        const newPostponedCount = task.postponedCount + 1;
-        
-        const postponedTask: PostponedTask = {
-          ...task,
-          status: 'postponed',
-          postponedCount: newPostponedCount,
-          postponeReason: reason,
-          postponedAt: new Date().toISOString(),
-        };
-        
-        set(state => ({
-          todayTasks: state.todayTasks.filter(t => t.id !== taskId),
-          postponedTasks: [...state.postponedTasks, postponedTask]
-        }));
-        
-        // PROTOCOLO DE DECOMPOSIÇÃO: Trigger automático em 3 adiamentos
-        if (newPostponedCount >= 3) {
-          setTimeout(() => state.setShowDecompositionModal(postponedTask), 500);
-        }
-      },
+        // Energia gerenciada pelo // Função movida para energyStore.ts
+calculateEnergyBudget: () => {
+  const energyStore = useEnergyStore.getState();
+  const state = get();
+  const usedEnergy = state.todayTasks
+    .filter(task => task.status === 'pending' || task.status === 'done')
+    .reduce((sum, task) => sum + task.energyPoints, 0);
+  return energyStore.calculateBudget(usedEnergy);
+},
+
       
       moveTaskToToday: (projectId, taskId) => {
         const state = get();
         
-        // Energia gerenciada pelo calculateEnergyBudget()
-        const project = state.projects.find(p => p.id === projectId);
-        const task = project?.backlog.find(t => t.id === taskId);
-        
-        if (!project || !task) return;
-        
-        const canAdd = state.canAddTask(task.energyPoints);
-        if (!canAdd) {
-          // PROTOCOLO DE INCÊNDIO: Trigger se orçamento cheio
-          state.triggerEmergencyModal({
-            description: task.description,
-            energyPoints: task.energyPoints,
-            projectId: project.id
-          });
-          return;
-        }
-        
-        const newTask: Task = {
-          ...task,
-          id: state.generateUniqueId(),
-          status: "pending",
-          comments: task.comments || [],
-          project: { name: project.name, icon: project.icon },
+        // Energia gerenciada pelo // Função movida para energyStore.ts
+calculateEnergyBudget: () => {
+  const energyStore = useEnergyStore.getState();
+  const state = get();
+  const usedEnergy = state.todayTasks
+    .filter(task => task.status === 'pending' || task.status === 'done')
+    .reduce((sum, task) => sum + task.energyPoints, 0);
+  return energyStore.calculateBudget(usedEnergy);
+},
+
           projectId: project.id,
         };
         
@@ -420,42 +353,16 @@ export const useTasksStore = create<TasksState>()(
       saveTaskEdit: (request) => {
         const state = get();
         
-        // Energia gerenciada pelo calculateEnergyBudget()
-        const { taskId, description, energyPoints, projectId, comment } = request;
-        
-        const updateTask = (task: Task) => {
-          if (task.id !== taskId) return task;
-          
-          const project = projectId ? state.projects.find(p => p.id === projectId) : null;
-          const newComments = comment?.trim() 
-            ? [...(task.comments || []), {
-                id: state.generateUniqueId(),
-                content: comment,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-              }]
-            : task.comments || [];
-          
-          return {
-            ...task,
-            description: description || task.description,
-            energyPoints: energyPoints || task.energyPoints,
-            projectId: projectId,
-            project: project ? { name: project.name, icon: project.icon } : undefined,
-            comments: newComments,
-            updatedAt: new Date().toISOString(),
-          };
-        };
-        
-        set(state => ({
-          todayTasks: state.todayTasks.map(updateTask),
-          postponedTasks: state.postponedTasks.map(updateTask),
-          projects: state.projects.map(project => ({
-            ...project,
-            backlog: project.backlog.map(updateTask),
-          })),
-        }));
-      },
+        // Energia gerenciada pelo // Função movida para energyStore.ts
+calculateEnergyBudget: () => {
+  const energyStore = useEnergyStore.getState();
+  const state = get();
+  const usedEnergy = state.todayTasks
+    .filter(task => task.status === 'pending' || task.status === 'done')
+    .reduce((sum, task) => sum + task.energyPoints, 0);
+  return energyStore.calculateBudget(usedEnergy);
+},
+
       
       // Actions - Comentários
       editTaskComment: (commentEdit) => {
@@ -510,32 +417,16 @@ export const useTasksStore = create<TasksState>()(
       addTaskToProject: (projectId, description, energyPoints) => {
         const state = get();
         
-        // Energia gerenciada pelo calculateEnergyBudget()
-        
-        const newTask: Task = {
-          id: state.generateUniqueId(),
-          userId: 'user1',
-          projectId,
-          description,
-          energyPoints,
-          status: 'backlog',
-          postponedCount: 0,
-          comments: [],
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        
-        set(state => ({
-          projects: state.projects.map(p =>
-            p.id === projectId
-              ? { ...p, backlog: [...p.backlog, newTask] }
-              : p
-          ),
-          newTaskDescription: '',
-          newTaskEnergy: 3,
-          addingTaskToProject: null,
-        }));
-      },
+        // Energia gerenciada pelo // Função movida para energyStore.ts
+calculateEnergyBudget: () => {
+  const energyStore = useEnergyStore.getState();
+  const state = get();
+  const usedEnergy = state.todayTasks
+    .filter(task => task.status === 'pending' || task.status === 'done')
+    .reduce((sum, task) => sum + task.energyPoints, 0);
+  return energyStore.calculateBudget(usedEnergy);
+},
+
       
       updateProjectNotes: (projectId, notes) => {
         set(state => ({
@@ -550,26 +441,16 @@ export const useTasksStore = create<TasksState>()(
       createProject: (name, icon, notes) => {
         const state = get();
         
-        // Energia gerenciada pelo calculateEnergyBudget()
-        
-        const newProject: Project = {
-          id: state.generateUniqueId(),
-          userId: 'user1',
-          name,
-          icon,
-          sandboxNotes: notes,
-          status: 'active',
-          backlog: [],
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        
-        set(state => ({
-          projects: [...state.projects, newProject],
-        }));
-        
-        return newProject.id;
-      },
+        // Energia gerenciada pelo // Função movida para energyStore.ts
+calculateEnergyBudget: () => {
+  const energyStore = useEnergyStore.getState();
+  const state = get();
+  const usedEnergy = state.todayTasks
+    .filter(task => task.status === 'pending' || task.status === 'done')
+    .reduce((sum, task) => sum + task.energyPoints, 0);
+  return energyStore.calculateBudget(usedEnergy);
+},
+
       
       // Actions - Gerenciamento de Tijolos
       editProjectTask: (projectId, taskId, description, energyPoints) => {
@@ -607,57 +488,31 @@ export const useTasksStore = create<TasksState>()(
       createProjectWithTasks: (name, icon, notes, initialTasks) => {
         const state = get();
         
-        // Energia gerenciada pelo calculateEnergyBudget()
-        
-        const newProject: Project = {
-          id: state.generateUniqueId(),
-          userId: 'user1',
-          name,
-          icon,
-          sandboxNotes: notes,
-          status: 'active',
-          backlog: initialTasks.map(task => ({
-            id: state.generateUniqueId(),
-            userId: 'user1',
-            description: task.description,
-            energyPoints: task.energyPoints,
-            status: 'backlog' as const,
-            postponedCount: 0,
-            comments: [],
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          })),
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        
-        set(state => ({
-          projects: [...state.projects, newProject],
-        }));
-        
-        return newProject.id;
-      },
+        // Energia gerenciada pelo // Função movida para energyStore.ts
+calculateEnergyBudget: () => {
+  const energyStore = useEnergyStore.getState();
+  const state = get();
+  const usedEnergy = state.todayTasks
+    .filter(task => task.status === 'pending' || task.status === 'done')
+    .reduce((sum, task) => sum + task.energyPoints, 0);
+  return energyStore.calculateBudget(usedEnergy);
+},
+
       
       // Actions - Notas
       saveNote: (content) => {
         const state = get();
         
-        // Energia gerenciada pelo calculateEnergyBudget()
-        
-        const newNote: Note = {
-          id: state.generateUniqueId(),
-          userId: 'user1',
-          content,
-          status: 'active',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        
-        set(state => ({
-          notes: [newNote, ...state.notes],
-          newNoteContent: '',
-        }));
-      },
+        // Energia gerenciada pelo // Função movida para energyStore.ts
+calculateEnergyBudget: () => {
+  const energyStore = useEnergyStore.getState();
+  const state = get();
+  const usedEnergy = state.todayTasks
+    .filter(task => task.status === 'pending' || task.status === 'done')
+    .reduce((sum, task) => sum + task.energyPoints, 0);
+  return energyStore.calculateBudget(usedEnergy);
+},
+
       
       updateNote: (noteId, content) => {
         set(state => ({
@@ -693,30 +548,16 @@ export const useTasksStore = create<TasksState>()(
       transformNoteToAction: (request) => {
         const state = get();
         
-        // Energia gerenciada pelo calculateEnergyBudget()
-        const { note, targetType, energyPoints = 3, scheduleDate } = request;
-        
-        if (targetType === 'project') {
-          const projectId = state.createProject(
-            note.content.slice(0, 50) + (note.content.length > 50 ? '...' : ''),
-            '🗂️',
-            note.content
-          );
-          state.archiveNote(note.id);
-          state.setCurrentPage('arquiteto');
-        } else if (scheduleDate) {
-          state.archiveNote(note.id);
-        } else {
-          const success = state.addTaskToToday(
-            note.content.slice(0, 100) + (note.content.length > 100 ? '...' : ''),
-            energyPoints
-          );
-          
-          if (success) {
-            state.archiveNote(note.id);
-          }
-        }
-      },
+        // Energia gerenciada pelo // Função movida para energyStore.ts
+calculateEnergyBudget: () => {
+  const energyStore = useEnergyStore.getState();
+  const state = get();
+  const usedEnergy = state.todayTasks
+    .filter(task => task.status === 'pending' || task.status === 'done')
+    .reduce((sum, task) => sum + task.energyPoints, 0);
+  return energyStore.calculateBudget(usedEnergy);
+},
+
       
       // Actions - Modais
       setShowCaptureModal: (show) => set({ showCaptureModal: show }),
@@ -738,64 +579,31 @@ export const useTasksStore = create<TasksState>()(
       replaceWithLightTasks: () => {
         const state = get();
         
-        // Energia gerenciada pelo calculateEnergyBudget()
-        const pendingTasks = state.todayTasks.filter(task => task.status === 'pending');
-        
-        if (pendingTasks.length === 0) return;
-        
-        // Mover todas as tarefas pendentes para sala de replanejamento
-        const postponedTasks = pendingTasks.map(task => ({
-          ...task,
-          status: 'postponed' as const,
-          postponedCount: task.postponedCount + 1,
-          postponeReason: 'replaced_with_light_tasks',
-          postponedAt: new Date().toISOString(),
-        }));
-        
-        // Adicionar tarefas leves aleatórias
-        const selectedLightTasks = LIGHT_TASKS
-          .sort(() => 0.5 - Math.random())
-          .slice(0, Math.min(3, pendingTasks.length))
-          .map(description => ({
-            id: state.generateUniqueId(),
-            userId: 'user1',
-            description,
-            energyPoints: 1 as const,
-            status: 'pending' as const,
-            postponedCount: 0,
-            comments: [],
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          }));
-        
-        set(state => ({
-          todayTasks: [...state.todayTasks.filter(task => task.status !== 'pending'), ...selectedLightTasks],
-          postponedTasks: [...state.postponedTasks, ...postponedTasks]
-        }));
-      },
+        // Energia gerenciada pelo // Função movida para energyStore.ts
+calculateEnergyBudget: () => {
+  const energyStore = useEnergyStore.getState();
+  const state = get();
+  const usedEnergy = state.todayTasks
+    .filter(task => task.status === 'pending' || task.status === 'done')
+    .reduce((sum, task) => sum + task.energyPoints, 0);
+  return energyStore.calculateBudget(usedEnergy);
+},
+
       
       // PROTOCOLO DE BAIXA ENERGIA: Adiar o dia inteiro
       postponeAllTasks: () => {
         const state = get();
         
-        // Energia gerenciada pelo calculateEnergyBudget()
-        const pendingTasks = state.todayTasks.filter(task => task.status === 'pending');
-        
-        if (pendingTasks.length === 0) return;
-        
-        const postponedTasks = pendingTasks.map(task => ({
-          ...task,
-          status: 'postponed' as const,
-          postponedCount: task.postponedCount + 1,
-          postponeReason: 'postponed_entire_day',
-          postponedAt: new Date().toISOString(),
-        }));
-        
-        set(state => ({
-          todayTasks: state.todayTasks.filter(task => task.status !== 'pending'),
-          postponedTasks: [...state.postponedTasks, ...postponedTasks]
-        }));
-      },
+        // Energia gerenciada pelo // Função movida para energyStore.ts
+calculateEnergyBudget: () => {
+  const energyStore = useEnergyStore.getState();
+  const state = get();
+  const usedEnergy = state.todayTasks
+    .filter(task => task.status === 'pending' || task.status === 'done')
+    .reduce((sum, task) => sum + task.energyPoints, 0);
+  return energyStore.calculateBudget(usedEnergy);
+},
+
       
       // Actions - Captura
       updateCaptureState: (updates) => {
@@ -814,98 +622,73 @@ export const useTasksStore = create<TasksState>()(
       handleCaptureSubmit: () => {
         const state = get();
         
-        // Energia gerenciada pelo calculateEnergyBudget()
-        if (!state.captureState.content.trim()) return;
-        
-        if (state.captureState.step === 'capture') {
-          state.updateCaptureState({ step: 'triage' });
-        }
-      },
+        // Energia gerenciada pelo // Função movida para energyStore.ts
+calculateEnergyBudget: () => {
+  const energyStore = useEnergyStore.getState();
+  const state = get();
+  const usedEnergy = state.todayTasks
+    .filter(task => task.status === 'pending' || task.status === 'done')
+    .reduce((sum, task) => sum + task.energyPoints, 0);
+  return energyStore.calculateBudget(usedEnergy);
+},
+
       
       handleTriageChoice: (choice) => {
         const state = get();
         
-        // Energia gerenciada pelo calculateEnergyBudget()
-        
-        if (choice === 'sandbox') {
-          state.saveNote(state.captureState.content);
-          state.resetCaptureState();
-          state.setCurrentPage('caixa-de-areia');
-        } else if (choice === 'task') {
-          state.updateCaptureState({ step: 'classify' });
-        }
-      },
+        // Energia gerenciada pelo // Função movida para energyStore.ts
+calculateEnergyBudget: () => {
+  const energyStore = useEnergyStore.getState();
+  const state = get();
+  const usedEnergy = state.todayTasks
+    .filter(task => task.status === 'pending' || task.status === 'done')
+    .reduce((sum, task) => sum + task.energyPoints, 0);
+  return energyStore.calculateBudget(usedEnergy);
+},
+
       
       handleClassifyChoice: (type) => {
         const state = get();
         
-        // Energia gerenciada pelo calculateEnergyBudget()
-        
-        if (type === 'project') {
-          state.createProject(
-            state.captureState.content.slice(0, 50) + (state.captureState.content.length > 50 ? '...' : ''),
-            '🗂️',
-            state.captureState.content
-          );
-          state.resetCaptureState();
-          state.setCurrentPage('arquiteto');
-        } else if (type === 'task') {
-          state.updateCaptureState({ step: 'schedule', type });
-        }
-      },
+        // Energia gerenciada pelo // Função movida para energyStore.ts
+calculateEnergyBudget: () => {
+  const energyStore = useEnergyStore.getState();
+  const state = get();
+  const usedEnergy = state.todayTasks
+    .filter(task => task.status === 'pending' || task.status === 'done')
+    .reduce((sum, task) => sum + task.energyPoints, 0);
+  return energyStore.calculateBudget(usedEnergy);
+},
+
       
       handleScheduleChoice: (when, date) => {
         const state = get();
         
-        // Energia gerenciada pelo calculateEnergyBudget()
-        
-        if (when === 'today') {
-          const success = state.addTaskToToday(state.captureState.content, 3);
-          if (success) state.resetCaptureState();
-        } else if (when === 'future' && date) {
-          state.resetCaptureState();
-        }
-      },
+        // Energia gerenciada pelo // Função movida para energyStore.ts
+calculateEnergyBudget: () => {
+  const energyStore = useEnergyStore.getState();
+  const state = get();
+  const usedEnergy = state.todayTasks
+    .filter(task => task.status === 'pending' || task.status === 'done')
+    .reduce((sum, task) => sum + task.energyPoints, 0);
+  return energyStore.calculateBudget(usedEnergy);
+},
+
       
       // Actions - Protocolos
       handleDecomposition: (request) => {
         const state = get();
         
-        // Energia gerenciada pelo calculateEnergyBudget()
-        const { originalTask, firstBrick, projectName } = request;
-        
-        if (!firstBrick.trim()) return;
-        
-        const newProject: Project = {
-          id: state.generateUniqueId(),
-          userId: 'user1',
-          name: projectName || originalTask.description,
-          icon: '🔧',
-          sandboxNotes: `Projeto criado automaticamente após ${originalTask.postponedCount} adiamentos da tarefa original.`,
-          status: 'active',
-          backlog: [
-            {
-              id: state.generateUniqueId(),
-              userId: 'user1',
-              description: firstBrick.trim(),
-              energyPoints: 1,
-              status: 'backlog',
-              postponedCount: 0,
-              comments: [],
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            }
-          ],
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        
-        set(state => ({
-          projects: [...state.projects, newProject],
-          postponedTasks: state.postponedTasks.filter(t => t.id !== originalTask.id),
-          showDecompositionModal: null,
-        }));
-      },
+        // Energia gerenciada pelo // Função movida para energyStore.ts
+calculateEnergyBudget: () => {
+  const energyStore = useEnergyStore.getState();
+  const state = get();
+  const usedEnergy = state.todayTasks
+    .filter(task => task.status === 'pending' || task.status === 'done')
+    .reduce((sum, task) => sum + task.energyPoints, 0);
+  return energyStore.calculateBudget(usedEnergy);
+},
+
       
       // Actions - Remoção
       removePostponedTask: (taskId) => {
@@ -916,59 +699,55 @@ export const useTasksStore = create<TasksState>()(
       
       // Actions - Energia
       canAddTask: (energyPoints) => {
-        const state = get();
-        
-        // Energia gerenciada pelo calculateEnergyBudget()
-        const currentBudget = state.calculateEnergyBudget();
-        return (currentBudget.used + energyPoints) <= currentBudget.total;
-      },
+  const state = get();
+  const energyStore = useEnergyStore.getState();
+  const usedEnergy = state.todayTasks
+    .filter(task => task.status === 'pending' || task.status === 'done')
+    .reduce((sum, task) => sum + task.energyPoints, 0);
+  return energyStore.canPerformAction(energyPoints, usedEnergy);
+},
+
+
       
       getRemainingEnergy: () => {
         const state = get();
         
-        // Energia gerenciada pelo calculateEnergyBudget()
-        const currentBudget = state.calculateEnergyBudget();
-        return currentBudget.remaining;
-      },
+        // Energia gerenciada pelo // Função movida para energyStore.ts
+calculateEnergyBudget: () => {
+  const energyStore = useEnergyStore.getState();
+  const state = get();
+  const usedEnergy = state.todayTasks
+    .filter(task => task.status === 'pending' || task.status === 'done')
+    .reduce((sum, task) => sum + task.energyPoints, 0);
+  return energyStore.calculateBudget(usedEnergy);
+},
+
       
-      calculateEnergyBudget: () => {
-        const state = get();
-        
-        // Buscar orçamento do authStore ou usar padrão
-        const authState = useAuthStore.getState();
-        const dailyBudget = authState.user?.settings.dailyEnergyBudget || 12;
-        
-        const used = state.todayTasks
-          .filter(task => task.status === 'pending' || task.status === 'done')
-          .reduce((sum, task) => sum + task.energyPoints, 0);
-        
-        return {
-          used,
-          total: dailyBudget,
-          remaining: dailyBudget - used,
-          percentage: Math.min((used / dailyBudget) * 100, 100),
-          isOverBudget: used > dailyBudget,
-          isComplete: used === dailyBudget,
-        };
-      },
+      // Função movida para energyStore.ts
+calculateEnergyBudget: () => {
+  const energyStore = useEnergyStore.getState();
+  const state = get();
+  const usedEnergy = state.todayTasks
+    .filter(task => task.status === 'pending' || task.status === 'done')
+    .reduce((sum, task) => sum + task.energyPoints, 0);
+  return energyStore.calculateBudget(usedEnergy);
+},
+
       
       // Actions - Sandbox Movível
       convertNotesToMovable: () => {
         const state = get();
         
-        // Energia gerenciada pelo calculateEnergyBudget()
-        const existingNotes = state.sandboxLayout.notes;
-        
-        const newMovableNotes = state.notes
-          .filter(note => note.status === 'active')
-          .filter(note => !existingNotes.some(existing => existing.content === note.content))
-          .map((note, index) => ({
-            id: note.id,
-            content: note.content,
-            position: { 
-              x: 100 + (index % 3) * 250, 
-              y: 150 + Math.floor(index / 3) * 200 
-            },
+        // Energia gerenciada pelo // Função movida para energyStore.ts
+calculateEnergyBudget: () => {
+  const energyStore = useEnergyStore.getState();
+  const state = get();
+  const usedEnergy = state.todayTasks
+    .filter(task => task.status === 'pending' || task.status === 'done')
+    .reduce((sum, task) => sum + task.energyPoints, 0);
+  return energyStore.calculateBudget(usedEnergy);
+},
+
             size: { width: 300, height: 200 },
             isExpanded: false,
             color: '#fbbf24',
@@ -1087,51 +866,16 @@ export const useTasksStore = create<TasksState>()(
       reorganizeNotes: (mode) => {
         const state = get();
         
-        // Energia gerenciada pelo calculateEnergyBudget()
-        const notes = state.sandboxLayout.notes;
-        const newNotes = [...notes];
-        
-        switch (mode) {
-          case 'grid':
-            const cols = Math.floor((typeof window !== 'undefined' ? window.innerWidth : 1200) / 320);
-            newNotes.forEach((note, index) => {
-              const col = index % cols;
-              const row = Math.floor(index / cols);
-              note.position = {
-                x: 50 + (col * 320),
-                y: 150 + (row * 220)
-              };
-            });
-            break;
-          
-          case 'list':
-            newNotes.forEach((note, index) => {
-              note.position = {
-                x: 50,
-                y: 150 + (index * 180)
-              };
-            });
-            break;
-            
-          case 'masonry':
-            const masonryCols = Math.floor((typeof window !== 'undefined' ? window.innerWidth : 1200) / 300);
-            const columnHeights = new Array(masonryCols).fill(150);
-            
-            newNotes.forEach((note) => {
-              const shortestCol = columnHeights.indexOf(Math.min(...columnHeights));
-              note.position = {
-                x: 50 + (shortestCol * 300),
-                y: columnHeights[shortestCol]
-              };
-              columnHeights[shortestCol] += note.size.height + 20;
-            });
-            break;
-        }
-        
-        set(state => ({
-          sandboxLayout: { ...state.sandboxLayout, notes: newNotes }
-        }));
-      },
+        // Energia gerenciada pelo // Função movida para energyStore.ts
+calculateEnergyBudget: () => {
+  const energyStore = useEnergyStore.getState();
+  const state = get();
+  const usedEnergy = state.todayTasks
+    .filter(task => task.status === 'pending' || task.status === 'done')
+    .reduce((sum, task) => sum + task.energyPoints, 0);
+  return energyStore.calculateBudget(usedEnergy);
+},
+
       
       // Utilities
       generateUniqueId: () => Date.now().toString() + Math.random().toString(36).substr(2, 9),

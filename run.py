@@ -214,10 +214,21 @@ class CriticalFixRunner:
         return count == 0
     
     def _check_imports(self, content: str) -> bool:
-        """Verificar imports básicos"""
-        import_lines = [line for line in content.split('\n') if line.strip().startswith('import')]
+        """Verificar imports básicos - versão melhorada"""
+        import_lines = [line.strip() for line in content.split('\n') if line.strip().startswith('import')]
+        
         for line in import_lines:
-            if not (';' in line or line.endswith("'")):
+            # Ignorar comentários
+            if line.startswith('//'):
+                continue
+                
+            # Imports válidos devem terminar com ; ou ser multiline
+            if not (line.endswith(';') or 
+                   line.endswith('{') or 
+                   line.endswith("'") or 
+                   line.endswith('"') or
+                   '} from' in line):
+                self.log(f"Import potencialmente inválido: {line}")
                 return False
         return True
     

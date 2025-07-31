@@ -1,31 +1,36 @@
-import { useMemo } from 'react';
-import { useTasksStore } from '../stores/tasksStore';
-import { useAuthStore } from '../stores/authStore';
+// ============================================================================
+// ENERGY BUDGET HOOK - Versão unificada
+// CORREÇÃO: Agora usa energyStore como única fonte de verdade
+// ============================================================================
 
-interface EnergyBudget {
-  current: number;
-  max: number;
-  percentage: number;
-  canPerformAction: (cost: number) => boolean;
-}
+import { useMemo } from 'react';
+import { useEnergyStore } from '../stores/energyStore';
+import { useTasksStore } from '../stores/tasksStore';
+import type { EnergyBudget } from '../stores/energyStore';
 
 /**
- * Hook simplificado para orçamento de energia
- * CORREÇÃO: Removidas proteções anti-loop excessivas
+ * Hook unificado para orçamento de energia
+ * CORREÇÃO: Consolidação de múltiplas implementações conflitantes
  */
-export const useEnergyBudget = (): EnergyBudget => {
-  const { calculateEnergyBudget } = useTasksStore();
-  const { user } = useAuthStore();
+export const useEnergyBudget = (): EnergyBudget & {
+  canPerformAction: (cost: number) => boolean;
+} => {
+  const { calculateBudget, canPerformAction } = useEnergyStore();
+  const { todayTasks } = useTasksStore();
   
   const energyData = useMemo(() => {
-    const budget = calculateEnergyBudget();
+    // Calcular energia usada hoje
+    const usedEnergy = todayTasks
+      .filter(task => task.status === 'pending' || task.status === 'done')
+      .reduce((sum, task) => sum + task.energyPoints, 0);
+    
+    const budget = calculateBudget(usedEnergy);
+    
     return {
-      current: budget.used,
-      max: budget.total,
-      percentage: budget.percentage,
-      canPerformAction: (cost: number) => budget.remaining >= cost
+      ...budget,
+      canPerformAction: (cost: number) => canPerformAction(cost, usedEnergy)
     };
-  }, [calculateEnergyBudget]);
+  }, [todayTasks, calculateBudget, canPerformAction]);
   
   return energyData;
 };

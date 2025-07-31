@@ -7,13 +7,13 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Flame } from 'lucide-react';
-import { useTasksStore } from '@/stores/tasksStore';
+import { useEnergyBudget } from '@/hooks/useEnergyBudget';
 import { useAuthStore } from '@/stores/authStore';
 
 export function EnergyMeter() {
-  const { calculateEnergyBudget } = useTasksStore();
+  const energyData = useEnergyBudget();
   const { user } = useAuthStore();
-  const energyBudget = calculateEnergyBudget();
+  // Energy data já obtido acima
   
   // Reagir a mudanças no orçamento de energia do usuário
   React.useEffect(() => {
@@ -63,7 +63,7 @@ export function EnergyMeter() {
             Dia um pouco cheio! Considere reorganizar algumas tarefas.
           </p>
         </div>
-      ) : energyBudget.isComplete ? (
+      ) : energyData.isComplete ? (
         <div className="bg-energia-normal/10 border border-energia-normal/30 p-4 rounded-xl">
           <p className="text-sm text-energia-normal flex items-center">
             <span className="text-lg mr-2">🎯</span>
