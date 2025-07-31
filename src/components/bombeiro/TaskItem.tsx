@@ -1,8 +1,8 @@
-'use client';
+// ============================================================================
+// TASK ITEM - Versão padronizada seguindo Sistema Sentinela
+// ============================================================================
 
-// ============================================================================
-// TASK ITEM - Item individual de tarefa com anexos e edição
-// ============================================================================
+'use client';
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,6 +18,7 @@ import {
   Edit3,
   MessageSquare 
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { FileUpload, useFileUpload } from '@/components/shared/FileUpload';
 import { useTasksStore } from '@/stores/tasksStore';
 import type { Task, Attachment } from '@/types';
@@ -25,6 +26,7 @@ import type { Task, Attachment } from '@/types';
 interface TaskItemProps {
   task: Task;
   onComplete: (taskId: string) => void;
+  onEdit: (task: Task) => void;
   onPostpone: (taskId: string) => void;
   onUpdateAttachments?: (taskId: string, attachments: Attachment[]) => void;
   showProject?: boolean;
@@ -33,6 +35,7 @@ interface TaskItemProps {
 export function TaskItem({ 
   task, 
   onComplete, 
+  onEdit,
   onPostpone, 
   onUpdateAttachments, 
   showProject = true 
@@ -43,9 +46,30 @@ export function TaskItem({
   const { openTaskEditModal } = useTasksStore();
 
   const getEnergyIcon = (points: number) => {
-    if (points === 1) return <Battery className="w-4 h-4 text-orange-500" />;
-    if (points === 3) return <Brain className="w-4 h-4 text-blue-500" />;
-    if (points === 5) return <Zap className="w-4 h-4 text-purple-500" />;
+    if (points === 1) return <Battery className="w-4 h-4" />;
+    if (points === 3) return <Brain className="w-4 h-4" />;
+    if (points === 5) return <Zap className="w-4 h-4" />;
+  };
+
+  const getEnergyConfig = (points: number) => {
+    if (points === 1) return {
+      level: 'baixa' as const,
+      label: '🔋 Energia Baixa',
+      bgClass: 'bg-energia-baixa/20',
+      indicatorClass: 'energia-baixa-indicador'
+    };
+    if (points === 3) return {
+      level: 'normal' as const,
+      label: '🧠 Energia Normal',
+      bgClass: 'bg-energia-normal/20',
+      indicatorClass: 'energia-normal-indicador'
+    };
+    return {
+      level: 'alta' as const,
+      label: '⚡ Energia Alta',
+      bgClass: 'bg-energia-alta/20',
+      indicatorClass: 'energia-alta-indicador'
+    };
   };
 
   const handleUpload = async (files: File[]) => {
@@ -75,51 +99,38 @@ export function TaskItem({
     }
   };
 
+  const energyConfig = getEnergyConfig(task.energyPoints);
   const hasAttachments = task.attachments && task.attachments.length > 0;
   const hasComments = task.comments && task.comments.length > 0;
-
-  
-  // CORREÇÃO: Verificação prévia de energia antes de qualquer ação
-  const handleTaskAction = async (action: () => void, requiredEnergy: number = 1) => {
-    // Verificação síncrona primeiro
-    if (energy < requiredEnergy) {
-      setShowLowEnergyModal(true);
-      return;
-    }
-    
-    // Se passou na verificação, executar ação
-    action();
-  };
+  const isCompleted = task.status === 'done';
 
   return (
     <motion.div
       layout
       whileHover={{ scale: 1.02, y: -2 }}
       onClick={handleTaskClick}
-      className={`bg-white/70 backdrop-blur-xl rounded-2xl p-5 border-l-4 shadow-lg border cursor-pointer ${
-        task.status === 'done' 
-          ? 'border-l-green-400 bg-green-50/50 border-green-100' 
-          : 'border-l-gray-200 hover:border-l-blue-400 border-white/20 hover:shadow-xl'
-      } transition-all duration-300`}
+      className={`sentinela-card cursor-pointer transition-all duration-300 ${
+        isCompleted 
+          ? 'bg-semantic-success/10 border-l-4 border-l-semantic-success' 
+          : 'border-l-4 border-l-border hover:border-l-primary-500 hover:shadow-medium'
+      }`}
     >
       <div className="flex items-start justify-between">
         <div className="flex-1">
+          {/* Header da Tarefa */}
           <div className="flex items-center mb-3">
-            <div className={`w-8 h-8 rounded-xl flex items-center justify-center mr-3 ${
-              task.energyPoints === 1 ? 'bg-gradient-to-r from-orange-100 to-orange-200' :
-              task.energyPoints === 3 ? 'bg-gradient-to-r from-blue-100 to-blue-200' :
-              'bg-gradient-to-r from-purple-100 to-purple-200'
-            }`}>
-              {getEnergyIcon(task.energyPoints)}
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center mr-3 ${energyConfig.bgClass}`}>
+              <span className={energyConfig.indicatorClass}>
+                {getEnergyIcon(task.energyPoints)}
+              </span>
             </div>
             <div>
-              <span className="text-xs text-gray-500 font-medium">
-                {task.energyPoints === 1 ? "Bateria Fraca" : 
-                 task.energyPoints === 3 ? "Cérebro Normal" : "Cérebro Ligado"}
+              <span className="text-xs sentinela-text-secondary font-medium">
+                {energyConfig.label}
               </span>
               {task.project && showProject && (
                 <div className="mt-1">
-                  <span className="text-xs bg-gradient-to-r from-gray-100 to-gray-200 text-gray-600 px-3 py-1 rounded-full border border-gray-200">
+                  <span className="text-xs bg-surface sentinela-text-secondary px-3 py-1 rounded-full border border-border">
                     {task.project.icon} {task.project.name}
                   </span>
                 </div>
@@ -127,8 +138,9 @@ export function TaskItem({
             </div>
           </div>
           
-          <p className={`text-sm leading-relaxed mb-3 ${
-            task.status === 'done' ? 'text-gray-500 line-through' : 'text-gray-800 font-medium'
+          {/* Descrição da Tarefa */}
+          <p className={`sentinela-text text-sm leading-relaxed mb-3 ${
+            isCompleted ? 'line-through opacity-60' : 'font-medium'
           }`}>
             {task.description}
           </p>
@@ -141,7 +153,7 @@ export function TaskItem({
                   e.stopPropagation();
                   setShowAttachments(!showAttachments);
                 }}
-                className="flex items-center space-x-2 text-xs text-blue-600 hover:text-blue-700 transition-colors"
+                className="flex items-center space-x-2 text-xs text-primary-500 hover:text-primary-600 sentinela-transition"
               >
                 <Paperclip className="w-3 h-3" />
                 <span>{task.attachments!.length} anexo{task.attachments!.length !== 1 ? 's' : ''}</span>
@@ -155,7 +167,7 @@ export function TaskItem({
                   e.stopPropagation();
                   setShowComments(!showComments);
                 }}
-                className="flex items-center space-x-2 text-xs text-purple-600 hover:text-purple-700 transition-colors"
+                className="flex items-center space-x-2 text-xs text-energia-alta hover:text-energia-alta/80 sentinela-transition"
               >
                 <MessageSquare className="w-3 h-3" />
                 <span>{task.comments!.length} comentário{task.comments!.length !== 1 ? 's' : ''}</span>
@@ -165,48 +177,46 @@ export function TaskItem({
           </div>
         </div>
         
+        {/* Ações da Tarefa */}
         <div className="ml-4 flex items-center space-x-2">
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={handleEditClick}
-            className="w-8 h-8 rounded-xl transition-all duration-300 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-blue-100 hover:to-blue-200 text-gray-400 hover:text-blue-600 shadow-md hover:shadow-lg flex items-center justify-center"
+            className="sentinela-transition"
             title="Editar tarefa"
           >
             <Edit3 className="w-4 h-4" />
-          </motion.button>
+          </Button>
           
-          {task.status !== 'done' && (
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
+          {!isCompleted && (
+            <Button
+              variant="outline"
+              size="icon"
               onClick={(e) => {
                 e.stopPropagation();
                 onPostpone(task.id);
               }}
-              className="w-8 h-8 rounded-xl transition-all duration-300 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-orange-100 hover:to-orange-200 text-gray-400 hover:text-orange-600 shadow-md hover:shadow-lg flex items-center justify-center"
+              className="sentinela-transition hover:border-semantic-warning hover:text-semantic-warning"
               title="Adiar tarefa"
             >
               <Calendar className="w-4 h-4" />
-            </motion.button>
+            </Button>
           )}
           
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+          <Button
+            variant={isCompleted ? "sentinela-soft" : "ghost"}
+            size="icon"
             onClick={(e) => {
               e.stopPropagation();
               onComplete(task.id);
             }}
-            disabled={task.status === 'done'}
-            className={`w-10 h-10 rounded-full transition-all duration-300 ${
-              task.status === 'done'
-                ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-600 cursor-default shadow-lg'
-                : 'bg-gradient-to-r from-gray-100 to-gray-200 hover:from-green-100 hover:to-green-200 text-gray-400 hover:text-green-600 shadow-md hover:shadow-lg'
-            } flex items-center justify-center`}
+            disabled={isCompleted}
+            className={isCompleted ? "bg-semantic-success/20 text-semantic-success" : "hover:bg-semantic-success/20 hover:text-semantic-success"}
+            title={isCompleted ? "Tarefa concluída" : "Marcar como concluída"}
           >
             <CheckCircle2 className="w-5 h-5" />
-          </motion.button>
+          </Button>
         </div>
       </div>
 
@@ -217,7 +227,7 @@ export function TaskItem({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="mt-4 pt-4 border-t border-gray-200"
+            className="mt-4 pt-4 border-t border-border"
             onClick={(e) => e.stopPropagation()}
           >
             <FileUpload
@@ -238,14 +248,14 @@ export function TaskItem({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="mt-4 pt-4 border-t border-gray-200"
+            className="mt-4 pt-4 border-t border-border"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="space-y-2 max-h-32 overflow-y-auto">
               {task.comments!.map((comment) => (
-                <div key={comment.id} className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-800">{comment.content}</p>
-                  <p className="text-xs text-gray-500 mt-1">
+                <div key={comment.id} className="sentinela-card-soft p-3">
+                  <p className="sentinela-text text-sm">{comment.content}</p>
+                  <p className="sentinela-text-secondary text-xs mt-1">
                     {new Date(comment.createdAt).toLocaleDateString()} às {new Date(comment.createdAt).toLocaleTimeString()}
                   </p>
                 </div>

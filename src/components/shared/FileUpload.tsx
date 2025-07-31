@@ -140,15 +140,15 @@ export function FileUpload({
           {isUploading ? (
             <div className="space-y-3">
               <div className="w-12 h-12 mx-auto border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-              <p className="text-gray-600">Fazendo upload...</p>
+              <p className="text-text-secondary">Fazendo upload...</p>
             </div>
           ) : (
             <div className="space-y-3">
-              <div className="w-12 h-12 mx-auto bg-gray-100 rounded-xl flex items-center justify-center">
-                <Upload className="w-6 h-6 text-gray-400" />
+              <div className="w-12 h-12 mx-auto bg-background rounded-xl flex items-center justify-center">
+                <Upload className="w-6 h-6 text-text-secondary" />
               </div>
               <div>
-                <p className="text-gray-900 font-medium">
+                <p className="text-text-primary font-medium">
                   Arraste arquivos aqui ou{' '}
                   <button
                     onClick={() => fileInputRef.current?.click()}
@@ -157,7 +157,7 @@ export function FileUpload({
                     clique para selecionar
                   </button>
                 </p>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-text-secondary mt-1">
                   Máximo {maxFiles} arquivos, até {maxSize}MB cada
                 </p>
               </div>
@@ -169,7 +169,7 @@ export function FileUpload({
       {/* Lista de anexos */}
       {attachments.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-sm font-medium text-gray-700 flex items-center">
+          <h4 className="text-sm font-medium text-text-primary flex items-center">
             <Paperclip className="w-4 h-4 mr-1" />
             Anexos ({attachments.length})
           </h4>
@@ -182,17 +182,17 @@ export function FileUpload({
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
+                  className="flex items-center justify-between p-3 bg-surface rounded-lg border border-border-sentinela"
                 >
                   <div className="flex items-center space-x-3 flex-1 min-w-0">
-                    <div className="text-gray-400">
+                    <div className="text-text-secondary">
                       {getFileIcon(attachment.type)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
+                      <p className="text-sm font-medium text-text-primary truncate">
                         {attachment.name}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-text-secondary">
                         {formatFileSize(attachment.size)} • {new Date(attachment.uploadedAt).toLocaleDateString('pt-BR')}
                       </p>
                     </div>
@@ -203,7 +203,7 @@ export function FileUpload({
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                       onClick={() => openFile(attachment)}
-                      className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors"
+                      className="p-1.5 text-text-secondary hover:text-energia-alta transition-colors"
                       title="Visualizar"
                     >
                       <Eye className="w-4 h-4" />
@@ -218,7 +218,7 @@ export function FileUpload({
                         a.download = attachment.name;
                         a.click();
                       }}
-                      className="p-1.5 text-gray-400 hover:text-green-600 transition-colors"
+                      className="p-1.5 text-text-secondary hover:text-energia-alta transition-colors"
                       title="Download"
                     >
                       <Download className="w-4 h-4" />
@@ -228,7 +228,7 @@ export function FileUpload({
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                       onClick={() => onRemove(attachment.id)}
-                      className="p-1.5 text-gray-400 hover:text-red-600 transition-colors"
+                      className="p-1.5 text-text-secondary hover:text-energia-critica transition-colors"
                       title="Remover"
                     >
                       <Trash2 className="w-4 h-4" />

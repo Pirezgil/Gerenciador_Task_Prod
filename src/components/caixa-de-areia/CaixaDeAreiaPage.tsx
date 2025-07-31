@@ -111,13 +111,13 @@ export function CaixaDeAreiaPage() {
               transition={{ delay: 0.2, type: "spring" }}
               className="w-20 h-20 rounded-full bg-gradient-to-r from-amber-400 via-orange-500 to-yellow-500 flex items-center justify-center mx-auto mb-6 shadow-lg"
             >
-              <Lock className="w-10 h-10 text-white" />
+              <Lock className="w-10 h-10 text-text-primary-on-primary" />
             </motion.div>
             <motion.h2 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="text-3xl font-bold text-white mb-3 bg-gradient-to-r from-amber-300 to-orange-300 bg-clip-text text-transparent"
+              className="text-3xl font-bold text-text-primary-on-primary mb-3 bg-gradient-to-r from-amber-300 to-orange-300 bg-clip-text text-transparent"
             >
               🏖️ Caixa de Areia Privada
             </motion.h2>
@@ -125,7 +125,7 @@ export function CaixaDeAreiaPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="text-white/80 text-lg"
+              className="text-text-primary-on-primary/80 text-lg"
             >
               Seu espaço seguro para pensamentos livres
             </motion.p>
@@ -142,7 +142,7 @@ export function CaixaDeAreiaPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handlePasswordSubmit()}
-                className="w-full p-5 bg-white/20 backdrop-blur-sm border border-white/30 rounded-2xl focus:outline-none focus:ring-4 focus:ring-amber-400/40 focus:border-amber-400 text-white placeholder-white/60 text-lg"
+                className="w-full p-5 bg-white/20 backdrop-blur-sm border border-white/30 rounded-2xl focus:outline-none focus:ring-4 focus:ring-energia-normal/40 focus:border-energia-normal text-text-primary-on-primary placeholder-gray-400 text-lg"
                 autoFocus
               />
               {passwordError && (
@@ -160,8 +160,8 @@ export function CaixaDeAreiaPage() {
               disabled={!password.trim()}
               className={`w-full py-4 rounded-2xl font-bold text-lg transition-all duration-300 ${
                 password.trim()
-                  ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 text-white hover:from-amber-600 hover:to-orange-600 shadow-lg hover:shadow-xl'
-                  : 'bg-white/20 text-white/40 cursor-not-allowed'
+                  ? 'bg-gradient-to-r from-energia-normal via-energia-alta to-semantic-warning text-text-primary-on-primary hover:from-energia-alta hover:to-semantic-warning shadow-lg hover:shadow-xl'
+                  : 'bg-white/20 text-text-primary-on-primary/40 cursor-not-allowed'
               }`}
             >
               🚀 Acessar Caixa de Areia
@@ -173,14 +173,14 @@ export function CaixaDeAreiaPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.7 }}
-              className="text-sm text-white/70"
+              className="text-sm text-text-primary-on-primary/70"
             >
               Senha não configurada?{' '}
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => useTasksStore.setState({ currentPage: 'profile' })}
-                className="text-amber-300 hover:text-amber-200 font-semibold underline underline-offset-2 transition-colors"
+                className="text-energia-normal hover:text-energia-normal font-semibold underline underline-offset-2 transition-colors"
               >
                 Configure aqui ✨
               </motion.button>
@@ -205,10 +205,10 @@ export function CaixaDeAreiaPage() {
               className="text-center py-20"
             >
               <div className="text-6xl mb-4">🏖️</div>
-              <h3 className="text-2xl font-semibold text-gray-800 mb-2 font-serif">
+              <h3 className="text-2xl font-semibold text-text-primary mb-2 font-serif">
                 Sua caixa de areia está vazia
               </h3>
-              <p className="text-gray-600 mb-6 max-w-md mx-auto">
+              <p className="text-text-secondary mb-6 max-w-md mx-auto">
                 Este é seu espaço privado para pensamentos livres. <br />
                 Crie sua primeira nota!
               </p>
@@ -216,7 +216,7 @@ export function CaixaDeAreiaPage() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowAddNote(true)}
-                className="px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-2xl font-semibold shadow-lg hover:from-amber-600 hover:to-orange-600 transition-all duration-300"
+                className="px-6 py-3 bg-gradient-to-r from-energia-normal to-energia-alta text-text-primary-on-primary rounded-2xl font-semibold shadow-lg hover:from-energia-alta hover:to-semantic-warning transition-all duration-300"
               >
                 Criar primeira nota
               </motion.button>
@@ -231,14 +231,14 @@ export function CaixaDeAreiaPage() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ delay: index * 0.05 }}
-                    className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-amber-200/50 hover:shadow-2xl hover:scale-[1.02] transition-all duration-500"
+                    className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-energia-normal/20/50 hover:shadow-2xl hover:scale-[1.02] transition-all duration-500"
                   >
                     {/* Header da nota */}
                     <div className="flex items-center justify-between mb-6">
                       <div className="flex items-center space-x-3">
                         <div className="text-2xl">📝</div>
                         <div>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-text-muted">
                             {new Date(note.createdAt).toLocaleDateString('pt-BR', {
                               day: 'numeric',
                               month: 'long',
@@ -248,7 +248,7 @@ export function CaixaDeAreiaPage() {
                             })}
                           </p>
                           {note.updatedAt !== note.createdAt && (
-                            <p className="text-xs text-amber-600">
+                            <p className="text-xs text-energia-alta">
                               Editado em {new Date(note.updatedAt).toLocaleDateString('pt-BR', {
                                 day: 'numeric',
                                 month: 'short',
@@ -263,7 +263,7 @@ export function CaixaDeAreiaPage() {
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => setShowTransformModal(note)}
-                          className="p-2 text-amber-500 hover:text-amber-700 transition-colors bg-amber-50 rounded-xl hover:bg-amber-100"
+                          className="p-2 text-energia-normal hover:text-energia-baixa transition-colors bg-surface-light rounded-xl hover:bg-surface"
                           title="Transformar em ação"
                         >
                           <Sparkles className="w-4 h-4" />
@@ -271,7 +271,7 @@ export function CaixaDeAreiaPage() {
                         
                         <button
                           onClick={() => useTasksStore.setState({ editingNote: editingNote === note.id ? null : note.id })}
-                          className="p-2 text-gray-400 hover:text-gray-600 transition-colors bg-gray-50 rounded-xl hover:bg-gray-100"
+                          className="p-2 text-gray-400 hover:text-text-secondary transition-colors bg-gray-50 rounded-xl hover:bg-gray-100"
                           title="Editar"
                         >
                           <Edit3 className="w-4 h-4" />
@@ -279,7 +279,7 @@ export function CaixaDeAreiaPage() {
                         
                         <button
                           onClick={() => archiveNote(note.id)}
-                          className="p-2 text-gray-400 hover:text-gray-600 transition-colors bg-gray-50 rounded-xl hover:bg-gray-100"
+                          className="p-2 text-gray-400 hover:text-text-secondary transition-colors bg-gray-50 rounded-xl hover:bg-gray-100"
                           title="Arquivar"
                         >
                           <Archive className="w-4 h-4" />
@@ -298,13 +298,13 @@ export function CaixaDeAreiaPage() {
                     {/* Conteúdo da nota - ALTURA AUTOMÁTICA */}
                     {editingNote === note.id ? (
                       <textarea
-                        className="w-full min-h-[100px] p-4 border border-amber-200 rounded-2xl resize-y focus:outline-none focus:ring-4 focus:ring-amber-400/20 focus:border-amber-400 font-serif text-gray-700 leading-relaxed"
+                        className="w-full min-h-[100px] p-4 border border-energia-normal/20 rounded-2xl resize-y focus:outline-none focus:ring-4 focus:ring-energia-normal/20 focus:border-energia-normal font-serif text-text-secondary leading-relaxed"
                         defaultValue={note.content}
                         onBlur={(e) => updateNote(note.id, e.target.value)}
                         autoFocus
                       />
                     ) : (
-                      <div className="font-serif text-gray-700 leading-relaxed whitespace-pre-wrap">
+                      <div className="font-serif text-text-secondary leading-relaxed whitespace-pre-wrap">
                         {note.content}
                       </div>
                     )}
@@ -332,12 +332,12 @@ export function CaixaDeAreiaPage() {
                 className="bg-white rounded-3xl p-8 w-full max-w-lg shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
               >
-                <h3 className="text-xl font-semibold text-gray-800 mb-4">
+                <h3 className="text-xl font-semibold text-text-primary mb-4">
                   ✍️ Nova nota na caixa de areia
                 </h3>
                 
                 <textarea
-                  className="w-full min-h-[120px] p-4 border border-amber-200 rounded-2xl resize-y focus:outline-none focus:ring-4 focus:ring-amber-400/20 focus:border-amber-400 font-serif text-gray-700 leading-relaxed"
+                  className="w-full min-h-[120px] p-4 border border-energia-normal/20 rounded-2xl resize-y focus:outline-none focus:ring-4 focus:ring-energia-normal/20 focus:border-energia-normal font-serif text-text-secondary leading-relaxed"
                   placeholder="Escreva seus pensamentos livremente... (Ctrl+Enter para salvar, Esc para cancelar)"
                   value={newNoteContent}
                   onChange={(e) => useTasksStore.setState({ newNoteContent: e.target.value })}
@@ -346,14 +346,14 @@ export function CaixaDeAreiaPage() {
                 />
                 
                 <div className="flex justify-between items-center mt-4">
-                  <p className="text-xs text-amber-600">
+                  <p className="text-xs text-energia-alta">
                     💡 Ctrl+Enter para salvar • Esc para cancelar
                   </p>
                   
                   <div className="flex space-x-2">
                     <button
                       onClick={() => setShowAddNote(false)}
-                      className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                      className="px-4 py-2 text-text-secondary hover:text-text-primary transition-colors"
                     >
                       Cancelar
                     </button>
@@ -364,7 +364,7 @@ export function CaixaDeAreiaPage() {
                       disabled={!newNoteContent.trim()}
                       className={`px-6 py-2 rounded-2xl font-semibold transition-all duration-300 ${
                         newNoteContent.trim()
-                          ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600'
+                          ? 'bg-gradient-to-r from-energia-normal to-energia-alta text-text-primary-on-primary hover:from-energia-alta hover:to-semantic-warning'
                           : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                       }`}
                     >

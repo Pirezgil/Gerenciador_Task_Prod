@@ -117,7 +117,7 @@ export function ThemeCustomizer() {
   return (
     <div className="bg-white/70 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 p-8">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-2xl font-bold text-gray-900">Personalizar Aparência</h2>
+        <h2 className="text-2xl font-bold theme-text">Personalizar Aparência</h2>
         <div className="flex items-center space-x-3">
           <button
             onClick={() => setShowPreview(!showPreview)}
@@ -142,7 +142,7 @@ export function ThemeCustomizer() {
           </button>
           <button
             onClick={resetToDefault}
-            className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+            className="flex items-center space-x-2 px-4 py-2 bg-gray-100 theme-text-secondary rounded-lg hover:bg-gray-200 transition-colors"
           >
             <RotateCcw className="w-4 h-4" />
             <span>Resetar</span>
@@ -161,8 +161,8 @@ export function ThemeCustomizer() {
                 onClick={() => setActiveSection(section.id)}
                 className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-all ${
                   activeSection === section.id
-                    ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
-                    : 'text-gray-700 hover:bg-blue-50'
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-500 theme-button-text shadow-lg'
+                    : 'theme-text-secondary hover:bg-blue-50'
                 }`}
               >
                 <Icon className="w-5 h-5" />
@@ -181,7 +181,7 @@ export function ThemeCustomizer() {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
-              <h3 className="text-lg font-semibold text-gray-900">Temas Predefinidos</h3>
+              <h3 className="text-lg font-semibold theme-text">Temas Predefinidos</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {presets.map((preset) => (
                   <motion.button
@@ -199,15 +199,15 @@ export function ThemeCustomizer() {
                       className="w-full h-12 rounded-lg mb-3"
                       style={{ background: preset.preview }}
                     />
-                    <h4 className="font-semibold text-gray-900">{preset.name}</h4>
-                    <p className="text-sm text-gray-600">{preset.description}</p>
+                    <h4 className="font-semibold theme-text">{preset.name}</h4>
+                    <p className="text-sm theme-text-secondary">{preset.description}</p>
                   </motion.button>
                 ))}
               </div>
               
               <button
                 onClick={handleSavePreset}
-                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 theme-text-on-primary rounded-lg hover:bg-blue-700 transition-colors"
               >
                 <Save className="w-4 h-4" />
                 <span>Salvar Tema Atual</span>
@@ -222,11 +222,11 @@ export function ThemeCustomizer() {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
-              <h3 className="text-lg font-semibold text-gray-900">Personalizar Cores</h3>
+              <h3 className="text-lg font-semibold theme-text">Personalizar Cores</h3>
               
               {/* Paletas de cores */}
               <div>
-                <h4 className="font-medium text-gray-700 mb-3">Paletas Sugeridas</h4>
+                <h4 className="font-medium theme-text-secondary mb-3">Paletas Sugeridas</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {colorPalettes.map((palette, index) => (
                     <button
@@ -246,7 +246,7 @@ export function ThemeCustomizer() {
                           />
                         ))}
                       </div>
-                      <h5 className="font-medium text-gray-900">{palette.name}</h5>
+                      <h5 className="font-medium theme-text">{palette.name}</h5>
                     </button>
                   ))}
                 </div>
@@ -255,7 +255,7 @@ export function ThemeCustomizer() {
               {/* Cores individuais */}
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium theme-text-secondary mb-2">
                     Cor Primária
                   </label>
                   <div className="flex items-center space-x-3">
@@ -275,7 +275,7 @@ export function ThemeCustomizer() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium theme-text-secondary mb-2">
                     Cor Secundária
                   </label>
                   <div className="flex items-center space-x-3">
@@ -304,12 +304,12 @@ export function ThemeCustomizer() {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
-              <h3 className="text-lg font-semibold text-gray-900">Layout e Estrutura</h3>
+              <h3 className="text-lg font-semibold theme-text">Layout e Estrutura</h3>
               
               <div className="space-y-6">
                 {/* Bordas arredondadas */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                  <label className="block text-sm font-medium theme-text-secondary mb-3">
                     Bordas Arredondadas
                   </label>
                   <div className="grid grid-cols-4 gap-3">
@@ -337,7 +337,7 @@ export function ThemeCustomizer() {
 
                 {/* Tamanho dos ícones */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                  <label className="block text-sm font-medium theme-text-secondary mb-3">
                     Tamanho dos Ícones
                   </label>
                   <div className="grid grid-cols-3 gap-3">
@@ -362,7 +362,7 @@ export function ThemeCustomizer() {
 
                 {/* Espaçamento */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                  <label className="block text-sm font-medium theme-text-secondary mb-3">
                     Espaçamento
                   </label>
                   <div className="grid grid-cols-3 gap-3">
@@ -400,12 +400,12 @@ export function ThemeCustomizer() {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
-              <h3 className="text-lg font-semibold text-gray-900">Tipografia</h3>
+              <h3 className="text-lg font-semibold theme-text">Tipografia</h3>
               
               <div className="space-y-6">
                 {/* Família da fonte */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                  <label className="block text-sm font-medium theme-text-secondary mb-3">
                     Família da Fonte
                   </label>
                   <div className="space-y-3">
@@ -423,7 +423,7 @@ export function ThemeCustomizer() {
                         }}
                       >
                         <div className="font-semibold mb-1 capitalize">{font}</div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm theme-text-secondary">
                           O que está passando pela sua mente hoje? Escreva livremente.
                         </div>
                       </button>
@@ -433,7 +433,7 @@ export function ThemeCustomizer() {
 
                 {/* Tamanho da fonte */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                  <label className="block text-sm font-medium theme-text-secondary mb-3">
                     Tamanho da Fonte
                   </label>
                   <div className="grid grid-cols-3 gap-3">
@@ -468,14 +468,14 @@ export function ThemeCustomizer() {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
-              <h3 className="text-lg font-semibold text-gray-900">Efeitos Visuais</h3>
+              <h3 className="text-lg font-semibold theme-text">Efeitos Visuais</h3>
               
               <div className="space-y-4">
                 {/* Animações */}
                 <div className="flex items-center justify-between p-4 border border-gray-200 rounded-xl">
                   <div>
-                    <h4 className="font-medium text-gray-900">Animações</h4>
-                    <p className="text-sm text-gray-600">Transições suaves e animações</p>
+                    <h4 className="font-medium theme-text">Animações</h4>
+                    <p className="text-sm theme-text-secondary">Transições suaves e animações</p>
                   </div>
                   <button
                     onClick={toggleAnimations}
@@ -494,8 +494,8 @@ export function ThemeCustomizer() {
                 {/* Glassmorphism */}
                 <div className="flex items-center justify-between p-4 border border-gray-200 rounded-xl">
                   <div>
-                    <h4 className="font-medium text-gray-900">Efeito Vidro</h4>
-                    <p className="text-sm text-gray-600">Blur e transparência nos cards</p>
+                    <h4 className="font-medium theme-text">Efeito Vidro</h4>
+                    <p className="text-sm theme-text-secondary">Blur e transparência nos cards</p>
                   </div>
                   <button
                     onClick={toggleGlassmorphism}
@@ -513,7 +513,7 @@ export function ThemeCustomizer() {
 
                 {/* Modo escuro/claro */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                  <label className="block text-sm font-medium theme-text-secondary mb-3">
                     Modo de Cor
                   </label>
                   <div className="grid grid-cols-3 gap-3">
@@ -551,7 +551,7 @@ export function ThemeCustomizer() {
           exit={{ opacity: 0, height: 0 }}
           className="mt-8 p-6 border border-gray-200 rounded-xl bg-gray-50"
         >
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Visualização</h3>
+          <h3 className="text-lg font-semibold theme-text mb-4">Visualização</h3>
           <div className="space-y-4">
             <div 
               className="p-4 rounded-lg shadow-sm"
@@ -572,7 +572,7 @@ export function ThemeCustomizer() {
                   className="w-8 h-8 rounded flex items-center justify-center"
                   style={{ backgroundColor: currentTheme.primaryColor }}
                 >
-                  <span className="text-white text-sm">🧠</span>
+                  <span className="theme-text-on-primary text-sm">🧠</span>
                 </div>
                 <h4 className="font-semibold">Exemplo de Tarefa</h4>
               </div>
@@ -580,7 +580,7 @@ export function ThemeCustomizer() {
                 Esta é uma visualização de como seu tema personalizado aparecerá na interface.
               </p>
               <button 
-                className="mt-3 px-4 py-2 rounded text-white text-sm"
+                className="mt-3 px-4 py-2 rounded theme-text-on-primary text-sm"
                 style={{ backgroundColor: currentTheme.secondaryColor }}
               >
                 Botão de Exemplo

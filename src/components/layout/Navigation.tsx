@@ -21,17 +21,17 @@ export function Navigation() {
   const getPageColors = (pageKey: string, isActive: boolean) => {
     const colors = {
       blue: isActive 
-        ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/25 transform scale-105'
-        : 'text-gray-600 hover:bg-blue-50 hover:text-blue-700',
+        ? 'bg-gradient-to-r from-blue-500 to-blue-600 theme-button-text shadow-lg shadow-blue-500/25 transform scale-105'
+        : 'theme-text-secondary hover:bg-blue-50 hover:text-blue-700',
       purple: isActive 
-        ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/25 transform scale-105'
-        : 'text-gray-600 hover:bg-purple-50 hover:text-purple-700',
+        ? 'bg-gradient-to-r from-purple-500 to-purple-600 theme-button-text shadow-lg shadow-purple-500/25 transform scale-105'
+        : 'theme-text-secondary hover:bg-purple-50 hover:text-purple-700',
       amber: isActive 
-        ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/25 transform scale-105'
-        : 'text-gray-600 hover:bg-amber-50 hover:text-amber-700',
+        ? 'bg-gradient-to-r from-amber-500 to-orange-500 theme-button-text shadow-lg shadow-amber-500/25 transform scale-105'
+        : 'theme-text-secondary hover:bg-amber-50 hover:text-amber-700',
       green: isActive 
-        ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg shadow-green-500/25 transform scale-105'
-        : 'text-gray-600 hover:bg-green-50 hover:text-green-700',
+        ? 'bg-gradient-to-r from-green-500 to-emerald-600 theme-button-text shadow-lg shadow-green-500/25 transform scale-105'
+        : 'theme-text-secondary hover:bg-green-50 hover:text-green-700',
     };
 
     const page = pages.find(p => p.key === pageKey);

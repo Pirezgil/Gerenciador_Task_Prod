@@ -124,7 +124,7 @@ export function NewTaskModal({ isOpen, onClose, onSubmit }: NewTaskModalProps) {
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="relative bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-md mx-4 overflow-hidden"
+          className="relative bg-surface rounded-2xl shadow-2xl border border-gray-200 w-full max-w-md mx-4 overflow-hidden"
         >
           {/* Header */}
           <div className="bg-gradient-to-r from-orange-500 to-red-500 px-6 py-4 text-white">
@@ -136,7 +136,7 @@ export function NewTaskModal({ isOpen, onClose, onSubmit }: NewTaskModalProps) {
               <button
                 onClick={handleClose}
                 disabled={isCreating}
-                className="p-1 hover:bg-white/20 rounded-lg transition-colors disabled:opacity-50"
+                className="p-1 hover:bg-surface/20 rounded-lg transition-colors disabled:opacity-50"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -167,7 +167,7 @@ export function NewTaskModal({ isOpen, onClose, onSubmit }: NewTaskModalProps) {
                 placeholder="Ex: Responder email urgente do cliente..."
                 rows={3}
                 className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all resize-none ${
-                  errors.description ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                  errors.description ? 'border-red-300 bg-red-50' : 'border-border-sentinela'
                 }`}
                 disabled={isCreating}
                 maxLength={200}
@@ -178,7 +178,7 @@ export function NewTaskModal({ isOpen, onClose, onSubmit }: NewTaskModalProps) {
                   {errors.description}
                 </p>
               )}
-              <p className="text-gray-500 text-xs mt-1">
+              <p className="text-text-secondary text-xs mt-1">
                 {formData.description.length}/200 caracteres
               </p>
             </div>
@@ -198,7 +198,7 @@ export function NewTaskModal({ isOpen, onClose, onSubmit }: NewTaskModalProps) {
                     className={`flex flex-col items-center space-y-2 p-4 rounded-xl text-center transition-all border-2 ${
                       formData.energyPoints === energy
                         ? 'border-orange-500 bg-orange-50 text-orange-700'
-                        : 'border-gray-200 bg-gray-50 text-gray-600 hover:border-orange-300'
+                        : 'border-gray-200 bg-background text-gray-600 hover:border-orange-300'
                     }`}
                   >
                     {getEnergyIcon(energy)}
@@ -227,7 +227,7 @@ export function NewTaskModal({ isOpen, onClose, onSubmit }: NewTaskModalProps) {
                   value={formData.projectId || ''}
                   onChange={(e) => setFormData({ ...formData, projectId: e.target.value || undefined })}
                   disabled={isCreating}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border border-border-sentinela rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                 >
                   <option value="">Nenhum projeto específico</option>
                   {projects.map((project) => (

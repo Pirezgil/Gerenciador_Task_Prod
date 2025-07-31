@@ -54,11 +54,11 @@ export default function SettingsPage() {
                 className="w-12 h-12 rounded-xl flex items-center justify-center"
                 style={{ background: `linear-gradient(135deg, ${currentTheme.primaryColor} 0%, ${currentTheme.secondaryColor} 100%)` }}
               >
-                <Settings className="w-6 h-6 text-white" />
+                <Settings className="w-6 h-6 text-text-primary-on-primary" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">Configurações</h3>
-                <p className="text-sm text-gray-600">Sistema e preferências</p>
+                <h3 className="font-semibold text-text-primary">Configurações</h3>
+                <p className="text-sm text-text-secondary">Sistema e preferências</p>
               </div>
             </div>
 
@@ -69,7 +69,7 @@ export default function SettingsPage() {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-all ${activeTab === tab.id ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}
+                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-all ${activeTab === tab.id ? 'bg-energia-normal/20 text-energia-normal' : 'text-text-secondary hover:bg-surface'}`}
                   >
                     <Icon className="w-5 h-5" />
                     <span className="font-medium">{tab.label}</span>

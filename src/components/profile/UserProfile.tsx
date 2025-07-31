@@ -57,7 +57,7 @@ export function UserProfile() {
   return (
     <div className="bg-white/70 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 p-8">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-2xl font-bold text-gray-900">Informações do Perfil</h2>
+        <h2 className="text-2xl font-bold theme-text">Informações do Perfil</h2>
         {!isEditing ? (
           <button
             onClick={() => setIsEditing(true)}
@@ -77,7 +77,7 @@ export function UserProfile() {
             </button>
             <button
               onClick={handleCancel}
-              className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+              className="flex items-center space-x-2 px-4 py-2 bg-gray-100 theme-text-secondary rounded-lg hover:bg-gray-200 transition-colors"
             >
               <X className="w-4 h-4" />
               <span>Cancelar</span>
@@ -97,7 +97,7 @@ export function UserProfile() {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <User className="w-10 h-10 text-white" />
+              <User className="w-10 h-10 theme-text-on-primary" />
             )}
           </div>
           <div className="flex-1">
@@ -106,13 +106,13 @@ export function UserProfile() {
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full text-2xl font-bold text-gray-900 bg-transparent border-b-2 border-blue-500 focus:outline-none"
+                className="w-full text-2xl font-bold theme-text bg-transparent border-b-2 border-blue-500 focus:outline-none"
                 placeholder="Seu nome"
               />
             ) : (
-              <h3 className="text-2xl font-bold text-gray-900">{user?.name || 'Usuário'}</h3>
+              <h3 className="text-2xl font-bold theme-text">{user?.name || 'Usuário'}</h3>
             )}
-            <p className="text-gray-600 mt-1">Usuário do Cérebro-Compatível</p>
+            <p className="theme-text-secondary mt-1">Usuário do Cérebro-Compatível</p>
           </div>
         </div>
 
@@ -120,7 +120,7 @@ export function UserProfile() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Email */}
           <div className="space-y-2">
-            <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+            <label className="flex items-center space-x-2 text-sm font-medium theme-text-secondary">
               <Mail className="w-4 h-4" />
               <span>Email</span>
             </label>
@@ -133,13 +133,13 @@ export function UserProfile() {
                 placeholder="seu@email.com"
               />
             ) : (
-              <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{user?.email}</p>
+              <p className="theme-text bg-gray-50 px-3 py-2 rounded-lg">{user?.email}</p>
             )}
           </div>
 
           {/* Timezone */}
           <div className="space-y-2">
-            <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+            <label className="flex items-center space-x-2 text-sm font-medium theme-text-secondary">
               <MapPin className="w-4 h-4" />
               <span>Fuso Horário</span>
             </label>
@@ -156,7 +156,7 @@ export function UserProfile() {
                 ))}
               </select>
             ) : (
-              <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+              <p className="theme-text bg-gray-50 px-3 py-2 rounded-lg">
                 {timezones.find(tz => tz.value === user?.settings.timezone)?.label || 'Brasília (GMT-3)'}
               </p>
             )}
@@ -164,7 +164,7 @@ export function UserProfile() {
 
           {/* Orçamento de Energia */}
           <div className="space-y-2">
-            <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+            <label className="flex items-center space-x-2 text-sm font-medium theme-text-secondary">
               <Clock className="w-4 h-4" />
               <span>Orçamento Diário de Energia</span>
             </label>
@@ -183,7 +183,7 @@ export function UserProfile() {
                 </span>
               </div>
             ) : (
-              <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+              <p className="theme-text bg-gray-50 px-3 py-2 rounded-lg">
                 {user?.settings.dailyEnergyBudget} pontos de energia
               </p>
             )}
@@ -191,11 +191,11 @@ export function UserProfile() {
 
           {/* Data de criação */}
           <div className="space-y-2">
-            <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+            <label className="flex items-center space-x-2 text-sm font-medium theme-text-secondary">
               <Calendar className="w-4 h-4" />
               <span>Membro desde</span>
             </label>
-            <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+            <p className="theme-text bg-gray-50 px-3 py-2 rounded-lg">
               {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('pt-BR') : 'Data indisponível'}
             </p>
           </div>
@@ -203,19 +203,19 @@ export function UserProfile() {
 
         {/* Estatísticas do usuário */}
         <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 mt-8">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Estatísticas</h3>
+          <h3 className="text-lg font-semibold theme-text mb-4">Estatísticas</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">0</div>
-              <div className="text-sm text-gray-600">Tarefas Completadas</div>
+              <div className="text-sm theme-text-secondary">Tarefas Completadas</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-purple-600">0</div>
-              <div className="text-sm text-gray-600">Projetos Criados</div>
+              <div className="text-sm theme-text-secondary">Projetos Criados</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">0</div>
-              <div className="text-sm text-gray-600">Dias de Streak</div>
+              <div className="text-sm theme-text-secondary">Dias de Streak</div>
             </div>
           </div>
         </div>

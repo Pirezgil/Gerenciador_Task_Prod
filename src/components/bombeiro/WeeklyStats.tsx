@@ -96,10 +96,10 @@ export default function WeeklyStats() {
     <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+        <h3 className="text-lg font-semibold text-text-primary dark:text-text-primary-on-primary flex items-center">
           📊 Estatísticas da Semana
         </h3>
-        <div className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="text-sm text-text-primary-muted dark:text-gray-400">
           Últimos 7 dias
         </div>
       </div>
@@ -107,8 +107,8 @@ export default function WeeklyStats() {
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {/* Tarefas Completadas */}
-        <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-          <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+        <div className="text-center p-3 bg-energia-baixa/10 dark:bg-green-900/20 rounded-lg">
+          <div className="text-2xl font-bold text-energia-baixa dark:text-green-400">
             {weeklyStats.tasksCompleted}
           </div>
           <div className="text-sm text-green-700 dark:text-green-300">
@@ -117,28 +117,28 @@ export default function WeeklyStats() {
         </div>
 
         {/* Energia Gasta */}
-        <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-          <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+        <div className="text-center p-3 bg-energia-normal/10 dark:bg-blue-900/20 rounded-lg">
+          <div className="text-2xl font-bold text-energia-normal dark:text-energia-normal">
             {weeklyStats.energySpent}
           </div>
-          <div className="text-sm text-blue-700 dark:text-blue-300">
+          <div className="text-sm text-energia-normal dark:text-blue-300">
             Energia Gasta
           </div>
         </div>
 
         {/* Taxa de Conclusão */}
-        <div className="text-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-          <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+        <div className="text-center p-3 bg-energia-alta/10 dark:bg-purple-900/20 rounded-lg">
+          <div className="text-2xl font-bold text-energia-alta dark:text-energia-alta">
             {weeklyStats.completionRate}%
           </div>
-          <div className="text-sm text-purple-700 dark:text-purple-300">
+          <div className="text-sm text-energia-alta dark:text-purple-300">
             Taxa Conclusão
           </div>
         </div>
 
         {/* Média por Tarefa */}
-        <div className="text-center p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-          <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+        <div className="text-center p-3 bg-energia-baixa/10 dark:bg-orange-900/20 rounded-lg">
+          <div className="text-2xl font-bold text-energia-baixa dark:text-orange-400">
             {weeklyStats.averageEnergy}
           </div>
           <div className="text-sm text-orange-700 dark:text-orange-300">
@@ -150,28 +150,28 @@ export default function WeeklyStats() {
       {/* Insights */}
       <div className="space-y-3">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-600 dark:text-gray-400">
+          <span className="text-text-primary-secondary dark:text-gray-400">
             📅 Dia mais produtivo:
           </span>
-          <span className="font-medium text-gray-900 dark:text-white capitalize">
+          <span className="font-medium text-text-primary dark:text-text-primary-on-primary capitalize">
             {weeklyStats.mostProductiveDay}
           </span>
         </div>
 
         <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-600 dark:text-gray-400">
+          <span className="text-text-primary-secondary dark:text-gray-400">
             ⚡ Energia atual:
           </span>
-          <span className="font-medium text-gray-900 dark:text-white">
+          <span className="font-medium text-text-primary dark:text-text-primary-on-primary">
             {currentEnergy}/{maxEnergy}
           </span>
         </div>
 
         <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-600 dark:text-gray-400">
+          <span className="text-text-primary-secondary dark:text-gray-400">
             📈 Total de tarefas:
           </span>
-          <span className="font-medium text-gray-900 dark:text-white">
+          <span className="font-medium text-text-primary dark:text-text-primary-on-primary">
             {weeklyStats.totalTasks}
           </span>
         </div>
@@ -179,7 +179,7 @@ export default function WeeklyStats() {
 
       {/* Progress Bar */}
       <div className="mt-4">
-        <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+        <div className="flex items-center justify-between text-xs text-text-primary-muted dark:text-gray-400 mb-1">
           <span>Progresso Semanal</span>
           <span>{weeklyStats.completionRate}%</span>
         </div>
@@ -194,7 +194,7 @@ export default function WeeklyStats() {
       {/* Motivational Message */}
       {weeklyStats.tasksCompleted > 0 && (
         <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/10 dark:to-blue-900/10 rounded-lg">
-          <div className="text-sm text-center text-gray-700 dark:text-gray-300">
+          <div className="text-sm text-center text-text-primary-secondary dark:text-gray-300">
             {weeklyStats.tasksCompleted >= 10 ? 
               "🔥 Semana incrível! Você está em chamas!" :
               weeklyStats.tasksCompleted >= 5 ?

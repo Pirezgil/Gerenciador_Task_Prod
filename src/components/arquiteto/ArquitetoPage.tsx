@@ -26,10 +26,10 @@ export function ArquitetoPage() {
     <>
       <div className="space-y-6">
         <div className="bg-purple-50 rounded-xl p-6 border border-purple-200">
-          <h2 className="text-xl font-semibold text-gray-800 mb-2 flex items-center">
+          <h2 className="text-xl font-semibold theme-text mb-2 flex items-center">
             🏗️ Modo Arquiteto
           </h2>
-          <p className="text-gray-600 text-sm">
+          <p className="theme-text-secondary text-sm">
             Aqui você planeja o futuro sem pressa. Organize seus projetos grandes em pequenos tijolos e mova-os para o dia quando estiver pronto.
           </p>
         </div>
@@ -43,15 +43,15 @@ export function ArquitetoPage() {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 border-dashed">
           <div className="text-center py-8">
             <div className="text-4xl mb-4">🏗️</div>
-            <h3 className="text-lg font-medium text-gray-800 mb-2">
+            <h3 className="text-lg font-medium theme-text mb-2">
               Novo Projeto
             </h3>
-            <p className="text-gray-600 mb-4">
+            <p className="theme-text-secondary mb-4">
               Começando algo grande? Crie um contêiner para organizar seus tijolos.
             </p>
             <button 
               onClick={handleCreateProject}
-              className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:outline-none"
+              className="px-6 py-2 bg-purple-600 theme-text-on-primary rounded-lg hover:bg-purple-700 transition-colors focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:outline-none"
             >
               + Criar Projeto
             </button>

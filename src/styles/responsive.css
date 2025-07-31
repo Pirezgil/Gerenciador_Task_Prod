@@ -1,0 +1,372 @@
+/* ============================================================================ */
+/* SISTEMA RESPONSIVO OTIMIZADO - Mobile First + Breakpoints Customizados */
+/* ============================================================================ */
+
+/* === BREAKPOINTS CUSTOMIZADOS === */
+:root {
+  /* Breakpoints otimizados para o projeto */
+  --breakpoint-xs: 375px;    /* Mobile pequeno */
+  --breakpoint-sm: 640px;    /* Mobile grande */
+  --breakpoint-md: 768px;    /* Tablet */
+  --breakpoint-lg: 1024px;   /* Desktop pequeno */
+  --breakpoint-xl: 1280px;   /* Desktop grande */
+  --breakpoint-2xl: 1536px;  /* Desktop ultra-wide */
+  
+  /* Espaçamentos responsivos */
+  --spacing-mobile: 1rem;
+  --spacing-tablet: 1.5rem;
+  --spacing-desktop: 2rem;
+  
+  /* Fontes responsivas */
+  --font-size-mobile: 14px;
+  --font-size-tablet: 16px;
+  --font-size-desktop: 16px;
+}
+
+/* === CONTAINER RESPONSIVO OTIMIZADO === */
+.responsive-container {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--spacing-mobile);
+  padding-right: var(--spacing-mobile);
+}
+
+@media (min-width: 640px) {
+  .responsive-container {
+    max-width: 640px;
+    padding-left: var(--spacing-tablet);
+    padding-right: var(--spacing-tablet);
+  }
+}
+
+@media (min-width: 768px) {
+  .responsive-container {
+    max-width: 768px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-container {
+    max-width: 1024px;
+    padding-left: var(--spacing-desktop);
+    padding-right: var(--spacing-desktop);
+  }
+}
+
+@media (min-width: 1280px) {
+  .responsive-container {
+    max-width: 1280px;
+  }
+}
+
+/* === GRID RESPONSIVO INTELIGENTE === */
+.responsive-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .responsive-grid {
+    gap: 1.5rem;
+  }
+  
+  .responsive-grid.cols-2-sm {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .responsive-grid {
+    gap: 2rem;
+  }
+  
+  .responsive-grid.cols-3-md {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .responsive-grid.cols-4-md {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-grid.cols-4-lg {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .responsive-grid.cols-6-lg {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+/* === CARDS RESPONSIVOS === */
+.responsive-card {
+  padding: 1rem;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+@media (min-width: 768px) {
+  .responsive-card {
+    padding: 1.5rem;
+    border-radius: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-card {
+    padding: 2rem;
+  }
+}
+
+/* === TEXTOS RESPONSIVOS === */
+.responsive-title {
+  font-size: 1.5rem;
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+@media (min-width: 640px) {
+  .responsive-title {
+    font-size: 1.75rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .responsive-title {
+    font-size: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-title {
+    font-size: 2.25rem;
+  }
+}
+
+.responsive-subtitle {
+  font-size: 1.125rem;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+@media (min-width: 768px) {
+  .responsive-subtitle {
+    font-size: 1.25rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-subtitle {
+    font-size: 1.375rem;
+  }
+}
+
+.responsive-text {
+  font-size: var(--font-size-mobile);
+  line-height: 1.6;
+}
+
+@media (min-width: 768px) {
+  .responsive-text {
+    font-size: var(--font-size-tablet);
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-text {
+    font-size: var(--font-size-desktop);
+  }
+}
+
+/* === ESPAÇAMENTOS RESPONSIVOS === */
+.responsive-spacing {
+  padding: var(--spacing-mobile);
+}
+
+@media (min-width: 768px) {
+  .responsive-spacing {
+    padding: var(--spacing-tablet);
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-spacing {
+    padding: var(--spacing-desktop);
+  }
+}
+
+.responsive-spacing-y {
+  padding-top: var(--spacing-mobile);
+  padding-bottom: var(--spacing-mobile);
+}
+
+@media (min-width: 768px) {
+  .responsive-spacing-y {
+    padding-top: var(--spacing-tablet);
+    padding-bottom: var(--spacing-tablet);
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-spacing-y {
+    padding-top: var(--spacing-desktop);
+    padding-bottom: var(--spacing-desktop);
+  }
+}
+
+.responsive-spacing-x {
+  padding-left: var(--spacing-mobile);
+  padding-right: var(--spacing-mobile);
+}
+
+@media (min-width: 768px) {
+  .responsive-spacing-x {
+    padding-left: var(--spacing-tablet);
+    padding-right: var(--spacing-tablet);
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-spacing-x {
+    padding-left: var(--spacing-desktop);
+    padding-right: var(--spacing-desktop);
+  }
+}
+
+/* === BOTÕES RESPONSIVOS === */
+.responsive-button {
+  padding: 0.75rem 1.5rem;
+  font-size: 0.875rem;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+@media (min-width: 768px) {
+  .responsive-button {
+    padding: 0.875rem 1.75rem;
+    font-size: 1rem;
+    border-radius: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-button {
+    padding: 1rem 2rem;
+  }
+}
+
+/* === SIDEBAR RESPONSIVA === */
+.responsive-sidebar {
+  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  z-index: 50;
+}
+
+.responsive-sidebar.open {
+  transform: translateX(0);
+}
+
+@media (min-width: 1024px) {
+  .responsive-sidebar {
+    width: 280px;
+    position: relative;
+    transform: translateX(0);
+  }
+}
+
+/* === NAVEGAÇÃO RESPONSIVA === */
+.responsive-nav {
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .responsive-nav {
+    flex-direction: row;
+    gap: 1rem;
+  }
+}
+
+/* === MODAL RESPONSIVO === */
+.responsive-modal {
+  width: 95vw;
+  max-width: 95vw;
+  margin: 1rem;
+}
+
+@media (min-width: 640px) {
+  .responsive-modal {
+    width: 90vw;
+    max-width: 600px;
+    margin: 2rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .responsive-modal {
+    width: 80vw;
+    max-width: 700px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-modal {
+    width: 70vw;
+    max-width: 800px;
+  }
+}
+
+/* === UTILITÁRIOS RESPONSIVOS === */
+.hide-mobile {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .hide-mobile {
+    display: block;
+  }
+}
+
+.show-mobile {
+  display: block;
+}
+
+@media (min-width: 768px) {
+  .show-mobile {
+    display: none;
+  }
+}
+
+.responsive-flex {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .responsive-flex {
+    flex-direction: row;
+    align-items: center;
+    gap: 1.5rem;
+  }
+}
+
+/* === ANIMAÇÕES RESPONSIVAS === */
+@media (prefers-reduced-motion: reduce) {
+  .responsive-card,
+  .responsive-button,
+  .responsive-sidebar,
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

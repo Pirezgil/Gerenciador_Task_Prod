@@ -77,9 +77,9 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
           <div className="flex items-center">
             <span className="text-2xl mr-3">{project.icon}</span>
             <div>
-              <h3 className="text-lg font-semibold text-gray-800">{project.name}</h3>
+              <h3 className="text-lg font-semibold theme-text">{project.name}</h3>
               {project.deadline && (
-                <p className="text-sm text-gray-500">
+                <p className="text-sm theme-text-muted">
                   📅 Prazo: {new Date(project.deadline).toLocaleDateString('pt-BR')}
                 </p>
               )}
@@ -87,7 +87,7 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
           </div>
           <button
             onClick={() => setSelectedProjectId(isExpanded ? null : project.id)}
-            className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+            className="p-2 text-gray-400 hover:theme-text-secondary transition-colors"
             title={isExpanded ? "Recolher tijolos" : "Expandir tijolos"}
           >
             {isExpanded ? (
@@ -104,7 +104,7 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
             Caixa de Areia do Projeto
           </h4>
           <textarea
-            className="w-full h-20 text-sm text-gray-700 bg-transparent resize-none border-none focus:outline-none placeholder-amber-400"
+            className="w-full h-20 text-sm theme-text-secondary bg-transparent resize-none border-none focus:outline-none placeholder-amber-400"
             value={project.sandboxNotes}
             placeholder="Rabisque suas ideias livremente aqui..."
             onChange={(e) => updateProjectNotes(project.id, e.target.value)}
@@ -122,16 +122,16 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
             className="p-6 bg-gray-50"
           >
             <div className="flex items-center justify-between mb-4">
-              <h4 className="text-md font-medium text-gray-800 flex items-center">
+              <h4 className="text-md font-medium theme-text flex items-center">
                 🧱 Backlog de Tijolos
-                <span className="ml-2 text-sm bg-gray-200 text-gray-600 px-2 py-1 rounded-full">
+                <span className="ml-2 text-sm bg-gray-200 theme-text-secondary px-2 py-1 rounded-full">
                   {project.backlog.length}
                 </span>
               </h4>
               
               <button
                 onClick={() => setShowAddForm(!showAddForm)}
-                className="px-3 py-1 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 transition-colors flex items-center space-x-1"
+                className="px-3 py-1 bg-purple-600 theme-text-on-primary rounded-lg text-sm hover:bg-purple-700 transition-colors flex items-center space-x-1"
               >
                 <Plus className="w-3 h-3" />
                 <span>Novo Tijolo</span>
@@ -168,7 +168,7 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
                             className={`flex items-center space-x-1 px-3 py-1 rounded-lg text-xs transition-all ${
                               newTaskEnergy === energy
                                 ? 'bg-purple-100 border-2 border-purple-500 text-purple-700'
-                                : 'bg-gray-100 border border-gray-300 text-gray-600 hover:border-purple-300'
+                                : 'bg-gray-100 border border-gray-300 theme-text-secondary hover:border-purple-300'
                             }`}
                           >
                             {getEnergyIcon(energy)}
@@ -180,14 +180,14 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
                       <div className="flex space-x-2">
                         <button
                           onClick={() => setShowAddForm(false)}
-                          className="px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-lg text-xs transition-colors"
+                          className="px-3 py-1 theme-text-secondary hover:bg-gray-100 rounded-lg text-xs transition-colors"
                         >
                           Cancelar
                         </button>
                         <button
                           onClick={handleAddTask}
                           disabled={!newTaskDescription.trim()}
-                          className="px-3 py-1 bg-purple-600 text-white rounded-lg text-xs hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center space-x-1"
+                          className="px-3 py-1 bg-purple-600 theme-text-on-primary rounded-lg text-xs hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center space-x-1"
                         >
                           <Save className="w-3 h-3" />
                           <span>Salvar</span>
@@ -244,7 +244,7 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
                         </button>
                         <button
                           onClick={cancelEdit}
-                          className="p-1 text-gray-500 hover:bg-gray-50 rounded transition-all"
+                          className="p-1 theme-text-muted hover:bg-gray-50 rounded transition-all"
                           title="Cancelar"
                         >
                           <X className="w-3 h-3" />
@@ -256,7 +256,7 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
                     <>
                       <div className="flex items-center flex-1 min-w-0">
                         {getEnergyIcon(task.energyPoints)}
-                        <span className="ml-3 text-sm text-gray-800 truncate">
+                        <span className="ml-3 text-sm theme-text truncate">
                           {task.description}
                         </span>
                       </div>
@@ -264,7 +264,7 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
                       <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => startEditing(task.id, task.description, task.energyPoints)}
-                          className="p-1 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-all"
+                          className="p-1 theme-text-muted hover:text-blue-600 hover:bg-blue-50 rounded transition-all"
                           title="Editar tijolo"
                         >
                           <Edit3 className="w-3 h-3" />
@@ -272,7 +272,7 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
                         
                         <button
                           onClick={() => handleDelete(task.id)}
-                          className="p-1 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-all"
+                          className="p-1 theme-text-muted hover:text-red-600 hover:bg-red-50 rounded transition-all"
                           title="Excluir tijolo"
                         >
                           <Trash2 className="w-3 h-3" />
@@ -293,7 +293,7 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
               ))}
 
               {project.backlog.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 theme-text-muted">
                   <div className="text-4xl mb-2">🎯</div>
                   <p className="text-sm">
                     Nenhum tijolo no backlog ainda! <br />

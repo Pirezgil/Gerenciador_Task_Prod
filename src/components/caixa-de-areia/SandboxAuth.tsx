@@ -98,14 +98,14 @@ export function SandboxAuth({ onUnlock }: SandboxAuthProps) {
               transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
               className="w-20 h-20 mx-auto bg-gradient-to-r from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center mb-6"
             >
-              <Lock className="w-10 h-10 text-white" />
+              <Lock className="w-10 h-10 theme-text-on-primary" />
             </motion.div>
             
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">
+            <h1 className="text-2xl font-bold theme-text mb-2">
               🏖️ Caixa de Areia Privada
             </h1>
             
-            <p className="text-gray-600 text-sm">
+            <p className="theme-text-secondary text-sm">
               Este é seu espaço privado e seguro para pensamentos pessoais.
             </p>
           </div>
@@ -114,7 +114,7 @@ export function SandboxAuth({ onUnlock }: SandboxAuthProps) {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-4">
               <div className="relative">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold theme-text-secondary mb-2">
                   <Key className="w-4 h-4 inline mr-2" />
                   Senha da Caixa de Areia
                 </label>
@@ -134,7 +134,7 @@ export function SandboxAuth({ onUnlock }: SandboxAuthProps) {
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     disabled={isLoading || isBlocked}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:theme-text-secondary transition-colors"
                   >
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
@@ -174,7 +174,7 @@ export function SandboxAuth({ onUnlock }: SandboxAuthProps) {
               disabled={isLoading || isBlocked || !password.trim()}
               whileHover={{ scale: !isLoading && !isBlocked ? 1.02 : 1 }}
               whileTap={{ scale: !isLoading && !isBlocked ? 0.98 : 1 }}
-              className={`w-full py-4 rounded-2xl font-semibold text-white transition-all duration-300 ${
+              className={`w-full py-4 rounded-2xl font-semibold theme-text-on-primary transition-all duration-300 ${
                 isLoading || isBlocked || !password.trim()
                   ? 'bg-gray-300 cursor-not-allowed'
                   : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg shadow-amber-500/25'
@@ -195,7 +195,7 @@ export function SandboxAuth({ onUnlock }: SandboxAuthProps) {
 
           {/* Footer */}
           <div className="mt-6 pt-6 border-t border-amber-200/50 text-center">
-            <p className="text-xs text-gray-500">
+            <p className="text-xs theme-text-muted">
               💡 Dica: Configure sua senha na página de Perfil
             </p>
           </div>

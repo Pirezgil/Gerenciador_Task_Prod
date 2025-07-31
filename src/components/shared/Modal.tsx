@@ -34,7 +34,7 @@ export function Modal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/30 backdrop-blur-md"
+            className="fixed inset-0 bg-overlay backdrop-blur-md"
             onClick={onClose}
           />
           
@@ -45,7 +45,7 @@ export function Modal({
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             className={cn(
-              'relative w-full bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20',
+              'relative w-full bg-surface backdrop-blur-xl rounded-3xl shadow-2xl border border-border-sentinela',
               maxWidthClasses[maxWidth]
             )}
             onClick={(e) => e.stopPropagation()}
@@ -53,14 +53,14 @@ export function Modal({
             {/* Header */}
             {title && (
               <div className="flex items-center justify-between p-6 pb-0">
-                <h2 className="text-xl font-semibold text-gray-800">
+                <h2 className="text-xl font-semibold text-text-primary">
                   {title}
                 </h2>
                 <button
                   onClick={onClose}
-                  className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
+                  className="p-2 rounded-xl hover:bg-energia-baixa/20 transition-colors"
                 >
-                  <X className="w-5 h-5 text-gray-500" />
+                  <X className="w-5 h-5 text-text-secondary" />
                 </button>
               </div>
             )}

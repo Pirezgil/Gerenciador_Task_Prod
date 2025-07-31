@@ -50,7 +50,7 @@ export function BombeiroPageClient({
   } = useTasksStore();
 
   // Local state
-  // Props recebidas do contexto
+
   const [showCelebration, setShowCelebration] = useState(false);
 
   // Derived state
@@ -105,23 +105,23 @@ export function BombeiroPageClient({
   }, [setShowLowEnergyModal]);
 
 return (
-  <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 dark:from-gray-900 dark:to-red-950">
+  <div className="min-h-screen bg-background sentinela-fade-in">
     {/* Main Content */}
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <main className="responsive-container py-6 space-y-6">
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="border-orange-200 dark:border-red-800 hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
+        <div className="responsive-grid cols-2-sm cols-4-lg gap-4">
+          <Card className="sentinela-card border-l-4 border-l-energia-baixa hover:shadow-energia-baixa">
+            <CardContent className="responsive-spacing">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
-                  <Clock className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                <div className="p-2 bg-energia-baixa/20 rounded-xl sentinela-transition">
+                  <Clock className="w-5 h-5 text-energia-baixa dark:text-orange-400" />
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                  <p className="sentinela-text-secondary text-xs font-medium uppercase tracking-wide">
                     Pendentes
                   </p>
-                  <p className="text-xl font-bold text-orange-600 dark:text-orange-400">
+                  <p className="sentinela-subtitle text-energia-baixa">
                     {pendingTasks.length}
                   </p>
                 </div>
@@ -129,17 +129,17 @@ return (
             </CardContent>
           </Card>
 
-          <Card className="border-green-200 dark:border-green-800 hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
+          <Card className="sentinela-card border-l-4 border-l-semantic-success hover:shadow-medium">
+            <CardContent className="responsive-spacing">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                  <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+                <div className="p-2 bg-semantic-success/20 rounded-xl sentinela-transition">
+                  <CheckCircle className="w-5 h-5 text-green-500 dark:text-green-400" />
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                  <p className="sentinela-text-secondary text-xs font-medium uppercase tracking-wide">
                     Hoje
                   </p>
-                  <p className="text-xl font-bold text-green-600 dark:text-green-400">
+                  <p className="sentinela-subtitle text-semantic-success">
                     {completedToday.length}
                   </p>
                 </div>
@@ -147,17 +147,17 @@ return (
             </CardContent>
           </Card>
 
-          <Card className="border-blue-200 dark:border-blue-800 hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
+          <Card className="sentinela-card border-l-4 border-l-energia-normal hover:shadow-energia-normal">
+            <CardContent className="responsive-spacing">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                  <Trophy className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <div className="p-2 bg-energia-normal/20 rounded-xl sentinela-transition">
+                  <Trophy className="w-5 h-5 text-energia-normal dark:text-energia-normal" />
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                  <p className="sentinela-text-secondary text-xs font-medium uppercase tracking-wide">
                     Energia
                   </p>
-                  <p className="text-xl font-bold text-blue-600 dark:text-blue-400">
+                  <p className="sentinela-subtitle text-energia-normal">
                     {energyBudget.remaining}
                   </p>
                 </div>
@@ -165,17 +165,17 @@ return (
             </CardContent>
           </Card>
 
-          <Card className="border-purple-200 dark:border-purple-800 hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
+          <Card className="sentinela-card border-l-4 border-l-energia-alta hover:shadow-energia-alta">
+            <CardContent className="responsive-spacing">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                  <Target className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                <div className="p-2 bg-energia-alta/20 rounded-xl sentinela-transition">
+                  <Target className="w-5 h-5 text-energia-alta dark:text-energia-alta" />
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                  <p className="sentinela-text-secondary text-xs font-medium uppercase tracking-wide">
                     Total
                   </p>
-                  <p className="text-xl font-bold text-purple-600 dark:text-purple-400">
+                  <p className="sentinela-subtitle text-energia-alta">
                     {todayTasks.length}
                   </p>
                 </div>
@@ -191,12 +191,12 @@ return (
         <WeeklyStats />
 
         {/* Tasks Sections */}
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="responsive-grid cols-1 lg:cols-2 gap-6">
           {/* Pending Tasks */}
-          <Card className="border-orange-200 dark:border-red-800">
+          <Card className="border-energia-baixa/30 dark:border-red-800">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
-                <Flame className="w-5 h-5 text-orange-500" />
+                <Flame className="w-5 h-5 text-energia-baixa" />
                 Tarefas Pendentes
                 <Badge variant="secondary" className="ml-auto">
                   {pendingTasks.length}
@@ -205,8 +205,8 @@ return (
             </CardHeader>
             <CardContent className="space-y-3">
               {pendingTasks.length === 0 ? (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                  <CheckCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                <div className="text-center py-8 sentinela-text-secondary">
+                  <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-500 dark:text-green-400 opacity-50" />
                   <p className="text-sm">Nenhuma tarefa pendente!</p>
                   <p className="text-xs">Você está em dia com suas tarefas 🎉</p>
                 </div>
@@ -229,7 +229,7 @@ return (
           <Card className="border-green-200 dark:border-green-800">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
-                <CheckCircle className="w-5 h-5 text-green-500" />
+                <CheckCircle className="w-5 h-5 text-green-500 dark:text-green-400" />
                 Incêndios Controlados
                 <Badge variant="secondary" className="ml-auto">
                   {completedTasks.length}
@@ -238,7 +238,7 @@ return (
             </CardHeader>
             <CardContent className="space-y-3">
               {completedTasks.length === 0 ? (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                <div className="text-center py-8 sentinela-text-secondary">
                   <TrendingUp className="w-12 h-12 mx-auto mb-3 opacity-50" />
                   <p className="text-sm">Ainda não há conquistas hoje</p>
                   <p className="text-xs">Complete sua primeira tarefa!</p>

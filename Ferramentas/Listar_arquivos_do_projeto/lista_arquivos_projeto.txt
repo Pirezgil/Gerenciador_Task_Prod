@@ -1,44 +1,38 @@
 ================================================================================
 LISTAGEM COMPLETA DE ARQUIVOS DO PROJETO
 ================================================================================
-Gerado em: 29/07/2025 às 15:32:53
+Gerado em: 30/07/2025 às 20:00:54
 Diretório: C:\Users\Gilmar Pires\Desktop\Projetos\Gerenciador_Task
-Total de arquivos: 149
-Tamanho total: 4.93 MB
+Total de arquivos: 145
+Tamanho total: 1.62 MB
 ================================================================================
 
 RESUMO POR CATEGORIA:
 ----------------------------------------
-Codigo Fonte: 92 arquivos (0.74 MB)
-Configuracao: 10 arquivos (3.47 MB)
-Documentacao: 17 arquivos (0.16 MB)
-Scripts Automacao: 27 arquivos (0.54 MB)
-Backups: 2 arquivos (0.01 MB)
+Codigo Fonte: 93 arquivos (0.68 MB)
+Configuracao: 9 arquivos (0.28 MB)
+Documentacao: 21 arquivos (0.18 MB)
+Scripts Automacao: 19 arquivos (0.46 MB)
+Backups: 2 arquivos (0.02 MB)
 Outros: 1 arquivos (0.0 MB)
 
 ================================================================================
 CÓDIGO FONTE
 ================================================================================
-.critical_protocols_backup\BombeiroPageClient.tsx (0.011 MB)
-.critical_protocols_backup\LowEnergyModal.tsx (0.003 MB)
-.critical_protocols_backup\NewTaskModal.tsx (0.011 MB)
-.critical_protocols_backup\tasksStore.ts (0.032 MB)
 Ferramentas\Listar_arquivos_do_projeto\executar_listagem.py (0.002 MB)
 Ferramentas\Listar_arquivos_do_projeto\listar_arquivos.py (0.008 MB)
 analisar_mcp.py (0.003 MB)
-buscar_funcao.py (0.002 MB)
-cleanup_project.py (0.011 MB)
+fix_bombeiro_errors.py (0.007 MB)
+fix_taskitem_prop.py (0.003 MB)
+force_compile.py (0.009 MB)
 mcp_server.py (0.027 MB)
-mcp_test.py (0.006 MB)
 next-env.d.ts (216 bytes)
 next.config.js (531 bytes)
 postcss.config.js (164 bytes)
 public\hydration-debug.js (682 bytes)
 public\limpar-cache.html (0.004 MB)
-scripts\Novo_visual_e_segurança_caixa_de_areia\Correção_Sandbox_Python_Rope.py (0.023 MB)
 scripts\Novo_visual_e_segurança_caixa_de_areia\Melhorias_visuais.py (0.013 MB)
 scripts\Novo_visual_e_segurança_caixa_de_areia\Novo_visual_caixa_de_areia.py (0.019 MB)
-scripts\Novo_visual_e_segurança_caixa_de_areia\correcao_alteracao_visual_e_senha.py (0.038 MB)
 scripts\Novo_visual_e_segurança_caixa_de_areia\python fix_auth_store_sandbox.py (0.006 MB)
 scripts\Novo_visual_e_segurança_caixa_de_areia\python sandbox_fix_syntax.py (0.009 MB)
 scripts\Novo_visual_e_segurança_caixa_de_areia\python sandbox_layout_fix.py (0.044 MB)
@@ -48,13 +42,15 @@ setup_mcp.py (0.012 MB)
 src\app\(main)\arquiteto\page.tsx (0.002 MB)
 src\app\(main)\bombeiro\page.tsx (0.003 MB)
 src\app\(main)\caixa-de-areia\page.tsx (0.003 MB)
-src\app\(main)\layout.tsx (602 bytes)
+src\app\(main)\layout.tsx (923 bytes)
 src\app\(main)\profile\page.tsx (0.003 MB)
 src\app\(main)\settings\page.tsx (0.004 MB)
 src\app\auth\page.tsx (0.005 MB)
 src\app\layout.tsx (0.002 MB)
-src\app\page.tsx (257 bytes)
+src\app\page.tsx (194 bytes)
 src\components\CerebroCompativel.tsx (0.015 MB)
+src\components\ColorDebug.tsx (0.004 MB)
+src\components\SentinelaTest.tsx (0.002 MB)
 src\components\arquiteto\ArquitetoPage.tsx (0.002 MB)
 src\components\arquiteto\ProjectContainer.tsx (0.013 MB)
 src\components\auth\AuthMiddleware.tsx (0.003 MB)
@@ -62,23 +58,26 @@ src\components\bombeiro\AchievementCelebration.tsx (0.012 MB)
 src\components\bombeiro\BombeiroPage.tsx (549 bytes)
 src\components\bombeiro\BombeiroPageClient.tsx (0.011 MB)
 src\components\bombeiro\BombeiroPageWrapper.tsx (939 bytes)
-src\components\bombeiro\EnergyMeter.tsx (0.003 MB)
+src\components\bombeiro\EnergyMeter.tsx (0.004 MB)
 src\components\bombeiro\PostponedTasksRoom.tsx (0.002 MB)
-src\components\bombeiro\TaskItem.tsx (0.010 MB)
+src\components\bombeiro\TaskItem.tsx (0.009 MB)
 src\components\bombeiro\UltraRewardingCelebration.tsx (0.018 MB)
 src\components\bombeiro\WeeklyStats.tsx (0.008 MB)
-src\components\caixa-de-areia\CaixaDeAreiaPage.tsx (0.016 MB)
+src\components\caixa-de-areia\CaixaDeAreiaPage.tsx (0.017 MB)
 src\components\caixa-de-areia\MovableNoteItem.tsx (0.012 MB)
 src\components\caixa-de-areia\NoteItem.tsx (0.005 MB)
-src\components\caixa-de-areia\SandboxAuth.tsx (0.007 MB)
+src\components\caixa-de-areia\SandboxAuth.tsx (0.008 MB)
+src\components\debug\ThemeColorTest.tsx (1485 bytes)
 src\components\layout\Header.tsx (0.005 MB)
-src\components\layout\Navigation.tsx (0.002 MB)
+src\components\layout\Navigation.tsx (0.003 MB)
+src\components\layout\NavigationHorizontal.tsx (0.003 MB)
 src\components\layout\PageContext.tsx (1037 bytes)
+src\components\layout\Sidebar.tsx (0.012 MB)
 src\components\profile\DataManagement.tsx (0.007 MB)
 src\components\profile\NotificationSettings.tsx (0.004 MB)
 src\components\profile\SecuritySettings.tsx (0.020 MB)
-src\components\profile\ThemeCustomizer.tsx (0.023 MB)
-src\components\profile\UserProfile.tsx (0.008 MB)
+src\components\profile\ThemeCustomizer.tsx (0.024 MB)
+src\components\profile\UserProfile.tsx (0.009 MB)
 src\components\protocols\CaptureModal.tsx (0.008 MB)
 src\components\protocols\DecompositionModal.tsx (0.003 MB)
 src\components\protocols\EmergencyChoiceModal.tsx (0.006 MB)
@@ -93,34 +92,35 @@ src\components\shared\NewProjectModal.tsx (0.015 MB)
 src\components\shared\NewTaskModal.tsx (0.011 MB)
 src\components\shared\NoSSR.tsx (429 bytes)
 src\components\shared\TaskEditModal.tsx (0.011 MB)
-src\components\ui\avatar.tsx (1465 bytes)
-src\components\ui\badge.tsx (1162 bytes)
-src\components\ui\button.tsx (0.002 MB)
+src\components\ui\ThemeToggle.tsx (0.004 MB)
+src\components\ui\avatar.tsx (1475 bytes)
+src\components\ui\badge.tsx (1177 bytes)
+src\components\ui\button.tsx (0.003 MB)
 src\components\ui\card.tsx (0.002 MB)
 src\components\ui\dropdown-menu.tsx (0.007 MB)
 src\hooks\useEnergyBudget.ts (0.003 MB)
 src\hooks\useHydration.ts (420 bytes)
 src\hooks\useLocalStorage.ts (1468 bytes)
+src\hooks\useTheme.ts (0.003 MB)
 src\lib\constants.ts (0.004 MB)
 src\lib\syncManager.ts (0.006 MB)
 src\lib\utils.ts (0.006 MB)
 src\stores\authStore.ts (0.005 MB)
-src\stores\tasksStore.ts (0.036 MB)
-src\stores\themeStore.ts (0.014 MB)
-src\styles\globals.css (0.009 MB)
+src\stores\tasksStore.ts (0.040 MB)
+src\stores\themeStore.ts (0.025 MB)
+src\styles\globals.css (0.010 MB)
+src\styles\responsive.css (0.007 MB)
 src\types\index.ts (0.002 MB)
-tailwind.config.js (1462 bytes)
-teste_leitura.py (0.002 MB)
+tailwind.config.js (0.007 MB)
 
-Subtotal: 92 arquivos
+Subtotal: 93 arquivos
 
 ================================================================================
 ARQUIVOS DE CONFIGURAÇÃO
 ================================================================================
-.critical_protocols_backup\backup_info.json (305 bytes)
 .eslintrc.json (403 bytes)
-Ferramentas\Listar_arquivos_do_projeto\manifest.yaml (252 bytes)
-cleanup_report_20250729_141606.json (3.205 MB)
+Ferramentas\Listar_arquivos_do_projeto\manifest_listagem.yaml (252 bytes)
+cleanup_report_20250730_193528.json (0.024 MB)
 data\tasks.json (282 bytes)
 mcp_config.json (583 bytes)
 navigation_standardization_log.json (0.002 MB)
@@ -128,7 +128,7 @@ package-lock.json (0.256 MB)
 package.json (1054 bytes)
 tsconfig.json (920 bytes)
 
-Subtotal: 10 arquivos
+Subtotal: 9 arquivos
 
 ================================================================================
 DOCUMENTAÇÃO
@@ -150,8 +150,12 @@ Ferramentas\Prompts\Desenvolvedor_frontend .md (0.003 MB)
 Ferramentas\Prompts\Lixeiro_do_projeto .md (0.003 MB)
 README.md (51 bytes)
 claude_desktop_setup.txt (841 bytes)
+docs\dark-mode-responsive\README.md (0.005 MB)
+docs\sistema-sentinela\README.md (0.005 MB)
+docs\sistema-sentinela\classes-reference.md (0.004 MB)
+docs\sistema-sentinela\migration-guide.md (1178 bytes)
 
-Subtotal: 17 arquivos
+Subtotal: 21 arquivos
 
 ================================================================================
 SCRIPTS DE AUTOMAÇÃO
@@ -159,18 +163,12 @@ SCRIPTS DE AUTOMAÇÃO
 scripts\Construção_do_esqueleto\2.0_Correção_Sintaxe_Template_Strings.ps1 (0.015 MB)
 scripts\Construção_do_esqueleto\2.5_Correção_Definitiva_Tipos_Button.ps1 (0.020 MB)
 scripts\Construção_do_esqueleto\3.0_Correção_paginas_com_erro_metadado.ps1 (0.026 MB)
-scripts\Construção_do_esqueleto\Correcao_final.ps1 (0.003 MB)
 scripts\Construção_do_esqueleto\Criar_MCP_SERVER.ps1 (0.017 MB)
-scripts\Inclusão_função_criar_projeto\Correção_Urgente_do_tasksStore.ts_.ps1 (0.026 MB)
 scripts\Inclusão_função_criar_projeto\adicionado_tijolos_na_criação_do_projeto.ps1 (0.036 MB)
 scripts\Inclusão_função_criar_projeto\incluir_função_novo_projeto.ps1 (0.018 MB)
 scripts\Melhorias\Correção_nivel_energia\1_Correção_plano_de_energia.ps1 (0.032 MB)
 scripts\Melhorias\Correção_nivel_energia\1_Implementacao_Limpar_Storage_Persistente.ps1 (0.010 MB)
 scripts\Melhorias\Correção_nivel_energia\1_Implementacao_Zerar_Missoes_Exemplo.ps1 (0.020 MB)
-scripts\Melhorias\Inclusão_opção_editar_tarefas\Correcao_Completa_Paginas_Quebradas.ps1 (0.011 MB)
-scripts\Melhorias\Inclusão_opção_editar_tarefas\Correcao_FlorestaPage_Final.ps1 (0.002 MB)
-scripts\Melhorias\Inclusão_opção_editar_tarefas\Correcao_Modal_Outras_Paginas.ps1 (0.008 MB)
-scripts\Melhorias\Inclusão_opção_editar_tarefas\Correcao_Sintaxe_Store.ps1 (0.024 MB)
 scripts\Melhorias\Inclusão_opção_editar_tarefas\Implementacao_Edicao_Tarefas.ps1 (0.055 MB)
 scripts\Melhorias\Inclusão_opção_editar_tarefas\Melhorias_Enter_Comentarios.ps1 (0.026 MB)
 scripts\Melhorias\Inclusão_opção_editar_tarefas\Verificacao_Final_Sistema_Edicao.ps1 (0.008 MB)
@@ -178,26 +176,24 @@ scripts\Novo_visual_e_segurança_caixa_de_areia\Atualizar_Guia_Python_First.ps1 
 scripts\Novo_visual_e_segurança_caixa_de_areia\Novo_visual_e_senha.ps1 (0.058 MB)
 scripts\Novo_visual_e_segurança_caixa_de_areia\REFINAMENTOS UI CAIXA DE AREIA - POWERSHELL REESCRITA COMPLETA.ps1 (0.022 MB)
 scripts\Novo_visual_e_segurança_caixa_de_areia\Sandbox_Layout_TypeErro.ps1 (0.016 MB)
-scripts\Novo_visual_e_segurança_caixa_de_areia\correcao_simples.ps1 (0.004 MB)
-scripts\Novo_visual_e_segurança_caixa_de_areia\fix_authstore_complete.ps1 (0.006 MB)
 scripts\Novo_visual_e_segurança_caixa_de_areia\security_settings_rewrite.ps1 (0.023 MB)
 scripts\Novo_visual_e_segurança_caixa_de_areia\tasksstore_complete_rewrite.ps1 (0.033 MB)
 setup.sh (0.002 MB)
 
-Subtotal: 27 arquivos
+Subtotal: 19 arquivos
 
 ================================================================================
 ARQUIVOS DE BACKUP
 ================================================================================
-.refactor_backups\BombeiroPage.tsx.backup_20250726_171534 (0.012 MB)
-.refactor_backups\page.tsx.backup_20250726_171534 (0.002 MB)
+src\components\bombeiro\TaskItem.tsx.backup (0.009 MB)
+src\components\bombeiro\TaskItem.tsx.backup_prop (0.009 MB)
 
 Subtotal: 2 arquivos
 
 ================================================================================
 OUTROS ARQUIVOS
 ================================================================================
-.gitignore (630 bytes)
+.gitignore (0.002 MB)
 
 Subtotal: 1 arquivos
 

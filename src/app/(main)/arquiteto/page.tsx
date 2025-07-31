@@ -45,9 +45,9 @@ export default function ArquitetoPage() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="text-center py-12">
-          <Building2 className="mx-auto h-12 w-12 text-purple-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">Área do Arquiteto</h3>
-          <p className="mt-1 text-sm text-gray-500">
+          <Building2 className="mx-auto h-12 w-12 text-energia-alta" />
+          <h3 className="mt-2 text-sm font-medium text-text-primary">Área do Arquiteto</h3>
+          <p className="mt-1 text-sm text-text-secondary">
             Esta área está sendo desenvolvida. Em breve você poderá planejar e estruturar seus projetos.
           </p>
           <div className="mt-6">

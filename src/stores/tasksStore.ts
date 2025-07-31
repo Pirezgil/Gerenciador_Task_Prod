@@ -1,39 +1,7 @@
 import { syncedUpdate } from '../lib/syncManager';
 
 
-// ===== CORREÇÃO ANTI-LOOP INFINITO GLOBAL =====
-let isUpdatingEnergy = false;
-let lastEnergyUpdate = 0;
-
-const safeEnergyUpdate = (store: any, newValue: number, source: string = 'global') => {
-  if (isUpdatingEnergy) {
-    console.warn(`[${source}] Energia: Atualização já em progresso, ignorando`);
-    return false;
-  }
-  
-  const now = Date.now();
-  if (now - lastEnergyUpdate < 150) {
-    console.warn(`[${source}] Energia: Throttled - muito rápido`);
-    return false;
-  }
-  
-  if (store.energy === newValue) {
-    return false;
-  }
-  
-  isUpdatingEnergy = true;
-  lastEnergyUpdate = now;
-  
-  try {
-    const safeValue = Math.max(0, Math.min(newValue, store.maxEnergy || 100));
-    store.energy = safeValue;
-    console.log(`[${source}] Energia atualizada: ${store.energy} → ${safeValue}`);
-    return true;
-  } finally {
-    setTimeout(() => { isUpdatingEnergy = false; }, 200);
-  }
-};
-// ===== FIM CORREÇÃO GLOBAL =====
+// Sistema de energia simplificado - sem proteções excessivas
 
 // ============================================================================
 // TASKS STORE - Gerenciamento completo de tarefas com Protocolos Críticos
@@ -286,9 +254,7 @@ export const useTasksStore = create<TasksState>()(
       addTaskToToday: (description, energyPoints, projectId) => {
         const state = get();
         
-        // Buscar o orçamento atual do authStore
-        const authState = useAuthStore.getState();
-        const dailyBudget = authState.user?.settings.dailyEnergyBudget || 12;
+        // Energia gerenciada pelo calculateEnergyBudget()
         const canAdd = state.canAddTask(energyPoints);
         
         if (!canAdd) {
@@ -346,9 +312,7 @@ export const useTasksStore = create<TasksState>()(
       postponeTask: (taskId, reason = 'manual') => {
         const state = get();
         
-        // Buscar o orçamento atual do authStore
-        const authState = useAuthStore.getState();
-        const dailyBudget = authState.user?.settings.dailyEnergyBudget || 12;
+        // Energia gerenciada pelo calculateEnergyBudget()
         const task = state.todayTasks.find(t => t.id === taskId);
         
         if (!task) return;
@@ -377,9 +341,7 @@ export const useTasksStore = create<TasksState>()(
       moveTaskToToday: (projectId, taskId) => {
         const state = get();
         
-        // Buscar o orçamento atual do authStore
-        const authState = useAuthStore.getState();
-        const dailyBudget = authState.user?.settings.dailyEnergyBudget || 12;
+        // Energia gerenciada pelo calculateEnergyBudget()
         const project = state.projects.find(p => p.id === projectId);
         const task = project?.backlog.find(t => t.id === taskId);
         
@@ -458,9 +420,7 @@ export const useTasksStore = create<TasksState>()(
       saveTaskEdit: (request) => {
         const state = get();
         
-        // Buscar o orçamento atual do authStore
-        const authState = useAuthStore.getState();
-        const dailyBudget = authState.user?.settings.dailyEnergyBudget || 12;
+        // Energia gerenciada pelo calculateEnergyBudget()
         const { taskId, description, energyPoints, projectId, comment } = request;
         
         const updateTask = (task: Task) => {
@@ -550,9 +510,7 @@ export const useTasksStore = create<TasksState>()(
       addTaskToProject: (projectId, description, energyPoints) => {
         const state = get();
         
-        // Buscar o orçamento atual do authStore
-        const authState = useAuthStore.getState();
-        const dailyBudget = authState.user?.settings.dailyEnergyBudget || 12;
+        // Energia gerenciada pelo calculateEnergyBudget()
         
         const newTask: Task = {
           id: state.generateUniqueId(),
@@ -592,9 +550,7 @@ export const useTasksStore = create<TasksState>()(
       createProject: (name, icon, notes) => {
         const state = get();
         
-        // Buscar o orçamento atual do authStore
-        const authState = useAuthStore.getState();
-        const dailyBudget = authState.user?.settings.dailyEnergyBudget || 12;
+        // Energia gerenciada pelo calculateEnergyBudget()
         
         const newProject: Project = {
           id: state.generateUniqueId(),
@@ -651,9 +607,7 @@ export const useTasksStore = create<TasksState>()(
       createProjectWithTasks: (name, icon, notes, initialTasks) => {
         const state = get();
         
-        // Buscar o orçamento atual do authStore
-        const authState = useAuthStore.getState();
-        const dailyBudget = authState.user?.settings.dailyEnergyBudget || 12;
+        // Energia gerenciada pelo calculateEnergyBudget()
         
         const newProject: Project = {
           id: state.generateUniqueId(),
@@ -688,9 +642,7 @@ export const useTasksStore = create<TasksState>()(
       saveNote: (content) => {
         const state = get();
         
-        // Buscar o orçamento atual do authStore
-        const authState = useAuthStore.getState();
-        const dailyBudget = authState.user?.settings.dailyEnergyBudget || 12;
+        // Energia gerenciada pelo calculateEnergyBudget()
         
         const newNote: Note = {
           id: state.generateUniqueId(),
@@ -741,9 +693,7 @@ export const useTasksStore = create<TasksState>()(
       transformNoteToAction: (request) => {
         const state = get();
         
-        // Buscar o orçamento atual do authStore
-        const authState = useAuthStore.getState();
-        const dailyBudget = authState.user?.settings.dailyEnergyBudget || 12;
+        // Energia gerenciada pelo calculateEnergyBudget()
         const { note, targetType, energyPoints = 3, scheduleDate } = request;
         
         if (targetType === 'project') {
@@ -788,9 +738,7 @@ export const useTasksStore = create<TasksState>()(
       replaceWithLightTasks: () => {
         const state = get();
         
-        // Buscar o orçamento atual do authStore
-        const authState = useAuthStore.getState();
-        const dailyBudget = authState.user?.settings.dailyEnergyBudget || 12;
+        // Energia gerenciada pelo calculateEnergyBudget()
         const pendingTasks = state.todayTasks.filter(task => task.status === 'pending');
         
         if (pendingTasks.length === 0) return;
@@ -830,9 +778,7 @@ export const useTasksStore = create<TasksState>()(
       postponeAllTasks: () => {
         const state = get();
         
-        // Buscar o orçamento atual do authStore
-        const authState = useAuthStore.getState();
-        const dailyBudget = authState.user?.settings.dailyEnergyBudget || 12;
+        // Energia gerenciada pelo calculateEnergyBudget()
         const pendingTasks = state.todayTasks.filter(task => task.status === 'pending');
         
         if (pendingTasks.length === 0) return;
@@ -868,9 +814,7 @@ export const useTasksStore = create<TasksState>()(
       handleCaptureSubmit: () => {
         const state = get();
         
-        // Buscar o orçamento atual do authStore
-        const authState = useAuthStore.getState();
-        const dailyBudget = authState.user?.settings.dailyEnergyBudget || 12;
+        // Energia gerenciada pelo calculateEnergyBudget()
         if (!state.captureState.content.trim()) return;
         
         if (state.captureState.step === 'capture') {
@@ -881,9 +825,7 @@ export const useTasksStore = create<TasksState>()(
       handleTriageChoice: (choice) => {
         const state = get();
         
-        // Buscar o orçamento atual do authStore
-        const authState = useAuthStore.getState();
-        const dailyBudget = authState.user?.settings.dailyEnergyBudget || 12;
+        // Energia gerenciada pelo calculateEnergyBudget()
         
         if (choice === 'sandbox') {
           state.saveNote(state.captureState.content);
@@ -897,9 +839,7 @@ export const useTasksStore = create<TasksState>()(
       handleClassifyChoice: (type) => {
         const state = get();
         
-        // Buscar o orçamento atual do authStore
-        const authState = useAuthStore.getState();
-        const dailyBudget = authState.user?.settings.dailyEnergyBudget || 12;
+        // Energia gerenciada pelo calculateEnergyBudget()
         
         if (type === 'project') {
           state.createProject(
@@ -917,9 +857,7 @@ export const useTasksStore = create<TasksState>()(
       handleScheduleChoice: (when, date) => {
         const state = get();
         
-        // Buscar o orçamento atual do authStore
-        const authState = useAuthStore.getState();
-        const dailyBudget = authState.user?.settings.dailyEnergyBudget || 12;
+        // Energia gerenciada pelo calculateEnergyBudget()
         
         if (when === 'today') {
           const success = state.addTaskToToday(state.captureState.content, 3);
@@ -933,9 +871,7 @@ export const useTasksStore = create<TasksState>()(
       handleDecomposition: (request) => {
         const state = get();
         
-        // Buscar o orçamento atual do authStore
-        const authState = useAuthStore.getState();
-        const dailyBudget = authState.user?.settings.dailyEnergyBudget || 12;
+        // Energia gerenciada pelo calculateEnergyBudget()
         const { originalTask, firstBrick, projectName } = request;
         
         if (!firstBrick.trim()) return;
@@ -982,9 +918,7 @@ export const useTasksStore = create<TasksState>()(
       canAddTask: (energyPoints) => {
         const state = get();
         
-        // Buscar o orçamento atual do authStore
-        const authState = useAuthStore.getState();
-        const dailyBudget = authState.user?.settings.dailyEnergyBudget || 12;
+        // Energia gerenciada pelo calculateEnergyBudget()
         const currentBudget = state.calculateEnergyBudget();
         return (currentBudget.used + energyPoints) <= currentBudget.total;
       },
@@ -992,9 +926,7 @@ export const useTasksStore = create<TasksState>()(
       getRemainingEnergy: () => {
         const state = get();
         
-        // Buscar o orçamento atual do authStore
-        const authState = useAuthStore.getState();
-        const dailyBudget = authState.user?.settings.dailyEnergyBudget || 12;
+        // Energia gerenciada pelo calculateEnergyBudget()
         const currentBudget = state.calculateEnergyBudget();
         return currentBudget.remaining;
       },
@@ -1002,9 +934,10 @@ export const useTasksStore = create<TasksState>()(
       calculateEnergyBudget: () => {
         const state = get();
         
-        // Buscar o orçamento atual do authStore
+        // Buscar orçamento do authStore ou usar padrão
         const authState = useAuthStore.getState();
         const dailyBudget = authState.user?.settings.dailyEnergyBudget || 12;
+        
         const used = state.todayTasks
           .filter(task => task.status === 'pending' || task.status === 'done')
           .reduce((sum, task) => sum + task.energyPoints, 0);
@@ -1023,9 +956,7 @@ export const useTasksStore = create<TasksState>()(
       convertNotesToMovable: () => {
         const state = get();
         
-        // Buscar o orçamento atual do authStore
-        const authState = useAuthStore.getState();
-        const dailyBudget = authState.user?.settings.dailyEnergyBudget || 12;
+        // Energia gerenciada pelo calculateEnergyBudget()
         const existingNotes = state.sandboxLayout.notes;
         
         const newMovableNotes = state.notes
@@ -1156,9 +1087,7 @@ export const useTasksStore = create<TasksState>()(
       reorganizeNotes: (mode) => {
         const state = get();
         
-        // Buscar o orçamento atual do authStore
-        const authState = useAuthStore.getState();
-        const dailyBudget = authState.user?.settings.dailyEnergyBudget || 12;
+        // Energia gerenciada pelo calculateEnergyBudget()
         const notes = state.sandboxLayout.notes;
         const newNotes = [...notes];
         

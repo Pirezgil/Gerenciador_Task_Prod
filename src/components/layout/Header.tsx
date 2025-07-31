@@ -7,6 +7,7 @@
 import React from 'react';
 import { usePageContext } from './PageContext';
 import { useAuthStore } from '@/stores/authStore';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 export function Header() {
   const pageContext = usePageContext();
@@ -21,10 +22,10 @@ export function Header() {
 
   const getThemeStyles = (theme: string) => {
     const themes = {
-      blue: 'from-blue-500 to-blue-600',
+      blue: 'bg-energia-normal',
       orange: 'from-orange-500 to-red-500',
       amber: 'from-amber-400 to-orange-500',
-      purple: 'from-purple-500 to-purple-600',
+      purple: 'bg-energia-alta',
       green: 'from-green-500 to-emerald-600'
     };
     return themes[theme as keyof typeof themes] || themes.blue;
@@ -43,25 +44,17 @@ export function Header() {
                   <h1 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
                     Sistema Cérebro-Compatível
                   </h1>
-                  <p className="text-sm text-gray-600">Organização inteligente para sua mente</p>
+                  <p className="text-sm text-text-secondary">Organização inteligente para sua mente</p>
                 </div>
               </div>
             </div>
             
             {/* User Info - Sempre visível */}
-            <div className="flex items-center space-x-6 ml-auto">
-              <div className="text-right">
-                <div className="text-sm font-medium text-gray-700">
-                  {getGreeting()}, <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-semibold">{user?.name || "Usuário"}</span>! 👋
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  {new Date().toLocaleDateString('pt-BR', { 
-                    weekday: 'long', 
-                    day: 'numeric', 
-                    month: 'long' 
-                  })}
-                </div>
-              </div>
+            <div className="flex items-center space-x-4 ml-auto">
+              $1
+              
+              {/* Theme Toggle */}
+              <ThemeToggle variant="icon" className="ml-4" />
             </div>
           </div>
         </div>
@@ -82,11 +75,11 @@ export function Header() {
                   </div>
                 )}
                 <div>
-                  <h2 className="text-2xl font-bold text-white">
+                  <h2 className="text-2xl font-bold text-white-on-primary">
                     {pageContext.title}
                   </h2>
                   {pageContext.subtitle && (
-                    <p className="text-sm text-white/90 mt-1">
+                    <p className="text-sm text-white-on-primary/90 mt-1">
                       {pageContext.subtitle}
                     </p>
                   )}
@@ -107,8 +100,8 @@ export function Header() {
                   <div key={index} className="bg-white/15 backdrop-blur-sm rounded-xl border border-white/20 p-4 hover:bg-white/20 transition-all duration-200">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-xs text-white/80 font-medium uppercase tracking-wide">{stat.label}</p>
-                        <p className="text-2xl font-bold text-white mt-1">{stat.value}</p>
+                        <p className="text-xs text-white-on-primary/80 font-medium uppercase tracking-wide">{stat.label}</p>
+                        <p className="text-2xl font-bold text-white-on-primary mt-1">{stat.value}</p>
                       </div>
                       {stat.icon && (
                         <span className="text-2xl opacity-90">{stat.icon}</span>

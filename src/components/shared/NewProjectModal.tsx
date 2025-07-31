@@ -160,7 +160,7 @@ export function NewProjectModal({ isOpen, onClose }: NewProjectModalProps) {
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="relative bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-2xl mx-4 overflow-hidden max-h-[90vh] overflow-y-auto"
+          className="relative bg-surface rounded-2xl shadow-2xl border border-gray-200 w-full max-w-2xl mx-4 overflow-hidden max-h-[90vh] overflow-y-auto"
         >
           {/* Header */}
           <div className="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-4 text-white sticky top-0">
@@ -172,7 +172,7 @@ export function NewProjectModal({ isOpen, onClose }: NewProjectModalProps) {
               <button
                 onClick={handleClose}
                 disabled={isCreating}
-                className="p-1 hover:bg-white/20 rounded-lg transition-colors disabled:opacity-50"
+                className="p-1 hover:bg-surface/20 rounded-lg transition-colors disabled:opacity-50"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -206,7 +206,7 @@ export function NewProjectModal({ isOpen, onClose }: NewProjectModalProps) {
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Ex: Aprender TypeScript..."
                     className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all ${
-                      errors.name ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                      errors.name ? 'border-red-300 bg-red-50' : 'border-border-sentinela'
                     }`}
                     disabled={isCreating}
                     maxLength={50}
@@ -217,7 +217,7 @@ export function NewProjectModal({ isOpen, onClose }: NewProjectModalProps) {
                       {errors.name}
                     </p>
                   )}
-                  <p className="text-gray-500 text-xs mt-1">
+                  <p className="text-text-secondary text-xs mt-1">
                     {formData.name.length}/50 caracteres
                   </p>
                 </div>
@@ -237,7 +237,7 @@ export function NewProjectModal({ isOpen, onClose }: NewProjectModalProps) {
                         className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all hover:scale-110 ${
                           formData.icon === icon
                             ? 'bg-purple-100 border-2 border-purple-500 scale-110'
-                            : 'bg-white border border-gray-200 hover:border-purple-300'
+                            : 'bg-surface border border-gray-200 hover:border-purple-300'
                         }`}
                       >
                         <span className="text-lg">{icon}</span>
@@ -256,11 +256,11 @@ export function NewProjectModal({ isOpen, onClose }: NewProjectModalProps) {
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                     placeholder="Objetivos e ideias..."
                     rows={4}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none"
+                    className="w-full px-4 py-3 border border-border-sentinela rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none"
                     disabled={isCreating}
                     maxLength={500}
                   />
-                  <p className="text-gray-500 text-xs mt-1">
+                  <p className="text-text-secondary text-xs mt-1">
                     {formData.notes.length}/500 caracteres
                   </p>
                 </div>
@@ -272,7 +272,7 @@ export function NewProjectModal({ isOpen, onClose }: NewProjectModalProps) {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     🧱 Tijolos Iniciais (Opcional)
                   </label>
-                  <p className="text-xs text-gray-500 mb-4">
+                  <p className="text-xs text-text-secondary mb-4">
                     Quebre seu projeto em pequenas tarefas desde o início
                   </p>
 
@@ -284,7 +284,7 @@ export function NewProjectModal({ isOpen, onClose }: NewProjectModalProps) {
                         value={newTaskDescription}
                         onChange={(e) => setNewTaskDescription(e.target.value)}
                         placeholder="Descreva um pequeno passo..."
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+                        className="w-full px-3 py-2 border border-border-sentinela rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
                         disabled={isCreating}
                         onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addInitialTask())}
                       />
@@ -300,7 +300,7 @@ export function NewProjectModal({ isOpen, onClose }: NewProjectModalProps) {
                               className={`flex items-center space-x-1 px-3 py-1 rounded-lg text-xs transition-all ${
                                 newTaskEnergy === energy
                                   ? 'bg-purple-100 border-2 border-purple-500 text-purple-700'
-                                  : 'bg-white border border-gray-300 text-gray-600 hover:border-purple-300'
+                                  : 'bg-surface border border-border-sentinela text-gray-600 hover:border-purple-300'
                               }`}
                             >
                               {getEnergyIcon(energy)}
@@ -327,7 +327,7 @@ export function NewProjectModal({ isOpen, onClose }: NewProjectModalProps) {
                     {initialTasks.map((task) => (
                       <div
                         key={task.id}
-                        className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200 group hover:shadow-sm transition-all"
+                        className="flex items-center justify-between p-3 bg-surface rounded-lg border border-gray-200 group hover:shadow-sm transition-all"
                       >
                         <div className="flex items-center space-x-2 flex-1 min-w-0">
                           {getEnergyIcon(task.energyPoints)}

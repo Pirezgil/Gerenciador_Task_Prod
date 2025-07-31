@@ -38,10 +38,10 @@ export function Sidebar({ className = '' }: SidebarProps) {
       icon: Flame,
       emoji: '🚒',
       path: '/bombeiro',
-      color: 'from-red-500 to-orange-600',
-      bgColor: 'bg-red-50 hover:bg-red-100 border-red-200',
-      textColor: 'text-red-700',
-      iconColor: 'text-red-600'
+      color: 'bg-semantic-warning',
+      bgColor: 'bg-semantic-warning/10 hover:bg-semantic-warning/20 border-semantic-warning/30',
+      textColor: 'text-semantic-warning',
+      iconColor: 'text-semantic-warning'
     },
     {
       key: 'arquiteto',
@@ -50,10 +50,10 @@ export function Sidebar({ className = '' }: SidebarProps) {
       icon: Building2,
       emoji: '🏗️',
       path: '/arquiteto', 
-      color: 'from-purple-500 to-purple-600',
-      bgColor: 'bg-purple-50 hover:bg-purple-100 border-purple-200',
-      textColor: 'text-purple-700',
-      iconColor: 'text-purple-600'
+      color: 'bg-energia-alta',
+      bgColor: 'bg-energia-alta/10 hover:bg-energia-alta/20 border-energia-alta/30',
+      textColor: 'text-energia-alta',
+      iconColor: 'text-energia-alta'
     },
     {
       key: 'caixa-de-areia',
@@ -75,14 +75,14 @@ export function Sidebar({ className = '' }: SidebarProps) {
       label: 'Perfil',
       icon: User,
       path: '/profile',
-      color: 'text-gray-600 hover:text-blue-600'
+      color: 'text-text-primary-secondary hover:text-energia-normal'
     },
     {
       key: 'settings',
       label: 'Configurações',
       icon: Settings,
       path: '/settings',
-      color: 'text-gray-600 hover:text-blue-600'
+      color: 'text-text-primary-secondary hover:text-energia-normal'
     }
   ];
 
@@ -109,9 +109,9 @@ export function Sidebar({ className = '' }: SidebarProps) {
       {/* Mobile Toggle Button */}
       <button
         onClick={() => setIsMobileOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/50 hover:bg-white transition-all duration-200"
+        className="lg:hidden fixed top-4 left-4 z-50 sentinela-btn sentinela-btn-secondary rounded-xl shadow-soft hover:shadow-medium sentinela-transition"
       >
-        <Menu className="w-5 h-5 text-gray-700" />
+        <Menu className="w-5 h-5 text-text-primary-secondary" />
       </button>
 
       {/* Mobile Overlay */}
@@ -131,29 +131,29 @@ export function Sidebar({ className = '' }: SidebarProps) {
               animate={{ x: 0 }}
               exit={{ x: -320 }}
               transition={{ type: "spring", damping: 20 }}
-              className="lg:hidden fixed left-0 top-0 h-full w-80 bg-white/95 backdrop-blur-xl shadow-2xl z-50 border-r border-gray-200/50"
+              className="lg:hidden fixed left-0 top-0 h-full w-80 bg-surface/95 backdrop-blur-xl shadow-large z-50 border-r border-border"
             >
               <div className="p-6">
                 <div className="flex items-center justify-between mb-8">
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                      <Home className="w-5 h-5 text-white" />
+                      <Home className="w-5 h-5 text-text-primary-on-primary" />
                     </div>
                     <div>
-                      <h2 className="font-bold text-gray-900">Cérebro-Compatível</h2>
-                      <p className="text-xs text-gray-500">Sistema Inteligente</p>
+                      <h2 className="font-bold text-text-primary">Cérebro-Compatível</h2>
+                      <p className="text-xs text-text-primary-muted">Sistema Inteligente</p>
                     </div>
                   </div>
                   <button
                     onClick={() => setIsMobileOpen(false)}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="p-2 hover:bg-surface rounded-lg transition-colors"
                   >
-                    <X className="w-5 h-5 text-gray-500" />
+                    <X className="w-5 h-5 text-text-primary-muted" />
                   </button>
                 </div>
 
                 {/* Mobile Navigation Items */}
-                <div className="space-y-2">
+                <div className="responsive-nav space-y-2">
                   {navigationItems.map((item) => {
                     const Icon = item.icon;
                     const active = isActive(item.path);
@@ -164,7 +164,7 @@ export function Sidebar({ className = '' }: SidebarProps) {
                         onClick={() => handleNavigation(item.path)}
                         className={`w-full p-4 rounded-xl border transition-all duration-200 text-left ${
                           active 
-                            ? `bg-gradient-to-r ${item.color} text-white shadow-lg` 
+                            ? `bg-gradient-to-r ${item.color} text-text-primary-on-primary shadow-lg` 
                             : item.bgColor
                         }`}
                         whileHover={{ scale: 1.02 }}
@@ -172,13 +172,13 @@ export function Sidebar({ className = '' }: SidebarProps) {
                       >
                         <div className="flex items-center space-x-4">
                           <div className={`p-2 rounded-lg ${active ? 'bg-white/20' : 'bg-white/50'}`}>
-                            <Icon className={`w-5 h-5 ${active ? 'text-white' : item.iconColor}`} />
+                            <Icon className={`w-5 h-5 ${active ? 'text-text-primary-on-primary' : item.iconColor}`} />
                           </div>
                           <div>
-                            <div className={`font-semibold ${active ? 'text-white' : item.textColor}`}>
+                            <div className={`font-semibold ${active ? 'text-text-primary-on-primary' : item.textColor}`}>
                               {item.emoji} {item.label}
                             </div>
-                            <div className={`text-sm ${active ? 'text-white/80' : 'text-gray-500'}`}>
+                            <div className={`text-sm ${active ? 'text-text-primary-on-primary/80' : 'text-text-primary-muted'}`}>
                               {item.description}
                             </div>
                           </div>
@@ -197,7 +197,7 @@ export function Sidebar({ className = '' }: SidebarProps) {
                         <button
                           key={item.key}
                           onClick={() => handleNavigation(item.path)}
-                          className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${item.color} hover:bg-gray-50`}
+                          className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${item.color} hover:bg-primary-50`}
                         >
                           <Icon className="w-5 h-5" />
                           <span className="font-medium">{item.label}</span>
@@ -223,7 +223,7 @@ export function Sidebar({ className = '' }: SidebarProps) {
       className={`hidden lg:flex flex-col h-screen bg-white/90 backdrop-blur-xl border-r border-gray-200/50 shadow-xl ${className}`}
     >
       {/* Header */}
-      <div className="p-6 border-b border-gray-200/50">
+      <div className="p-6 border-b border-border">
         <div className="flex items-center justify-between">
           <AnimatePresence>
             {!isCollapsed && (
@@ -235,11 +235,11 @@ export function Sidebar({ className = '' }: SidebarProps) {
                 className="flex items-center space-x-3"
               >
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                  <Home className="w-5 h-5 text-white" />
+                  <Home className="w-5 h-5 text-text-primary-on-primary" />
                 </div>
                 <div>
-                  <h2 className="font-bold text-gray-900">Cérebro-Compatível</h2>
-                  <p className="text-xs text-gray-500">Sistema Inteligente</p>
+                  <h2 className="font-bold text-text-primary">Cérebro-Compatível</h2>
+                  <p className="text-xs text-text-primary-muted">Sistema Inteligente</p>
                 </div>
               </motion.div>
             )}
@@ -247,12 +247,12 @@ export function Sidebar({ className = '' }: SidebarProps) {
           
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors ml-auto"
+            className="p-2 hover:bg-surface rounded-lg transition-colors ml-auto"
           >
             {isCollapsed ? (
-              <ChevronRight className="w-4 h-4 text-gray-500" />
+              <ChevronRight className="w-4 h-4 text-text-primary-muted" />
             ) : (
-              <ChevronLeft className="w-4 h-4 text-gray-500" />
+              <ChevronLeft className="w-4 h-4 text-text-primary-muted" />
             )}
           </button>
         </div>
@@ -270,7 +270,7 @@ export function Sidebar({ className = '' }: SidebarProps) {
               onClick={() => handleNavigation(item.path)}
               className={`w-full p-4 rounded-xl border transition-all duration-200 text-left ${
                 active 
-                  ? `bg-gradient-to-r ${item.color} text-white shadow-lg transform scale-105` 
+                  ? `bg-gradient-to-r ${item.color} text-text-primary-on-primary shadow-lg transform scale-105` 
                   : item.bgColor
               }`}
               whileHover={{ scale: active ? 1.05 : 1.02 }}
@@ -279,7 +279,7 @@ export function Sidebar({ className = '' }: SidebarProps) {
             >
               <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-4'}`}>
                 <div className={`p-2 rounded-lg ${active ? 'bg-white/20' : 'bg-white/50'}`}>
-                  <Icon className={`w-5 h-5 ${active ? 'text-white' : item.iconColor}`} />
+                  <Icon className={`w-5 h-5 ${active ? 'text-text-primary-on-primary' : item.iconColor}`} />
                 </div>
                 
                 <AnimatePresence>
@@ -290,10 +290,10 @@ export function Sidebar({ className = '' }: SidebarProps) {
                       animate="expanded"
                       exit="collapsed"
                     >
-                      <div className={`font-semibold ${active ? 'text-white' : item.textColor}`}>
+                      <div className={`font-semibold ${active ? 'text-text-primary-on-primary' : item.textColor}`}>
                         {item.emoji} {item.label}
                       </div>
-                      <div className={`text-sm ${active ? 'text-white/80' : 'text-gray-500'}`}>
+                      <div className={`text-sm ${active ? 'text-text-primary-on-primary/80' : 'text-text-primary-muted'}`}>
                         {item.description}
                       </div>
                     </motion.div>
@@ -306,7 +306,7 @@ export function Sidebar({ className = '' }: SidebarProps) {
       </div>
 
       {/* Utility Items */}
-      <div className="p-4 border-t border-gray-200/50">
+      <div className="p-4 border-t border-border">
         <div className="space-y-1">
           {utilityItems.map((item) => {
             const Icon = item.icon;
@@ -314,7 +314,7 @@ export function Sidebar({ className = '' }: SidebarProps) {
               <button
                 key={item.key}
                 onClick={() => handleNavigation(item.path)}
-                className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} px-4 py-3 rounded-lg transition-all duration-200 ${item.color} hover:bg-gray-50`}
+                className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} px-4 py-3 rounded-lg transition-all duration-200 ${item.color} hover:bg-primary-50`}
                 title={isCollapsed ? item.label : undefined}
               >
                 <Icon className="w-5 h-5" />

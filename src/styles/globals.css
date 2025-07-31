@@ -1,279 +1,259 @@
 @tailwind base;
-@tailwind components;
+@tailwind components; 
 @tailwind utilities;
 
 /* ============================================================================ */
-/* VARIÁVEIS CSS PARA SISTEMA DE TEMAS */
+/* SISTEMA SENTINELA - VARIÁVEIS CSS PARA DESIGN ACOLHEDOR */
 /* ============================================================================ */
 
 :root {
-  /* Cores do tema (serão atualizadas dinamicamente) */
-  --theme-primary: #3b82f6;
-  --theme-secondary: #8b5cf6;
-  --theme-surface: #ffffff;
-  --theme-background: #f8fafc;
-  --theme-text: #1e293b;
-  --theme-text-secondary: #64748b;
-  --theme-border: #e2e8f0;
-  --theme-shadow: rgba(0, 0, 0, 0.1);
+  /* === PALETA PRINCIPAL === */
+  --sentinela-primary: #5B86E5;        /* Azul Sereno */
+  --sentinela-background: #F7F7F7;     /* Branco Neve */
+  --sentinela-surface: #FFFFFF;
+  --sentinela-text: #333740;           /* Cinza Nanquim */
+  --sentinela-text-secondary: #64748B;
+  --sentinela-border: #EAEAEA;         /* Cinza Suave */
   
-  /* Layout */
-  --theme-radius: 8px;
-  --theme-spacing: 1rem;
-  --theme-font: system-ui, -apple-system, sans-serif;
-  --theme-font-size: 16px;
-}
-
-/* Modo escuro */
-.theme-dark {
-  --theme-surface: #1e293b;
-  --theme-background: #0f172a;
-  --theme-text: #f1f5f9;
-  --theme-text-secondary: #94a3b8;
-  --theme-border: #334155;
-  --theme-shadow: rgba(0, 0, 0, 0.5);
-}
-
-/* ============================================================================ */
-/* CLASSES UTILITÁRIAS PARA TEMAS */
-/* ============================================================================ */
-
-.theme-surface {
-  background-color: var(--theme-surface);
-  color: var(--theme-text);
-}
-
-.theme-background {
-  background-color: var(--theme-background);
-}
-
-.theme-primary {
-  background-color: var(--theme-primary);
-}
-
-.theme-secondary {
-  background-color: var(--theme-secondary);
-}
-
-.theme-border {
-  border-color: var(--theme-border);
-}
-
-.theme-text {
-  color: var(--theme-text);
-}
-
-.theme-text-secondary {
-  color: var(--theme-text-secondary);
+  /* === ENERGIA DO DIA === */
+  --energia-baixa: #6DD58C;            /* 🔋 Verde Menta */
+  --energia-normal: #5B86E5;           /* 🧠 Azul Sereno */
+  --energia-alta: #FFB36B;             /* ⚡ Laranja Suave */
+  
+  /* === SEMÂNTICAS === */
+  --sentinela-alert: #FFD76B;          /* Amarelo Âmbar */
+  --sentinela-success: #6DD58C;        /* Verde Menta */
+  --sentinela-warning: #FFB36B;        /* Laranja Suave */
+  
+  /* === O PÁTIO === */
+  --patio-background: #F5F0E6;         /* Bege Papel */
+  --patio-text: #5D4037;              /* Marrom Escuro */
+  
+  /* === GEOMETRIA ACOLHEDORA === */
+  --sentinela-radius-sm: 8px;
+  --sentinela-radius: 16px;
+  --sentinela-radius-lg: 24px;
+  --sentinela-spacing: 1rem;
+  
+  /* === TIPOGRAFIA === */
+  --sentinela-font-primary: 'Inter', 'Poppins', system-ui, sans-serif;
+  --sentinela-font-reading: 'Lora', 'Merriweather', Georgia, serif;
 }
 
 /* ============================================================================ */
-/* ANIMAÇÕES CONDICIONAIS */
+/* MODO ESCURO SUAVE (OPCIONAL) */
 /* ============================================================================ */
 
-.theme-animations * {
-  transition: all 0.2s ease-in-out;
-}
-
-.theme-animations button:hover {
-  transform: translateY(-1px);
-}
-
-.theme-animations .card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px var(--theme-shadow);
+.sentinela-dark {
+  --sentinela-background: #1a1a1a;
+  --sentinela-surface: #2a2a2a;
+  --sentinela-text: #f0f0f0;
+  --sentinela-text-secondary: #a0a0a0;
+  --sentinela-border: #3a3a3a;
 }
 
 /* ============================================================================ */
-/* GLASSMORPHISM CONDICIONAL */
+/* BASE STYLES - FUNDAÇÃO ACOLHEDORA */
 /* ============================================================================ */
 
-.theme-glassmorphism .glass {
-  backdrop-filter: blur(12px);
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+* {
+  box-sizing: border-box;
 }
-
-.theme-dark.theme-glassmorphism .glass {
-  background: rgba(30, 41, 59, 0.8);
-  border: 1px solid rgba(51, 65, 85, 0.3);
-}
-
-/* ============================================================================ */
-/* ESTILOS BASE EXISTENTES */
-/* ============================================================================ */
 
 html {
-  font-family: var(--theme-font);
-  font-size: var(--theme-font-size);
+  font-family: var(--sentinela-font-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
   margin: 0;
   padding: 0;
-  background-color: var(--theme-background);
-  color: var(--theme-text);
+  background-color: var(--sentinela-background);
+  color: var(--sentinela-text);
   line-height: 1.6;
+  font-size: 16px;
 }
 
-/* Scrollbar personalizada */
-::-webkit-scrollbar {
-  width: 8px;
+/* ============================================================================ */
+/* COMPONENTES SENTINELA - REUTILIZÁVEIS */
+/* ============================================================================ */
+
+/* === CARDS ACOLHEDORES === */
+.sentinela-card {
+  background: var(--sentinela-surface);
+  border: 1px solid var(--sentinela-border);
+  border-radius: var(--sentinela-radius);
+  padding: 1.5rem;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
 }
 
-::-webkit-scrollbar-track {
-  background: var(--theme-surface);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--theme-border);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--theme-text-secondary);
-}
-
-/* Focus styles */
-button:focus,
-input:focus,
-textarea:focus {
-  outline: 2px solid var(--theme-primary);
-  outline-offset: 2px;
-}
-
-/* Selection styles */
-::selection {
-  background-color: var(--theme-primary);
-  color: white;
-}
-
-/* Gradientes dinâmicos */
-.gradient-primary {
-  background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-secondary) 100%);
-}
-
-.gradient-surface {
-  background: linear-gradient(135deg, var(--theme-surface) 0%, var(--theme-background) 100%);
-}
-
-/* Cards adaptativos */
-.card {
-  background: var(--theme-surface);
-  border: 1px solid var(--theme-border);
-  border-radius: var(--theme-radius);
-  padding: var(--theme-spacing);
-  box-shadow: 0 4px 6px var(--theme-shadow);
-}
-
-/* Botões adaptativos */
-.btn-primary {
-  background: var(--theme-primary);
-  color: white;
-  border: none;
-  border-radius: var(--theme-radius);
-  padding: calc(var(--theme-spacing) * 0.5) var(--theme-spacing);
-  font-family: var(--theme-font);
-  font-size: var(--theme-font-size);
-  cursor: pointer;
-}
-
-.btn-primary:hover {
-  filter: brightness(1.1);
-}
-
-.btn-secondary {
-  background: var(--theme-secondary);
-  color: white;
-  border: none;
-  border-radius: var(--theme-radius);
-  padding: calc(var(--theme-spacing) * 0.5) var(--theme-spacing);
-  font-family: var(--theme-font);
-  font-size: var(--theme-font-size);
-  cursor: pointer;
-}
-
-.btn-secondary:hover {
-  filter: brightness(1.1);
-}
-
-/* Inputs adaptativos */
-.input {
-  background: var(--theme-surface);
-  border: 1px solid var(--theme-border);
-  border-radius: var(--theme-radius);
-  padding: calc(var(--theme-spacing) * 0.5);
-  color: var(--theme-text);
-  font-family: var(--theme-font);
-  font-size: var(--theme-font-size);
-}
-
-.input:focus {
-  border-color: var(--theme-primary);
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-/* Placeholders adaptativos */
-.input::placeholder {
-  color: var(--theme-text-secondary);
-}
-
-/* Texto responsivo para modo escuro */
-.theme-dark h1,
-.theme-dark h2,
-.theme-dark h3,
-.theme-dark h4,
-.theme-dark h5,
-.theme-dark h6 {
-  color: var(--theme-text);
-}
-
-.theme-dark p,
-.theme-dark span,
-.theme-dark div {
-  color: var(--theme-text);
-}
-
-/* Responsividade aprimorada */
-@media (max-width: 768px) {
-  :root {
-    --theme-spacing: 0.75rem;
-    --theme-font-size: 14px;
-  }
-}
-
-@media (max-width: 480px) {
-  :root {
-    --theme-spacing: 0.5rem;
-    --theme-font-size: 12px;
-  }
-}
-
-/* Prevenção de flash durante carregamento */
-.theme-loading {
-  visibility: hidden;
-}
-
-.theme-loaded {
-  visibility: visible;
-}
-
-/* Estados de hover adaptativos */
-.hover-lift:hover {
+.sentinela-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px var(--theme-shadow);
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.12);
 }
 
-.hover-glow:hover {
-  box-shadow: 0 0 20px var(--theme-primary);
+.sentinela-card-soft {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-/* Animações de entrada */
-@keyframes fadeInUp {
+/* === BOTÕES SENTINELA === */
+.sentinela-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--sentinela-radius);
+  font-family: var(--sentinela-font-primary);
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+}
+
+.sentinela-btn-primary {
+  background: var(--sentinela-primary);
+  color: white;
+}
+
+.sentinela-btn-primary:hover {
+  background: #4A75D4;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(91, 134, 229, 0.3);
+}
+
+.sentinela-btn-secondary {
+  background: transparent;
+  color: var(--sentinela-primary);
+  border: 1px solid var(--sentinela-primary);
+}
+
+.sentinela-btn-secondary:hover {
+  background: var(--sentinela-primary);
+  color: white;
+}
+
+.sentinela-btn-soft {
+  background: rgba(91, 134, 229, 0.1);
+  color: var(--sentinela-primary);
+  border: 1px solid rgba(91, 134, 229, 0.2);
+}
+
+/* === ENERGIA VISUAL === */
+.energia-baixa {
+  background: var(--energia-baixa);
+  color: white;
+}
+
+.energia-normal {
+  background: var(--energia-normal);
+  color: white;
+}
+
+.energia-alta {
+  background: var(--energia-alta);
+  color: white;
+}
+
+.energia-indicador {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
+.energia-baixa-indicador {
+  background: var(--energia-baixa);
+}
+
+.energia-normal-indicador {
+  background: var(--energia-normal);
+}
+
+.energia-alta-indicador {
+  background: var(--energia-alta);
+}
+
+/* === TEXTOS HIERÁRQUICOS === */
+.sentinela-title {
+  font-size: 1.875rem;
+  font-weight: 600;
+  color: var(--sentinela-text);
+  margin: 0 0 1rem 0;
+  line-height: 1.2;
+}
+
+.sentinela-subtitle {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--sentinela-text);
+  margin: 0 0 0.75rem 0;
+  line-height: 1.3;
+}
+
+.sentinela-text {
+  color: var(--sentinela-text);
+}
+
+.sentinela-text-secondary {
+  color: var(--sentinela-text-secondary);
+}
+
+.sentinela-text-muted {
+  color: var(--sentinela-text-secondary);
+  opacity: 0.7;
+}
+
+/* === O PÁTIO ESPECIAL === */
+.patio-container {
+  background: var(--patio-background);
+  color: var(--patio-text);
+  font-family: var(--sentinela-font-reading);
+  border-radius: var(--sentinela-radius-lg);
+  padding: 2rem;
+}
+
+.patio-text {
+  color: var(--patio-text);
+  line-height: 1.7;
+}
+
+/* ============================================================================ */
+/* UTILIDADES SENTINELA */
+/* ============================================================================ */
+
+/* === ESPAÇAMENTOS GENEROSOS === */
+.sentinela-space-y > * + * {
+  margin-top: 1.5rem;
+}
+
+.sentinela-space-y-sm > * + * {
+  margin-top: 1rem;
+}
+
+.sentinela-space-y-lg > * + * {
+  margin-top: 2rem;
+}
+
+/* === ANIMAÇÕES SUAVES === */
+.sentinela-transition {
+  transition: all 0.2s ease;
+}
+
+.sentinela-fade-in {
+  animation: sentinela-fade-in 0.5s ease-out;
+}
+
+@keyframes sentinela-fade-in {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
@@ -281,159 +261,162 @@ textarea:focus {
   }
 }
 
-.animate-fade-in-up {
-  animation: fadeInUp 0.5s ease-out;
+/* === SCROLLBAR SUAVE === */
+::-webkit-scrollbar {
+  width: 6px;
 }
 
-/* Melhorias de acessibilidade */
-@media (prefers-reduced-motion: reduce) {
-  .theme-animations * {
-    transition: none !important;
-    animation: none !important;
-  }
+::-webkit-scrollbar-track {
+  background: var(--sentinela-background);
 }
 
-/* Dark mode media query automático */
-@media (prefers-color-scheme: dark) {
-  .theme-auto {
-    --theme-surface: #1e293b;
-    --theme-background: #0f172a;
-    --theme-text: #f1f5f9;
-    --theme-text-secondary: #94a3b8;
-    --theme-border: #334155;
-    --theme-shadow: rgba(0, 0, 0, 0.5);
-  }
+::-webkit-scrollbar-thumb {
+  background: var(--sentinela-border);
+  border-radius: 3px;
 }
 
+::-webkit-scrollbar-thumb:hover {
+  background: var(--sentinela-text-secondary);
+}
+
+/* === FOCUS STATES ACOLHEDORES === */
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--sentinela-primary);
+  outline-offset: 2px;
+  border-radius: var(--sentinela-radius-sm);
+}
+
+/* === SELEÇÃO DE TEXTO === */
+::selection {
+  background-color: rgba(91, 134, 229, 0.2);
+  color: var(--sentinela-text);
+}
 
 /* ============================================================================ */
-/* DOPAMINE TREE ANIMATION - Estilos para Árvore de Conquistas */
+/* RESPONSIVIDADE ACOLHEDORA */
 /* ============================================================================ */
 
-.tree-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  pointer-events: none;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.tree-background {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(59, 130, 246, 0.1) 0%,
-    rgba(16, 185, 129, 0.1) 50%,
-    rgba(34, 197, 94, 0.1) 100%
-  );
-  backdrop-filter: blur(8px);
-}
-
-.tree-svg {
-  filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.3));
-  transition: all 0.3s ease;
-}
-
-.tree-svg:hover {
-  transform: scale(1.02);
-}
-
-/* Animações de folhas */
-@keyframes leafGrow {
-  0% {
-    transform: scale(0) rotate(0deg);
-    opacity: 0;
-  }
-  50% {
-    transform: scale(1.2) rotate(180deg);
-    opacity: 0.8;
-  }
-  100% {
-    transform: scale(1) rotate(360deg);
-    opacity: 1;
-  }
-}
-
-@keyframes leafShimmer {
-  0%, 100% {
-    filter: brightness(1);
-  }
-  50% {
-    filter: brightness(1.3) drop-shadow(0 0 10px currentColor);
-  }
-}
-
-.tree-leaf {
-  animation: leafGrow 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-}
-
-.tree-leaf.new {
-  animation: leafGrow 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55),
-             leafShimmer 2s ease-in-out 0.8s;
-}
-
-/* Partículas de celebração */
-@keyframes particleFloat {
-  0% {
-    transform: translateY(0) scale(0);
-    opacity: 1;
-  }
-  50% {
-    transform: translateY(-30px) scale(1);
-    opacity: 0.8;
-  }
-  100% {
-    transform: translateY(-60px) scale(0);
-    opacity: 0;
-  }
-}
-
-.celebration-particle {
-  animation: particleFloat 2s ease-out forwards;
-}
-
-/* Efeito de brilho na árvore */
-@keyframes treeGlow {
-  0%, 100% {
-    filter: drop-shadow(0 0 20px rgba(34, 197, 94, 0.3));
-  }
-  50% {
-    filter: drop-shadow(0 0 40px rgba(34, 197, 94, 0.6));
-  }
-}
-
-.tree-glow {
-  animation: treeGlow 3s ease-in-out;
-}
-
-/* Responsividade para árvore */
 @media (max-width: 768px) {
-  .tree-svg {
-    transform: scale(0.8);
+  :root {
+    --sentinela-spacing: 0.75rem;
+    --sentinela-radius: 12px;
+  }
+  
+  .sentinela-card {
+    padding: 1rem;
+  }
+  
+  .sentinela-title {
+    font-size: 1.5rem;
   }
 }
 
 @media (max-width: 480px) {
-  .tree-svg {
-    transform: scale(0.6);
+  :root {
+    --sentinela-spacing: 0.5rem;
+    --sentinela-radius: 8px;
+  }
+  
+  .sentinela-card {
+    padding: 0.75rem;
+  }
+  
+  .sentinela-title {
+    font-size: 1.25rem;
   }
 }
 
-/* Estados da árvore por idade */
-.tree-young {
-  filter: hue-rotate(60deg) brightness(1.1);
+/* ============================================================================ */
+/* ACESSIBILIDADE MELHORADA */
+/* ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .sentinela-transition,
+  .sentinela-fade-in {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
-.tree-mature {
-  filter: hue-rotate(0deg) brightness(1);
+@media (prefers-color-scheme: dark) {
+  .sentinela-auto {
+    --sentinela-background: #1a1a1a;
+    --sentinela-surface: #2a2a2a;
+    --sentinela-text: #f0f0f0;
+    --sentinela-text-secondary: #a0a0a0;
+    --sentinela-border: #3a3a3a;
+  }
 }
 
-.tree-ancient {
-  filter: hue-rotate(-20deg) brightness(1.2) drop-shadow(0 0 30px rgba(34, 197, 94, 0.4));
+
+/* ============================================================================ */
+/* IMPORT - SISTEMA RESPONSIVO OTIMIZADO */
+/* ============================================================================ */
+@import './responsive.css';
+
+/* ============================================================================ */
+/* MODO ESCURO - APRIMORAMENTOS */
+/* ============================================================================ */
+
+/* Tema escuro via themeStore */
+.theme-dark {
+  --sentinela-background: #1a1a1a;
+  --sentinela-surface: #2a2a2a;
+  --sentinela-text: #f0f0f0;
+  --sentinela-text-secondary: #a0a0a0;
+  --sentinela-border: #3a3a3a;
+}
+
+/* Transições suaves para mudança de tema */
+.theme-transition {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Aplicar transição em elementos principais */
+body, 
+.sentinela-card,
+.sentinela-btn,
+.responsive-card,
+.responsive-button {
+  @apply theme-transition;
+}
+
+/* ============================================================================ */
+/* RESPONSIVIDADE - MELHORIAS ESPECÍFICAS */
+/* ============================================================================ */
+
+/* Touch targets otimizados */
+@media (max-width: 768px) {
+  button, 
+  .sentinela-btn,
+  .responsive-button,
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Scrollbars responsivas */
+@media (max-width: 640px) {
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+}
+
+/* Otimizações para telas pequenas */
+@media (max-width: 375px) {
+  :root {
+    --sentinela-radius: 8px;
+    --sentinela-spacing: 0.75rem;
+  }
+  
+  .sentinela-title {
+    font-size: 1.25rem;
+  }
+  
+  .sentinela-card {
+    padding: 1rem;
+  }
 }
