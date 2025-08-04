@@ -18,31 +18,55 @@ const publicRoutes = ['/auth', '/login', '/register'];
 export function AuthMiddleware({ children }: AuthMiddlewareProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, isLoading, checkAuthStatus } = useAuthStore();
+  const { isAuthenticated, isLoading, user, initializeAuth } = useAuthStore();
   const [isHydrated, setIsHydrated] = useState(false);
 
   const isPublicRoute = publicRoutes.includes(pathname);
 
   useEffect(() => {
-    // Marcar como hidratado
+    // Marcar como hidratado e inicializar auth
     setIsHydrated(true);
+    initializeAuth();
+  }, [initializeAuth]);
+
+  useEffect(() => {
+    if (!isHydrated) return;
     
-    const verifyAuth = async () => {
-      if (!isPublicRoute && !isAuthenticated) {
-        const isValid = await checkAuthStatus();
-        if (!isValid) {
-          router.push('/auth');
-        }
-      } else if (isPublicRoute && isAuthenticated) {
-        router.push('/');
+    const verifyAuth = () => {
+      // Verificar se há token no localStorage
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth-token') : null;
+      
+      // Log para debug
+      console.log('AuthMiddleware Debug:', {
+        pathname,
+        isPublicRoute,
+        isAuthenticated,
+        hasToken: !!token,
+        user
+      });
+      
+      // Se estiver na página /auth e não estiver autenticado, não redirecionar
+      if (pathname === '/auth' && !isAuthenticated) {
+        return;
+      }
+      
+      // Se estiver em rota privada sem autenticação, redirecionar para auth
+      if (!isPublicRoute && !isAuthenticated && !token) {
+        console.log('Redirecting to /auth - no auth on private route');
+        router.push('/auth');
+        return;
+      }
+      
+      // Se estiver em rota pública mas autenticado, redirecionar para bombeiro
+      if (isPublicRoute && isAuthenticated && token) {
+        console.log('Redirecting to /bombeiro - authenticated user on public route');
+        router.push('/bombeiro');
+        return;
       }
     };
 
-    // Só verificar auth após hidratação completa
-    if (isHydrated) {
-      verifyAuth();
-    }
-  }, [isAuthenticated, isPublicRoute, pathname, router, checkAuthStatus, isHydrated]);
+    verifyAuth();
+  }, [isAuthenticated, isPublicRoute, pathname, router, isHydrated, user]);
 
   // Durante SSR ou carregamento, mostrar loading
   if (!isHydrated || isLoading) {

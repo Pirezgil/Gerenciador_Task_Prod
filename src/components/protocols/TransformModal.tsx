@@ -60,7 +60,7 @@ export function TransformModal() {
         <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-4 mb-6 border border-amber-200">
           <p className="text-sm text-amber-700 font-semibold mb-1">💡 Sua ideia:</p>
           <p className="text-sm text-gray-700 italic leading-relaxed">
-            "{showTransformModal?.content?.slice(0, 120)}{showTransformModal?.content && showTransformModal.content.length > 120 ? '...' : ''}"
+            &ldquo;{showTransformModal?.content?.slice(0, 120)}{showTransformModal?.content && showTransformModal.content.length > 120 ? '...' : ''}&rdquo;
           </p>
         </div>
         

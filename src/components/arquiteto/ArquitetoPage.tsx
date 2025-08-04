@@ -1,6 +1,6 @@
 'use client';
 
-import { useTasksStore } from '@/stores/tasksStore';
+import { useProjects, useProjectsStats } from '@/hooks/api/useProjects';
 import { useModalsStore } from '@/stores/modalsStore';
 import { TaskEditModal } from '@/components/shared/TaskEditModal';
 import { NewProjectModal } from '@/components/shared/NewProjectModal';
@@ -9,13 +9,11 @@ import { ProjectContainer } from './ProjectContainer';
 import { Plus, Layout } from 'lucide-react';
 
 export function ArquitetoPage() {
-  const { projects } = useTasksStore();
+  const { data: projects = [], isLoading } = useProjects();
+  const stats = useProjectsStats();
   const { openNewProjectModal } = useModalsStore();
 
-  const activeProjects = projects.filter(p => !p.status || p.status === 'active').length;
-  const completedProjects = projects.filter(p => p.status === 'completed').length;
-  const totalTasks = projects.reduce((total, p) => total + p.backlog.length, 0);
-  const inPlanningProjects = projects.filter(p => p.status === 'planning').length;
+  if (isLoading) return <div className="p-4">Carregando projetos...</div>;
 
   return (
     <>
@@ -46,19 +44,19 @@ export function ArquitetoPage() {
             {/* Quick Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
-                <div className="text-2xl font-bold">{activeProjects}</div>
+                <div className="text-2xl font-bold">{stats.active}</div>
                 <div className="text-sm text-purple-100">Projetos Ativos</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
-                <div className="text-2xl font-bold">{totalTasks}</div>
+                <div className="text-2xl font-bold">{stats.totalTasks}</div>
                 <div className="text-sm text-purple-100">Total de Tijolos</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
-                <div className="text-2xl font-bold">{completedProjects}</div>
+                <div className="text-2xl font-bold">{stats.completed}</div>
                 <div className="text-sm text-purple-100">Concluídos</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
-                <div className="text-2xl font-bold">{inPlanningProjects}</div>
+                <div className="text-2xl font-bold">{stats.planning}</div>
                 <div className="text-sm text-purple-100">Em Planejamento</div>
               </div>
             </div>

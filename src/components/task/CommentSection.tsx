@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useTasksStore } from '@/stores/tasksStore';
+import { useAddComment } from '@/hooks/api/useTasks';
 import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui/button';
 import { Send } from 'lucide-react';
@@ -14,13 +14,24 @@ interface CommentSectionProps {
 
 export function CommentSection({ task }: CommentSectionProps) {
   const [newComment, setNewComment] = useState('');
-  const { addComment } = useTasksStore();
+  const addCommentMutation = useAddComment();
   const { user } = useAuthStore();
 
-  const handleAddComment = () => {
+  const handleAddComment = async () => {
     if (newComment.trim() === '' || !user) return;
-    addComment(task.id, { author: user.name || 'Usuário', content: newComment.trim() });
-    setNewComment('');
+    
+    try {
+      await addCommentMutation.mutateAsync({
+        taskId: task.id,
+        comment: { 
+          author: user.name || 'Usuário', 
+          content: newComment.trim() 
+        }
+      });
+      setNewComment('');
+    } catch (error) {
+      console.error('Erro ao adicionar comentário:', error);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

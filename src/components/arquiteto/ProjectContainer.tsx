@@ -100,16 +100,16 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
                 <p className="theme-text-muted">
                   🧱 {(() => {
                     const allTasks = [
-                      ...project.backlog,
+                      ...(project.backlog || []),
                       ...todayTasks.filter(task => task.projectId === project.id),
                       ...postponedTasks.filter(task => task.projectId === project.id)
                     ];
                     return allTasks.length;
                   })()} tijolos
                 </p>
-                {project.backlog.filter(t => t.status === 'completed').length > 0 && (
+                {(project.backlog?.filter(t => t.status === 'completed').length || 0) > 0 && (
                   <p className="text-green-600">
-                    ✅ {project.backlog.filter(t => t.status === 'completed').length} concluídos
+                    ✅ {project.backlog?.filter(t => t.status === 'completed').length || 0} concluídos
                   </p>
                 )}
               </div>
@@ -155,7 +155,7 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
                   <span className="ml-2 text-sm bg-gray-200 theme-text-secondary px-2 py-1 rounded-full">
                     {(() => {
                       const allTasks = [
-                        ...project.backlog,
+                        ...(project.backlog || []),
                         ...todayTasks.filter(task => task.projectId === project.id),
                         ...postponedTasks.filter(task => task.projectId === project.id)
                       ];
@@ -168,7 +168,7 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
                   <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full">
                     {(() => {
                       const allTasks = [
-                        ...project.backlog,
+                        ...(project.backlog || []),
                         ...todayTasks.filter(task => task.projectId === project.id),
                         ...postponedTasks.filter(task => task.projectId === project.id)
                       ];
@@ -178,7 +178,7 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
                   <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full">
                     {(() => {
                       const allTasks = [
-                        ...project.backlog,
+                        ...(project.backlog || []),
                         ...todayTasks.filter(task => task.projectId === project.id),
                         ...postponedTasks.filter(task => task.projectId === project.id)
                       ];
@@ -284,7 +284,7 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
             <div className="space-y-2">
               {(() => {
                 const allTasks = [
-                  ...project.backlog,
+                  ...(project.backlog || []),
                   ...todayTasks.filter(task => task.projectId === project.id),
                   ...postponedTasks.filter(task => task.projectId === project.id)
                 ];

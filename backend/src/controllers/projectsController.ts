@@ -1,0 +1,189 @@
+import { Response, NextFunction } from 'express';
+import * as projectService from '../services/projectService';
+import { AuthenticatedRequest } from '../types/api';
+import { CreateProjectRequest, UpdateProjectRequest } from '../types/project';
+
+export const getProjects = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    if (!req.userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Não autenticado',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    const includeStats = req.query.includeStats === 'true';
+    const projects = await projectService.getUserProjects(req.userId, includeStats);
+    
+    res.json({
+      success: true,
+      data: projects,
+      meta: {
+        total: projects.length,
+        includeStats
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getProject = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    if (!req.userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Não autenticado',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    const { id } = req.params;
+    const includeTasks = req.query.includeTasks === 'true';
+    
+    const project = await projectService.getProjectById(id, req.userId, includeTasks);
+    
+    res.json({
+      success: true,
+      data: project,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error: any) {
+    if (error.message === 'Projeto não encontrado') {
+      return res.status(404).json({
+        success: false,
+        error: 'Projeto não encontrado',
+        message: 'O projeto solicitado não existe ou não pertence ao usuário',
+        timestamp: new Date().toISOString()
+      });
+    }
+    next(error);
+  }
+};
+
+export const createProject = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    if (!req.userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Não autenticado',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    const projectData: CreateProjectRequest = req.body;
+    const project = await projectService.createProject(req.userId, projectData);
+    
+    res.status(201).json({
+      success: true,
+      message: 'Projeto criado com sucesso',
+      data: project,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateProject = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    if (!req.userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Não autenticado',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    const { id } = req.params;
+    const updateData: UpdateProjectRequest = req.body;
+    
+    const project = await projectService.updateProject(id, req.userId, updateData);
+    
+    res.json({
+      success: true,
+      message: 'Projeto atualizado com sucesso',
+      data: project,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error: any) {
+    if (error.message === 'Projeto não encontrado') {
+      return res.status(404).json({
+        success: false,
+        error: 'Projeto não encontrado',
+        timestamp: new Date().toISOString()
+      });
+    }
+    next(error);
+  }
+};
+
+export const deleteProject = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    if (!req.userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Não autenticado',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    const { id } = req.params;
+    await projectService.deleteProject(id, req.userId);
+    
+    res.json({
+      success: true,
+      message: 'Projeto deletado com sucesso',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error: any) {
+    if (error.message === 'Projeto não encontrado') {
+      return res.status(404).json({
+        success: false,
+        error: 'Projeto não encontrado',
+        timestamp: new Date().toISOString()
+      });
+    }
+    if (error.message === 'Não é possível deletar projeto com tarefas vinculadas') {
+      return res.status(400).json({
+        success: false,
+        error: 'Projeto contém tarefas',
+        message: 'Remova ou mova todas as tarefas antes de deletar o projeto',
+        timestamp: new Date().toISOString()
+      });
+    }
+    next(error);
+  }
+};
+
+export const getProjectStats = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    if (!req.userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Não autenticado',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    const { id } = req.params;
+    const stats = await projectService.getProjectStats(id, req.userId);
+    
+    res.json({
+      success: true,
+      data: stats,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error: any) {
+    if (error.message === 'Projeto não encontrado') {
+      return res.status(404).json({
+        success: false,
+        error: 'Projeto não encontrado',
+        timestamp: new Date().toISOString()
+      });
+    }
+    next(error);
+  }
+};

@@ -26,7 +26,6 @@ import {
   Brain,
   Zap
 } from 'lucide-react';
-import { useTasksStore } from '@/stores/tasksStore';
 
 interface SidebarProps {
   className?: string;
@@ -38,11 +37,13 @@ export function Sidebar({ className = '' }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   
-  // Energy budget para mostrar informações contextuais - seletores específicos
-  const todayTasks = useTasksStore(state => state.todayTasks);
-  const postponedTasks = useTasksStore(state => state.postponedTasks);
-  const calculateEnergyBudget = useTasksStore(state => state.calculateEnergyBudget);
-  const energyBudget = useMemo(() => calculateEnergyBudget(), [todayTasks, postponedTasks, calculateEnergyBudget]);
+  // Energy budget temporariamente desabilitado para evitar conflitos de hooks
+  const energyBudget = useMemo(() => ({
+    used: 0,
+    remaining: 12,
+    total: 12,
+    tasks: []
+  }), []);
 
   // Navegação principal seguindo filosofia "Sentinela"
   const navigationItems = [

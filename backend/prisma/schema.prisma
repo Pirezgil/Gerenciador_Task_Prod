@@ -1,0 +1,350 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===== USUÁRIOS E AUTENTICAÇÃO =====
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  avatarUrl String?  @map("avatar_url")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relacionamentos
+  settings            UserSettings?
+  sandboxAuth         SandboxAuth?
+  tasks               Task[]
+  projects            Project[]
+  notes               Note[]
+  habits              Habit[]
+  sandboxLayouts      SandboxLayout[]
+  themeConfigs        ThemeConfig[]
+  dailyEnergyLogs     DailyEnergyLog[]
+  dopamineAnimations  DopamineAnimation[]
+
+  @@map("users")
+}
+
+model UserSettings {
+  id                String   @id @default(cuid())
+  userId            String   @unique @map("user_id")
+  dailyEnergyBudget Int      @default(12) @map("daily_energy_budget")
+  theme             String   @default("light")
+  timezone          String   @default("America/Sao_Paulo")
+  notifications     Boolean  @default(true)
+  sandboxPassword   String?  @map("sandbox_password")
+  sandboxEnabled    Boolean  @default(false) @map("sandbox_enabled")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
+}
+
+model SandboxAuth {
+  id               String    @id @default(cuid())
+  userId           String    @unique @map("user_id")
+  isUnlocked       Boolean   @default(false) @map("is_unlocked")
+  lastUnlockTime   DateTime? @map("last_unlock_time")
+  failedAttempts   Int       @default(0) @map("failed_attempts")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sandbox_auth")
+}
+
+// ===== PROJETOS =====
+
+model Project {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  name         String
+  icon         String   @default("📁")
+  color        String   @default("#3B82F6")
+  status       String   @default("active")
+  deadline     DateTime? @db.Date
+  sandboxNotes String?  @map("sandbox_notes")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks Task[]
+
+  @@map("projects")
+}
+
+// ===== TAREFAS =====
+
+model Task {
+  id                  String    @id @default(cuid())
+  userId              String    @map("user_id")
+  projectId           String?   @map("project_id")
+  description         String
+  status              String    @default("pending")
+  energyPoints        Int       @map("energy_points")
+  type                String    @default("task")
+  isRecurring         Boolean   @default(false) @map("is_recurring")
+  isAppointment       Boolean   @default(false) @map("is_appointment")
+  dueDate             DateTime? @db.Date @map("due_date")
+  rescheduleDate      DateTime? @db.Date @map("reschedule_date")
+  postponementCount   Int       @default(0) @map("postponement_count")
+  postponementReason  String?   @map("postponement_reason")
+  plannedForToday     Boolean   @default(false) @map("planned_for_today")
+  externalLinks       String[]  @map("external_links")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  completedAt         DateTime? @map("completed_at")
+  postponedAt         DateTime? @map("postponed_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project      Project?           @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  recurrence   TaskRecurrence?
+  appointment  TaskAppointment?
+  comments     TaskComment[]
+  attachments  TaskAttachment[]
+  history      TaskHistory[]
+  dopamineRefs DopamineAnimation[]
+
+  @@map("tasks")
+}
+
+model TaskRecurrence {
+  id            String    @id @default(cuid())
+  taskId        String    @unique @map("task_id")
+  frequency     String
+  daysOfWeek    Int[]     @map("days_of_week")
+  lastCompleted DateTime? @map("last_completed")
+  nextDue       DateTime? @map("next_due")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("task_recurrence")
+}
+
+model TaskAppointment {
+  id              String   @id @default(cuid())
+  taskId          String   @unique @map("task_id")
+  scheduledTime   String   @map("scheduled_time")
+  preparationTime Int      @default(0) @map("preparation_time")
+  location        String?
+  notes           String?
+  reminderTime    Int?     @map("reminder_time")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("task_appointments")
+}
+
+model TaskComment {
+  id        String   @id @default(cuid())
+  taskId    String   @map("task_id")
+  author    String
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("task_comments")
+}
+
+model TaskAttachment {
+  id         String   @id @default(cuid())
+  taskId     String?  @map("task_id")
+  noteId     String?  @map("note_id")
+  name       String
+  url        String
+  type       String
+  size       BigInt
+  uploadedAt DateTime @default(now()) @map("uploaded_at")
+
+  task Task? @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  note Note? @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@map("task_attachments")
+}
+
+model TaskHistory {
+  id        String   @id @default(cuid())
+  taskId    String   @map("task_id")
+  action    String
+  timestamp DateTime @default(now())
+  details   Json?
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("task_history")
+}
+
+// ===== NOTAS (CAIXA DE AREIA) =====
+
+model Note {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  content   String
+  status    String   @default("active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  layout      SandboxLayout?
+  attachments TaskAttachment[]
+
+  @@map("notes")
+}
+
+model SandboxLayout {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  noteId     String   @unique @map("note_id")
+  positionX  Int      @default(0) @map("position_x")
+  positionY  Int      @default(0) @map("position_y")
+  width      Int      @default(300)
+  height     Int      @default(200)
+  zIndex     Int      @default(1) @map("z_index")
+  isExpanded Boolean  @default(false) @map("is_expanded")
+  color      String   @default("#FEF3C7")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@map("sandbox_layout")
+}
+
+// ===== HÁBITOS =====
+
+model Habit {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  name        String
+  description String?
+  icon        String   @default("✅")
+  color       String   @default("#10B981")
+  targetCount Int      @default(1) @map("target_count")
+  streak      Int      @default(0)
+  bestStreak  Int      @default(0) @map("best_streak")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  frequency   HabitFrequency?
+  completions HabitCompletion[]
+
+  @@map("habits")
+}
+
+model HabitFrequency {
+  id           String   @id @default(cuid())
+  habitId      String   @unique @map("habit_id")
+  type         String
+  intervalDays Int      @default(1) @map("interval_days")
+  daysOfWeek   Int[]    @map("days_of_week")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  habit Habit @relation(fields: [habitId], references: [id], onDelete: Cascade)
+
+  @@map("habit_frequency")
+}
+
+model HabitCompletion {
+  id          String   @id @default(cuid())
+  habitId     String   @map("habit_id")
+  date        DateTime @db.Date
+  completedAt DateTime @default(now()) @map("completed_at")
+  count       Int      @default(1)
+  notes       String?
+
+  habit Habit @relation(fields: [habitId], references: [id], onDelete: Cascade)
+
+  @@unique([habitId, date])
+  @@map("habit_completions")
+}
+
+// ===== TEMAS E PERSONALIZAÇÃO =====
+
+model ThemeConfig {
+  id                  String   @id @default(cuid())
+  userId              String   @map("user_id")
+  name                String
+  description         String?
+  primaryColor        String   @map("primary_color")
+  secondaryColor      String   @map("secondary_color")
+  surfaceColor        String   @map("surface_color")
+  backgroundColor     String   @map("background_color")
+  textColor           String   @map("text_color")
+  textSecondaryColor  String   @map("text_secondary_color")
+  borderColor         String   @map("border_color")
+  shadowColor         String   @map("shadow_color")
+  mode                String   @default("light")
+  borderRadius        String   @default("medium") @map("border_radius")
+  iconSize            String   @default("medium") @map("icon_size")
+  spacing             String   @default("normal")
+  fontFamily          String   @default("system") @map("font_family")
+  fontSize            String   @default("medium") @map("font_size")
+  animations          Boolean  @default(true)
+  glassmorphism       Boolean  @default(false)
+  isPreset            Boolean  @default(false) @map("is_preset")
+  isActive            Boolean  @default(false) @map("is_active")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("theme_configs")
+}
+
+// ===== SISTEMA DE ENERGIA E ESTATÍSTICAS =====
+
+model DailyEnergyLog {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  date            DateTime @db.Date
+  budgetTotal     Int      @map("budget_total")
+  energyUsed      Int      @default(0) @map("energy_used")
+  energyRemaining Int      @default(0) @map("energy_remaining")
+  tasksCompleted  Int      @default(0) @map("tasks_completed")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@map("daily_energy_logs")
+}
+
+model DopamineAnimation {
+  id                  String    @id @default(cuid())
+  userId              String    @map("user_id")
+  isActive            Boolean   @default(false) @map("is_active")
+  totalLeaves         Int       @default(0) @map("total_leaves")
+  currentLeaves       Int       @default(0) @map("current_leaves")
+  treeAge             Int       @default(0) @map("tree_age")
+  lastGrowth          DateTime? @map("last_growth")
+  lastCompletedTaskId String?   @map("last_completed_task")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  user              User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastCompletedTask Task? @relation(fields: [lastCompletedTaskId], references: [id])
+
+  @@map("dopamine_animations")
+}

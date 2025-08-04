@@ -50,6 +50,7 @@ export interface Task {
   postponementReason?: string;
   rescheduleDate?: string;
   dueDate?: string;
+  plannedForToday?: boolean;
   comments: Comment[];
   attachments: Attachment[];
   history: HistoryEntry[];

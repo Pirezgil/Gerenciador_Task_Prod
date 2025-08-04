@@ -4,26 +4,34 @@
 // PÁGINA DE AUTENTICAÇÃO - Login e Register
 // ============================================================================
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 export default function AuthPage() {
   const router = useRouter();
-  const { login, isLoading } = useAuthStore();
+  const { login, isLoading, isAuthenticated } = useAuthStore();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
+
+  // Redirecionar se já estiver autenticado
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/bombeiro');
+    }
+  }, [isAuthenticated, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
       await login(formData.email, formData.password);
-      router.push('/');
+      router.push('/bombeiro');
     } catch (error) {
       console.error('Erro ao fazer login:', error);
     }
@@ -109,6 +117,16 @@ export default function AuthPage() {
           </Button>
         </form>
 
+        {/* Register Link */}
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-600">
+            Não tem uma conta?{' '}
+            <Link href="/register" className="text-blue-600 hover:text-blue-700 font-medium">
+              Criar conta
+            </Link>
+          </p>
+        </div>
+
         {/* Footer */}
         <div className="mt-8 text-center">
           <p className="text-sm text-gray-500">
@@ -119,16 +137,34 @@ export default function AuthPage() {
         {/* Quick Login para desenvolvimento */}
         <div className="mt-6 p-4 bg-blue-50 rounded-xl">
           <p className="text-xs text-blue-700 mb-2 font-medium">🚀 Acesso Rápido (Desenvolvimento)</p>
-          <Button
-            type="button"
-            onClick={() => {
-              setFormData({ email: 'demo@cerebro.com', password: '123456' });
-              handleSubmit({ preventDefault: () => {} } as React.FormEvent);
-            }}
-            className="w-full text-sm bg-blue-100 text-blue-700 py-2 rounded-lg hover:bg-blue-200 transition-colors"
-          >
-            Login Automático
-          </Button>
+          <div className="space-y-2">
+            <Button
+              type="button"
+              onClick={async () => {
+                try {
+                  await login('demo@cerebro.com', '123456');
+                  router.push('/bombeiro');
+                } catch (error) {
+                  console.error('Erro no login automático:', error);
+                }
+              }}
+              className="w-full text-sm bg-blue-100 text-blue-700 py-2 rounded-lg hover:bg-blue-200 transition-colors"
+            >
+              Login Automático
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  localStorage.clear();
+                  window.location.reload();
+                }
+              }}
+              className="w-full text-sm bg-red-100 text-red-700 py-2 rounded-lg hover:bg-red-200 transition-colors"
+            >
+              🧹 Limpar Dados Corrompidos
+            </Button>
+          </div>
         </div>
       </motion.div>
     </div>

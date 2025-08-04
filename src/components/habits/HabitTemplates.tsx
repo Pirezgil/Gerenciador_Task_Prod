@@ -150,7 +150,7 @@ export function HabitTemplates({ onSelectTemplate }: HabitTemplatesProps) {
       <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-6 border border-blue-200">
         <h4 className="font-semibold text-blue-900 mb-2">💡 Dica</h4>
         <p className="text-blue-700 text-sm">
-          Estes são modelos pré-configurados para começar rapidamente. Você pode personalizar qualquer aspecto antes de criar o hábito, ou criar um completamente do zero clicando em "Novo Hábito".
+          Estes são modelos pré-configurados para começar rapidamente. Você pode personalizar qualquer aspecto antes de criar o hábito, ou criar um completamente do zero clicando em &ldquo;Novo Hábito&rdquo;.
         </p>
       </div>
 

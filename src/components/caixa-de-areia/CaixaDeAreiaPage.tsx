@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, Lock, Sparkles, Edit3, Archive, Plus, SortAsc, SortDesc } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useNotesStore } from '@/stores/notesStore';
+import { useNotes, useCreateNote, useUpdateNote, useDeleteNote } from '@/hooks/api/useNotes';
 import { useAuthStore } from '@/stores/authStore';
 import { useModalsStore } from '@/stores/modalsStore';
 
@@ -16,18 +16,15 @@ import { NewProjectModal } from '@/components/shared/NewProjectModal';
 export function CaixaDeAreiaPage() {
   const [sortBy, setSortBy] = useState<'created' | 'updated'>('updated');
   const [showAddNote, setShowAddNote] = useState(false);
+  const [newNoteContent, setNewNoteContent] = useState('');
+  const [editingNote, setEditingNote] = useState<string | null>(null);
   const router = useRouter();
-  const {
-    notes,
-    newNoteContent,
-    saveNote,
-    updateNote,
-    archiveNote,
-    deleteNote,
-    editingNote,
-    setNewNoteContent,
-    setEditingNote
-  } = useNotesStore();
+  
+  const { data: notes = [], isLoading } = useNotes();
+  const createNote = useCreateNote();
+  const updateNote = useUpdateNote();
+  const deleteNote = useDeleteNote();
+  
   const { setShowTransformModal } = useModalsStore();
   const { sandboxAuth, user, unlockSandbox } = useAuthStore();
   const [password, setPassword] = useState('');
@@ -71,10 +68,18 @@ export function CaixaDeAreiaPage() {
     router.push('/settings?tab=security');
   };
 
-  const handleAddNote = () => {
+  const handleAddNote = async () => {
     if (newNoteContent.trim()) {
-      saveNote(newNoteContent);
-      setShowAddNote(false);
+      try {
+        await createNote.mutateAsync({
+          content: newNoteContent,
+          status: 'active',
+        });
+        setNewNoteContent('');
+        setShowAddNote(false);
+      } catch (error) {
+        console.error('Erro ao criar nota:', error);
+      }
     }
   };
 
@@ -88,6 +93,8 @@ export function CaixaDeAreiaPage() {
       setNewNoteContent('');
     }
   };
+
+  if (isLoading) return <div className="p-4">Carregando notas...</div>;
 
   if (needsAuth) {
     return (
@@ -299,14 +306,14 @@ export function CaixaDeAreiaPage() {
                           <Edit3 className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => archiveNote(note.id)}
+                          onClick={() => updateNote.mutate({ noteId: note.id, updates: { status: 'archived' } })}
                           className="p-2 text-gray-400 hover:text-text-secondary transition-colors bg-gray-50 rounded-xl hover:bg-gray-100"
                           title="Arquivar"
                         >
                           <Archive className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => deleteNote(note.id)}
+                          onClick={() => deleteNote.mutate(note.id)}
                           className="p-2 text-gray-400 hover:text-red-500 transition-colors bg-gray-50 rounded-xl hover:bg-red-50"
                           title="Deletar"
                         >

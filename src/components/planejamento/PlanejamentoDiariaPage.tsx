@@ -2,8 +2,8 @@
 
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { useTasksStore } from '@/stores/tasksStore';
-import { useEnergyBudget } from '@/hooks/useEnergyBudget';
+import { useTasks, useUpdateTask } from '@/hooks/api/useTasks';
+import { useProjects } from '@/hooks/api/useProjects';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { 
@@ -30,44 +30,68 @@ interface TaskWithProject {
 
 export function PlanejamentoDiariaPage() {
   const router = useRouter();
-  const { todayTasks, projects, postponedTasks } = useTasksStore();
-  const energyBudget = useEnergyBudget();
+  const { data: allTasks = [], isLoading: tasksLoading } = useTasks();
+  const { data: projects = [], isLoading: projectsLoading } = useProjects();
+  const updateTaskMutation = useUpdateTask();
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set());
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Orçamento de energia simples (pode ser customizado via hook depois)
+  const dailyEnergyBudget = 15;
 
   const allAvailableTasks = useMemo(() => {
+    if (tasksLoading || projectsLoading) return [];
+    
     const tasks: TaskWithProject[] = [];
+    const today = new Date().toISOString().split('T')[0];
 
-    todayTasks.forEach(task => {
-      if (task.status === 'pending') {
+    // Adicionar todas as tarefas pendentes e adiadas
+    allTasks.forEach(task => {
+      if (task.status === 'pending' || task.status === 'postponed') {
         const project = projects.find(p => p.id === task.projectId);
+        let source: 'today' | 'project' | 'postponed' = 'project';
+        
+        // Determinar a origem da tarefa
+        if (task.status === 'postponed') {
+          source = 'postponed';
+        } else if (task.dueDate === today || !task.dueDate) {
+          source = 'today';
+        }
+
         tasks.push({
-          ...task,
+          id: task.id,
+          description: task.description,
+          energyPoints: task.energyPoints as 1 | 3 | 5,
+          projectId: task.projectId,
           projectName: project?.name,
-          source: 'today'
+          deadline: task.dueDate || undefined,
+          source,
+          status: task.status as 'pending' | 'completed' | 'postponed'
         });
       }
     });
 
+    // Adicionar tarefas do backlog dos projetos (se existir)
     projects.forEach(project => {
-      project.backlog.forEach(task => {
-        if (task.status === 'pending') {
-          tasks.push({
-            ...task,
-            projectName: project.name,
-            source: 'project'
-          });
-        }
-      });
-    });
-
-    postponedTasks.forEach(task => {
-      if (task.status === 'postponed') {
-        const project = projects.find(p => p.id === task.projectId);
-        tasks.push({
-          ...task,
-          projectName: project?.name,
-          source: 'postponed'
+      if (project.backlog && Array.isArray(project.backlog)) {
+        project.backlog.forEach(task => {
+          if (task.status === 'pending') {
+            // Verificar se a tarefa já não foi adicionada
+            const exists = tasks.find(t => t.id === task.id);
+            if (!exists) {
+              tasks.push({
+                id: task.id,
+                description: task.description,
+                energyPoints: task.energyPoints as 1 | 3 | 5,
+                projectId: project.id,
+                projectName: project.name,
+                deadline: task.dueDate || undefined,
+                source: 'project',
+                status: 'pending'
+              });
+            }
+          }
         });
       }
     });
@@ -80,7 +104,7 @@ export function PlanejamentoDiariaPage() {
       if (!a.deadline && b.deadline) return 1;
       return 0;
     });
-  }, [todayTasks, projects, postponedTasks]);
+  }, [allTasks, projects, tasksLoading, projectsLoading]);
 
   const selectedEnergy = useMemo(() => {
     return Array.from(selectedTasks).reduce((total, taskId) => {
@@ -98,7 +122,7 @@ export function PlanejamentoDiariaPage() {
       newSelected.delete(taskId);
     } else {
       const newEnergy = selectedEnergy + task.energyPoints;
-      if (newEnergy <= energyBudget.total) {
+      if (newEnergy <= dailyEnergyBudget) {
         newSelected.add(taskId);
       }
     }
@@ -143,8 +167,59 @@ export function PlanejamentoDiariaPage() {
   };
 
   const handleTaskClick = (taskId: string) => {
-    router.push(`/task?id=${taskId}`);
+    router.push(`/task/${taskId}`);
   };
+
+  const handleStartDay = async () => {
+    if (selectedTasks.size === 0) return;
+
+    setIsProcessing(true);
+    
+    try {
+      // Marcar todas as tarefas selecionadas como planejadas para hoje
+      const updatePromises = Array.from(selectedTasks).map(taskId => {
+        return updateTaskMutation.mutateAsync({
+          taskId,
+          updates: {
+            plannedForToday: true,
+            status: 'pending' // Garantir que estão pendentes
+          }
+        });
+      });
+
+      await Promise.all(updatePromises);
+      
+      // Limpar seleções após sucesso
+      setSelectedTasks(new Set());
+      
+      // Navegar para bombeiro
+      router.push('/bombeiro');
+    } catch (error) {
+      console.error('Erro ao configurar tarefas para hoje:', error);
+      // Ainda navegar mesmo se houver erro
+      router.push('/bombeiro');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Calcular métricas de energia
+  const energyUsed = selectedEnergy;
+  const energyRemaining = dailyEnergyBudget - energyUsed;
+  const energyPercentage = (energyUsed / dailyEnergyBudget) * 100;
+  const isOverBudget = energyUsed > dailyEnergyBudget;
+
+  // Mostrar loading se ainda carregando
+  if (tasksLoading || projectsLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregando tarefas...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
@@ -175,7 +250,7 @@ export function PlanejamentoDiariaPage() {
                   const isSelected = selectedTasks.has(task.id);
                   const isExpanded = expandedTasks.has(task.id);
                   const energyConfig = getEnergyConfig(task.energyPoints);
-                  const canSelect = !isSelected && (selectedEnergy + task.energyPoints) <= energyBudget.total;
+                  const canSelect = !isSelected && (selectedEnergy + task.energyPoints) <= dailyEnergyBudget;
 
                   return (
                     <motion.div
@@ -244,7 +319,7 @@ export function PlanejamentoDiariaPage() {
                           </button>
 
                           <Button
-                            variant="ghost"
+                            variant={isSelected ? "default" : "ghost"}
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation();
@@ -253,11 +328,11 @@ export function PlanejamentoDiariaPage() {
                             disabled={!canSelect && !isSelected}
                             className={`${
                               isSelected
-                                ? 'text-red-600 hover:text-red-700'
-                                : 'text-green-600 hover:text-green-700'
+                                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                : 'text-green-600 hover:text-green-700 hover:bg-green-50'
                             } ${(!canSelect && !isSelected) ? 'opacity-50 cursor-not-allowed' : ''}`}
                           >
-                            {isSelected ? 'Atuar Depois' : 'Atuar Hoje'}
+                            {isSelected ? 'Remover da Lista' : 'Atuar Hoje'}
                           </Button>
                         </div>
 
@@ -300,30 +375,30 @@ export function PlanejamentoDiariaPage() {
               
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span>Usado:</span>
-                  <span className="font-medium">{energyBudget.used}</span>
+                  <span>Planejado:</span>
+                  <span className="font-medium">{energyUsed}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>Total:</span>
-                  <span className="font-medium">{energyBudget.total}</span>
+                  <span>Orçamento:</span>
+                  <span className="font-medium">{dailyEnergyBudget}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Restante:</span>
-                  <span className={`font-medium ${energyBudget.remaining < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                    {energyBudget.remaining}
+                  <span className={`font-medium ${energyRemaining < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    {energyRemaining}
                   </span>
                 </div>
                 
                 <div className="w-full bg-gray-200 rounded-full h-3 mt-3">
                   <div
                     className={`h-3 rounded-full transition-all ${
-                      energyBudget.isOverBudget ? 'bg-red-500' : 'bg-blue-500'
+                      isOverBudget ? 'bg-red-500' : 'bg-blue-500'
                     }`}
-                    style={{ width: `${Math.min(energyBudget.percentage, 100)}%` }}
+                    style={{ width: `${Math.min(energyPercentage, 100)}%` }}
                   />
                 </div>
                 
-                {energyBudget.isOverBudget && (
+                {isOverBudget && (
                   <p className="text-xs text-red-600 mt-2">
                     ⚠️ Orçamento excedido!
                   </p>
@@ -351,9 +426,17 @@ export function PlanejamentoDiariaPage() {
                 <div className="mt-4 pt-4 border-t border-gray-200">
                   <Button 
                     className="w-full"
-                    onClick={() => router.push('/bombeiro')}
+                    onClick={handleStartDay}
+                    disabled={isProcessing}
                   >
-                    Iniciar Dia
+                    {isProcessing ? (
+                      <div className="flex items-center justify-center">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                        Configurando...
+                      </div>
+                    ) : (
+                      'Iniciar Dia'
+                    )}
                   </Button>
                 </div>
               )}

@@ -10,7 +10,8 @@ import { X, Battery, Brain, Zap, CheckSquare, AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 // Stores e Tipos
-import { useTasksStore } from '@/stores/tasksStore';
+import { useCreateTask } from '@/hooks/api/useTasks';
+import { useProjects } from '@/hooks/api/useProjects';
 import { useModalsStore } from '@/stores/modalsStore';
 import { useAuthStore } from '@/stores/authStore';
 import type { Attachment } from '@/types/task';
@@ -23,7 +24,8 @@ export function NewTaskModal() {
   const router = useRouter();
   
   // Estado dos Stores
-  const { projects, addTask, addTaskToProject, canAddTask, calculateEnergyBudget } = useTasksStore();
+  const { data: projects = [] } = useProjects();
+  const createTask = useCreateTask();
   const { showCaptureModal, setShowCaptureModal, showNewTaskModal, setShowNewTaskModal, preselectedProjectId, transformedNote, setTransformedNote } = useModalsStore();
   const { user } = useAuthStore();
 
@@ -47,8 +49,6 @@ export function NewTaskModal() {
   const [isCreating, setIsCreating] = useState(false);
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
 
-  const energyBudget = calculateEnergyBudget();
-
   // Effect para pré-popular com nota transformada e projeto pré-selecionado
   useEffect(() => {
     if (transformedNote && showNewTaskModal) {
@@ -63,7 +63,7 @@ export function NewTaskModal() {
     const newErrors: {[key: string]: string} = {};
     if (!description.trim()) newErrors.description = 'Descrição é obrigatória';
     if (description.trim().length < 3) newErrors.description = 'Descrição deve ter no mínimo 3 caracteres';
-    if (!canAddTask(energyPoints)) newErrors.energy = `Energia insuficiente! Disponível: ${energyBudget.remaining}`;
+    // Validação de energia removida por enquanto - implementar lógica no backend
     if (isAppointment && !appointmentTime) newErrors.appointmentTime = 'Horário é obrigatório para compromissos';
     if (isAppointment && !dueDate) newErrors.dueDate = 'Data é obrigatória para compromissos';
     setErrors(newErrors);
@@ -99,22 +99,17 @@ export function NewTaskModal() {
     
     setIsCreating(true);
     try {
-      if (projectId) {
-        // Se projectId estiver definido, adicionar como tijolo no projeto
-        addTaskToProject(projectId, description, energyPoints, dueDate);
-      } else {
-        // Caso contrário, adicionar como tarefa do dia
-        addTask({
-          description,
-          energyPoints,
-          projectId,
-          dueDate,
-          isRecurring,
-          recurrence: isRecurring ? {
-            frequency: recurrenceFrequency,
-            daysOfWeek: recurrenceFrequency === 'weekly' || recurrenceFrequency === 'custom' ? selectedDays : undefined,
-          } : undefined,
-          isAppointment,
+      await createTask.mutateAsync({
+        description,
+        energyPoints,
+        projectId,
+        dueDate: dueDate || undefined,
+        isRecurring,
+        recurrence: isRecurring ? {
+          frequency: recurrenceFrequency,
+          daysOfWeek: recurrenceFrequency === 'weekly' || recurrenceFrequency === 'custom' ? selectedDays : undefined,
+        } : undefined,
+        isAppointment,
           appointment: isAppointment ? {
             scheduledTime: appointmentTime,
             preparationTime,
@@ -122,16 +117,16 @@ export function NewTaskModal() {
             notes: appointmentNotes,
             reminderTime: 15, // Default 15 minutes before
           } : undefined,
-          comments: comment ? [{
-            id: Date.now().toString(),
-            author: user?.name || 'Usuário',
-            content: comment,
-            createdAt: new Date().toISOString(),
-          }] : [],
-          attachments: attachment ? [attachment] : [],
-          history: [],
-        });
-      }
+        comments: comment ? [{
+          id: Date.now().toString(),
+          author: user?.name || 'Usuário',
+          content: comment,
+          createdAt: new Date().toISOString(),
+        }] : [],
+        attachments: attachment ? [attachment] : [],
+        externalLinks: [],
+        history: [],
+      });
       
       // Mostrar animação de sucesso
       setShowSuccessAnimation(true);

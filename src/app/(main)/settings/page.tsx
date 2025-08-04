@@ -70,10 +70,10 @@ export default function SettingsPage() {
             
             <div className="flex items-center space-x-4 text-sm">
               <div className="flex items-center space-x-2 bg-white/10 px-3 py-2 rounded-lg">
-                {user?.settings.dailyEnergyBudget && user.settings.dailyEnergyBudget >= 15 && <Zap className="w-4 h-4 text-red-400" />}
-                {user?.settings.dailyEnergyBudget && user.settings.dailyEnergyBudget >= 10 && user.settings.dailyEnergyBudget < 15 && <Brain className="w-4 h-4 text-blue-400" />}
-                {user?.settings.dailyEnergyBudget && user.settings.dailyEnergyBudget < 10 && <Battery className="w-4 h-4 text-green-400" />}
-                <span>Energia: {user?.settings.dailyEnergyBudget}</span>
+                {user?.settings?.dailyEnergyBudget && user.settings.dailyEnergyBudget >= 15 && <Zap className="w-4 h-4 text-red-400" />}
+                {user?.settings?.dailyEnergyBudget && user.settings.dailyEnergyBudget >= 10 && user.settings.dailyEnergyBudget < 15 && <Brain className="w-4 h-4 text-blue-400" />}
+                {user?.settings?.dailyEnergyBudget && user.settings.dailyEnergyBudget < 10 && <Battery className="w-4 h-4 text-green-400" />}
+                <span>Energia: {user?.settings?.dailyEnergyBudget || 0}</span>
               </div>
             </div>
           </div>

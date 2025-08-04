@@ -7,6 +7,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '@/stores/authStore';
+import { useUpdateSettings } from '@/hooks/api/useAuth';
 import { 
   Shield, 
   Lock, 
@@ -21,7 +22,8 @@ import {
 } from 'lucide-react';
 
 export function SecuritySettings() {
-  const { user, updateSettings } = useAuthStore();
+  const { user, updateUserSettings } = useAuthStore();
+  const updateSettings = useUpdateSettings();
   
   // Se não há usuário logado, não renderizar o componente
   if (!user) {
@@ -51,7 +53,7 @@ export function SecuritySettings() {
   const [passwordIsError, setPasswordIsError] = useState(false);
 
   // Handler para salvar senha da caixa de areia
-  const handleSandboxPasswordSave = () => {
+  const handleSandboxPasswordSave = async () => {
     // Limpar mensagens anteriores
     setSandboxMessage('');
     setSandboxIsError(false);
@@ -75,37 +77,62 @@ export function SecuritySettings() {
       return;
     }
     
-    // Salvar senha
-    updateSettings({ 
-      sandboxPassword: sandboxPassword,
-      sandboxEnabled: true 
-    });
-    
-    // Limpar campos
-    setSandboxPassword('');
-    setConfirmSandboxPassword('');
-    
-    // Mostrar sucesso
-    setSandboxMessage('Senha da Caixa de Areia configurada com sucesso!');
-    setSandboxIsError(false);
-    
-    // Limpar mensagem após 3 segundos
-    setTimeout(() => setSandboxMessage(''), 3000);
+    try {
+      // Salvar senha no backend
+      await updateSettings.mutateAsync({ 
+        sandboxPassword: sandboxPassword,
+        sandboxEnabled: true 
+      });
+      
+      // Atualizar estado local também
+      updateUserSettings({ 
+        sandboxPassword: sandboxPassword,
+        sandboxEnabled: true 
+      });
+      
+      // Limpar campos
+      setSandboxPassword('');
+      setConfirmSandboxPassword('');
+      
+      // Mostrar sucesso
+      setSandboxMessage('Senha da Caixa de Areia configurada com sucesso!');
+      setSandboxIsError(false);
+      
+      // Limpar mensagem após 3 segundos
+      setTimeout(() => setSandboxMessage(''), 3000);
+    } catch (error) {
+      setSandboxMessage('Erro ao salvar senha. Tente novamente.');
+      setSandboxIsError(true);
+      console.error('Erro ao salvar senha da caixa de areia:', error);
+    }
   };
 
   // Handler para desabilitar proteção da caixa de areia
-  const handleDisableSandboxPassword = () => {
-    updateSettings({ 
-      sandboxEnabled: false, 
-      sandboxPassword: undefined 
-    });
-    
-    setSandboxPassword('');
-    setConfirmSandboxPassword('');
-    setSandboxMessage('Proteção da Caixa de Areia desabilitada');
-    setSandboxIsError(false);
-    
-    setTimeout(() => setSandboxMessage(''), 3000);
+  const handleDisableSandboxPassword = async () => {
+    try {
+      // Desabilitar no backend
+      await updateSettings.mutateAsync({ 
+        sandboxEnabled: false, 
+        sandboxPassword: undefined 
+      });
+      
+      // Atualizar estado local
+      updateUserSettings({ 
+        sandboxEnabled: false, 
+        sandboxPassword: undefined 
+      });
+      
+      setSandboxPassword('');
+      setConfirmSandboxPassword('');
+      setSandboxMessage('Proteção da Caixa de Areia desabilitada');
+      setSandboxIsError(false);
+      
+      setTimeout(() => setSandboxMessage(''), 3000);
+    } catch (error) {
+      setSandboxMessage('Erro ao desabilitar proteção. Tente novamente.');
+      setSandboxIsError(true);
+      console.error('Erro ao desabilitar senha da caixa de areia:', error);
+    }
   };
 
   // Handler para alterar senha principal

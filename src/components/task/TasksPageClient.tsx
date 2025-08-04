@@ -10,22 +10,18 @@ import {
   Battery,
   Brain,
   Zap,
-  Filter,
   Search,
   Plus,
-  ArrowRight,
-  Flame,
   Target,
   ChevronDown,
   ExternalLink,
-  MessageSquare,
-  Paperclip
+  MessageSquare
 } from 'lucide-react';
-import { useTasksStore } from '@/stores/tasksStore';
+import { useTasks, useTasksStats, useCompleteTask } from '@/hooks/api/useTasks';
+import { useProjects } from '@/hooks/api/useProjects';
 import { useModalsStore } from '@/stores/modalsStore';
 import { Button } from '@/components/ui/button';
 import { NewTaskModal } from '@/components/shared/NewTaskModal';
-import type { Task } from '@/types';
 import Link from 'next/link';
 
 type FilterType = 'all' | 'today' | 'week' | 'completed' | 'pending';
@@ -33,44 +29,54 @@ type SortType = 'date' | 'energy' | 'project' | 'status';
 type ViewMode = 'today' | 'all' | 'completed' | 'pending';
 
 export function TasksPageClient() {
-  const { todayTasks, postponedTasks, projects, completeTask, calculateEnergyBudget } = useTasksStore();
+  // Primeiro todos os hooks, sempre na mesma ordem
+  const { data: allTasks = [], isLoading } = useTasks();
+  const { data: projects = [] } = useProjects();
+  const completeTask = useCompleteTask();
   const { setShowNewTaskModal, showNewTaskModal } = useModalsStore();
   
+  // Estados sempre na mesma ordem
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
   const [currentView, setCurrentView] = useState<ViewMode>('today');
-  
-  // Combinar todas as tarefas para a visualização
-  const tasks = useMemo(() => {
-    const allTasks = [];
-    
-    // Adicionar tarefas de hoje
-    if (Array.isArray(todayTasks)) {
-      allTasks.push(...todayTasks);
-    }
-    
-    // Adicionar tarefas adiadas
-    if (Array.isArray(postponedTasks)) {
-      allTasks.push(...postponedTasks);
-    }
-    
-    // Adicionar tarefas dos backlogs dos projetos
-    if (Array.isArray(projects)) {
-      projects.forEach(project => {
-        if (Array.isArray(project.backlog)) {
-          allTasks.push(...project.backlog.map(task => ({
-            ...task,
-            projectId: project.id // Garantir que a tarefa tem o projectId correto
-          })));
-        }
-      });
-    }
-    
-    return allTasks;
-  }, [todayTasks, postponedTasks, projects]);
-  
-  const [filter, setFilter] = useState<FilterType>('all');
   const [sortBy, setSortBy] = useState<SortType>('date');
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Memos calculados sempre na mesma ordem
+  const todayTasks = useMemo(() => {
+    if (!Array.isArray(allTasks)) return [];
+    const today = new Date().toISOString().split('T')[0];
+    return allTasks.filter(task => {
+      if (!task.dueDate) return task.status === 'pending';
+      return task.dueDate === today;
+    });
+  }, [allTasks]);
+  
+  const postponedTasks = useMemo(() => {
+    return Array.isArray(allTasks) ? allTasks.filter(t => t && t.status === 'postponed') : [];
+  }, [allTasks]);
+
+  // Combinar e filtrar tarefas baseado na view atual
+  const tasks = useMemo(() => {
+    if (!Array.isArray(allTasks)) return [];
+    
+    switch (currentView) {
+      case 'today':
+        const today = new Date().toISOString().split('T')[0];
+        const todayTasksList = Array.isArray(todayTasks) ? todayTasks : [];
+        return [
+          ...todayTasksList.filter(t => t && t.status === 'pending'),
+          ...postponedTasks
+        ];
+      case 'all':
+        return allTasks;
+      case 'completed':
+        return allTasks.filter(t => t && t.status === 'completed');
+      case 'pending':
+        return allTasks.filter(t => t && t.status === 'pending');
+      default:
+        return allTasks;
+    }
+  }, [allTasks, todayTasks, postponedTasks, currentView]);
 
   const toggleTaskExpansion = (taskId: string) => {
     const newExpanded = new Set(expandedTasks);
@@ -82,44 +88,24 @@ export function TasksPageClient() {
     setExpandedTasks(newExpanded);
   };
 
-  const energyBudget = calculateEnergyBudget();
-
-  // Filtrar tarefas baseado na view atual
-  const filteredTasks = useMemo(() => {
-    if (!Array.isArray(tasks)) {
-      return [];
-    }
-
-    switch (currentView) {
-      case 'today':
-        const today = new Date().toISOString().split('T')[0];
-        return tasks.filter(task => 
-          task.status === 'pending' && 
-          (!task.dueDate || task.dueDate === today)
-        );
-      case 'completed':
-        return tasks.filter(task => task.status === 'completed');
-      case 'pending':
-        return tasks.filter(task => task.status === 'pending');
-      default:
-        return tasks;
-    }
-  }, [tasks, currentView]);
-
-  // Aplicar busca e ordenação
+  // Aplicar busca e ordenação nas tarefas
   const filteredAndSortedTasks = useMemo(() => {
-    let filtered = [...filteredTasks];
+    if (!Array.isArray(tasks)) return [];
+    
+    let filtered = [...tasks];
 
     // Aplicar busca
     if (searchTerm && searchTerm.trim()) {
       filtered = filtered.filter(task =>
-        task.description && task.description.toLowerCase().includes(searchTerm.toLowerCase())
+        task && task.description && task.description.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     // Aplicar ordenação
     if (Array.isArray(filtered) && filtered.length > 0) {
       filtered.sort((a, b) => {
+        if (!a || !b) return 0;
+        
         switch (sortBy) {
           case 'energy':
             return (b.energyPoints || 0) - (a.energyPoints || 0);
@@ -137,32 +123,28 @@ export function TasksPageClient() {
       });
     }
 
-    return filtered || [];
-  }, [filteredTasks, projects, sortBy, searchTerm]);
+    return filtered;
+  }, [tasks, projects, sortBy, searchTerm]);
 
-  // Estatísticas
-  const stats = useMemo(() => {
-    // Verificar se tasks é um array válido
-    if (!Array.isArray(tasks)) {
-      return {
-        today: 0,
-        week: 0,
-        completed: 0,
-        pending: 0
-      };
+  // Remover early return que pode causar Rules of Hooks
+  // if (isLoading) return <div className="p-4">Carregando tarefas...</div>;
+
+  // Estatísticas calculadas
+  const calculatedStats = useMemo(() => {
+    if (!Array.isArray(allTasks)) {
+      return { today: 0, all: 0, completed: 0, pending: 0 };
     }
 
     const today = new Date().toISOString().split('T')[0];
-    const weekFromNow = new Date();
-    weekFromNow.setDate(weekFromNow.getDate() + 7);
+    const todayTasksList = Array.isArray(todayTasks) ? todayTasks : [];
 
     return {
-      today: tasks.filter(t => t && t.status === 'pending' && (!t.dueDate || t.dueDate === today)).length,
-      all: tasks.length,
-      completed: tasks.filter(t => t && t.status === 'completed').length,
-      pending: tasks.filter(t => t && t.status === 'pending').length
+      today: todayTasksList.filter(t => t && t.status === 'pending').length + postponedTasks.length,
+      all: allTasks.length,
+      completed: allTasks.filter(t => t && t.status === 'completed').length,
+      pending: allTasks.filter(t => t && t.status === 'pending').length
     };
-  }, [tasks]);
+  }, [allTasks, todayTasks, postponedTasks]);
 
   const getEnergyIcon = (points: number) => {
     switch (points) {
@@ -189,18 +171,26 @@ export function TasksPageClient() {
     }
 
     try {
-      await completeTask(taskId);
+      await completeTask.mutateAsync(taskId);
     } catch (error) {
       console.error('Erro ao completar tarefa:', error);
     }
   };
 
   const views = [
-    { id: 'today' as ViewMode, label: 'Hoje', icon: Target, count: stats.today },
-    { id: 'all' as ViewMode, label: 'Todas', icon: Calendar, count: stats.all },
-    { id: 'completed' as ViewMode, label: 'Concluídas', icon: CheckCircle2, count: stats.completed },
-    { id: 'pending' as ViewMode, label: 'Pendentes', icon: Clock, count: stats.pending },
+    { id: 'today' as ViewMode, label: 'Hoje', icon: Target, count: calculatedStats.today },
+    { id: 'all' as ViewMode, label: 'Todas', icon: Calendar, count: calculatedStats.all },
+    { id: 'completed' as ViewMode, label: 'Concluídas', icon: CheckCircle2, count: calculatedStats.completed },
+    { id: 'pending' as ViewMode, label: 'Pendentes', icon: Clock, count: calculatedStats.pending },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto p-4 sm:p-6">
+        <div className="p-4 text-center">Carregando tarefas...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6">
@@ -230,19 +220,19 @@ export function TasksPageClient() {
           {/* Quick Stats */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
-              <div className="text-2xl font-bold">{stats.today}</div>
+              <div className="text-2xl font-bold">{calculatedStats.today}</div>
               <div className="text-sm text-blue-100">Para Hoje</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
-              <div className="text-2xl font-bold">{stats.all}</div>
+              <div className="text-2xl font-bold">{calculatedStats.all}</div>
               <div className="text-sm text-blue-100">Total</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
-              <div className="text-2xl font-bold">{stats.completed}</div>
+              <div className="text-2xl font-bold">{calculatedStats.completed}</div>
               <div className="text-sm text-blue-100">Concluídas</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
-              <div className="text-2xl font-bold">{stats.pending}</div>
+              <div className="text-2xl font-bold">{calculatedStats.pending}</div>
               <div className="text-sm text-blue-100">Pendentes</div>
             </div>
           </div>

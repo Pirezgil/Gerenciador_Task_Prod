@@ -9,10 +9,9 @@ import { PlusCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 // Stores e Hooks
-import { useTasksStore } from '@/stores/tasksStore';
+import { useTodayTasks, useCompleteTask, usePostponeTask } from '@/hooks/api/useTasks';
 import { useModalsStore } from '@/stores/modalsStore';
 import { useHabitsStore } from '@/stores/habitsStore';
-import { useEnergyBudget } from '@/hooks/useEnergyBudget';
 import { useHydration } from '@/hooks/useHydration';
 
 // Componentes
@@ -32,12 +31,14 @@ export function BombeiroPageClient() {
   const router = useRouter();
 
   // Hooks de estado
-  const { todayTasks, postponedTasks, completeTask, postponeTask } = useTasksStore();
+  const { data: todayTasks = [], isLoading } = useTodayTasks();
+  const completeTaskMutation = useCompleteTask();
+  const postponeTaskMutation = usePostponeTask();
   const { setShowCaptureModal, showCaptureModal, showLowEnergyModal } = useModalsStore();
   const { getTodayHabits, completeHabit, undoHabitCompletion } = useHabitsStore();
-  const energyBudget = useEnergyBudget();
 
   const pendingTasks = todayTasks.filter(task => task.status === 'pending');
+  const postponedTasks = todayTasks.filter(task => task.status === 'postponed');
   const completedTasks = todayTasks.filter(task => task.status === 'completed');
   const todayHabits = getTodayHabits();
   
@@ -51,8 +52,8 @@ export function BombeiroPageClient() {
   );
 
   // Renderiza um skeleton ou nada até a hidratação estar completa
-  if (!isHydrated) {
-    return null; // Ou um componente de loading
+  if (!isHydrated || isLoading) {
+    return <div className="p-4">Carregando...</div>;
   }
 
   return (
@@ -164,8 +165,8 @@ export function BombeiroPageClient() {
                       <TaskItem 
                         key={task.id} 
                         task={task} 
-                        onComplete={completeTask}
-                        onPostpone={postponeTask}
+                        onComplete={(taskId) => completeTaskMutation.mutate(taskId)}
+                        onPostpone={(taskId) => postponeTaskMutation.mutate({ taskId })}
                       />
                     ))}
                   </div>
@@ -187,8 +188,8 @@ export function BombeiroPageClient() {
                       <TaskItem 
                         key={task.id} 
                         task={task} 
-                        onComplete={completeTask}
-                        onPostpone={postponeTask}
+                        onComplete={(taskId) => completeTaskMutation.mutate(taskId)}
+                        onPostpone={(taskId) => postponeTaskMutation.mutate({ taskId })}
                       />
                     ))}
                   </div>

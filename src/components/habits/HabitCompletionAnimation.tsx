@@ -80,7 +80,7 @@ export function HabitCompletionAnimation({ show, habitName, streak, onComplete }
                 transition={{ delay: 0.4 }}
                 className="text-gray-600 mb-4 font-medium"
               >
-                Hábito "{habitName}" concluído!
+                Hábito &ldquo;{habitName}&rdquo; concluído!
               </motion.p>
 
               {streak > 1 && (

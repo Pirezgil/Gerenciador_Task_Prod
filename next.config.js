@@ -19,6 +19,33 @@ const nextConfig = {
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
+  // Configuração do Webpack para resolver erros do Watchpack no Windows
+  webpack: (config, { dev }) => {
+    if (dev) {
+      config.watchOptions = {
+        ...config.watchOptions,
+        ignored: [
+          '**/node_modules',
+          '**/.git',
+          '**/.next',
+          // Arquivos de sistema do Windows que causam erro no Watchpack
+          'C:/DumpStack.log.tmp',
+          'C:/hiberfil.sys',
+          'C:/System Volume Information/**',
+          'C:/swapfile.sys',
+          'C:/pagefile.sys',
+          // Padrões gerais para arquivos de sistema
+          '**/System Volume Information/**',
+          '**/*.sys',
+          '**/*.tmp',
+          '**/hiberfil.sys',
+          '**/pagefile.sys',
+          '**/swapfile.sys',
+        ],
+      };
+    }
+    return config;
+  },
 }
 
 export default nextConfig

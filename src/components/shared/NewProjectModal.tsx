@@ -7,7 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, FolderPlus, Save, AlertCircle, Plus, Trash2, Battery, Brain, Zap } from 'lucide-react';
-import { useTasksStore } from '@/stores/tasksStore';
+import { useCreateProject } from '@/hooks/api/useProjects';
 import { useModalsStore } from '@/stores/modalsStore';
 
 interface InitialTask {
@@ -23,7 +23,7 @@ const PROJECT_ICONS = [
 ];
 
 export function NewProjectModal() {
-  const { createProjectWithTasks } = useTasksStore();
+  const createProject = useCreateProject();
   const { showNewProjectModal, openNewProjectModal, transformedNote, setTransformedNote } = useModalsStore();
 
   const [formData, setFormData] = useState({
@@ -103,13 +103,23 @@ export function NewProjectModal() {
     setIsCreating(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      createProjectWithTasks({
+      await createProject.mutateAsync({
         name: formData.name.trim(),
         icon: formData.icon,
-        color: '#3B82F6', // cor padrão azul
-        tasks: initialTasks.map(task => task.description)
+        color: '#3B82F6',
+        status: 'active',
+        backlog: initialTasks.map(task => ({
+          description: task.description,
+          energyPoints: task.energyPoints,
+          status: 'pending',
+          isRecurring: false,
+          isAppointment: false,
+          comments: [],
+          attachments: [],
+          externalLinks: [],
+          history: [],
+        })),
+        sandboxNotes: formData.notes,
       });
 
       setFormData({

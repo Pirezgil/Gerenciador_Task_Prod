@@ -3,7 +3,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Check, Plus, Minus, Calendar, Flame, Target } from 'lucide-react';
-import { useHabitsStore } from '@/stores/habitsStore';
+import { useCompleteHabit } from '@/hooks/api/useHabits';
 import { HabitCompletionAnimation } from './HabitCompletionAnimation';
 import type { Habit } from '@/types/habit';
 
@@ -13,14 +13,7 @@ interface HabitListProps {
 }
 
 export function HabitList({ habits, showDate = false }: HabitListProps) {
-  const { 
-    completeHabit, 
-    undoHabitCompletion, 
-    getHabitCompletionsForDate,
-    showCompletionAnimation,
-    completionAnimationData,
-    setCompletionAnimation
-  } = useHabitsStore();
+  const completeHabitMutation = useCompleteHabit();
   
   const today = new Date().toISOString().split('T')[0];
 
@@ -33,26 +26,35 @@ export function HabitList({ habits, showDate = false }: HabitListProps) {
     return todayCompletions.reduce((sum, c) => sum + c.count, 0);
   };
 
-  const handleComplete = (habit: Habit) => {
-    if (isCompletedToday(habit)) {
-      undoHabitCompletion(habit.id, today);
-    } else {
-      completeHabit(habit.id, 1);
+  const handleComplete = async (habit: Habit) => {
+    try {
+      if (!isCompletedToday(habit)) {
+        await completeHabitMutation.mutateAsync({
+          habitId: habit.id,
+          date: today,
+          notes: `Completado em ${new Date().toLocaleString('pt-BR')}`
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao completar hábito:', error);
     }
   };
 
-  const handleIncrement = (habit: Habit) => {
-    completeHabit(habit.id, 1);
+  const handleIncrement = async (habit: Habit) => {
+    try {
+      await completeHabitMutation.mutateAsync({
+        habitId: habit.id,
+        date: today,
+        notes: `Incrementado em ${new Date().toLocaleString('pt-BR')}`
+      });
+    } catch (error) {
+      console.error('Erro ao incrementar hábito:', error);
+    }
   };
 
   const handleDecrement = (habit: Habit) => {
-    const count = getTodayCompletionCount(habit);
-    if (count > 0) {
-      undoHabitCompletion(habit.id, today);
-      if (count > 1) {
-        completeHabit(habit.id, count - 1);
-      }
-    }
+    // Por enquanto, não implementamos decremento via API
+    console.log('Decremento não implementado na API ainda');
   };
 
   const getStreakColor = (streak: number) => {
