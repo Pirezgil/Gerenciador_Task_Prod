@@ -6,7 +6,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { User, UserSettings, SandboxAuth } from '@/types';
 
-import { syncedUpdate } from '../lib/syncManager';
+
 
 interface AuthState {
   user: User | null;
@@ -23,6 +23,7 @@ interface AuthActions {
   checkAuthStatus: () => Promise<boolean>;
   
   // Actions - Sandbox Security
+  checkSandboxPassword: (password: string) => boolean;
   unlockSandbox: () => void;
   lockSandbox: () => void;
 }
@@ -32,9 +33,23 @@ type AuthStore = AuthState & AuthActions;
 export const useAuthStore = create<AuthStore>()(
   persist(
     (set, get) => ({
-      // Estado inicial
-      user: null,
-      isAuthenticated: false,
+      // Estado inicial - com usuário mock para desenvolvimento
+      user: {
+        id: 'user-1',
+        name: 'João Silva',
+        email: 'joao@exemplo.com',
+        settings: {
+          dailyEnergyBudget: 12,
+          theme: 'light',
+          timezone: 'America/Sao_Paulo',
+          notifications: true,
+          sandboxPassword: '',
+          sandboxEnabled: false,
+        },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      isAuthenticated: true,
       isLoading: false,
       
       // Sandbox Security - SEMPRE bloqueado por segurança
@@ -93,7 +108,16 @@ export const useAuthStore = create<AuthStore>()(
 
       updateSettings: (newSettings: Partial<UserSettings>) => {
         const { user } = get();
-        if (!user) return;
+        
+        if (!user) {
+          console.error('Erro: user é null em updateSettings');
+          return;
+        }
+
+        if (!user.settings) {
+          console.error('Erro: user.settings é undefined em updateSettings');
+          return;
+        }
 
         const updatedUser: User = {
           ...user,
@@ -144,6 +168,12 @@ export const useAuthStore = create<AuthStore>()(
       },
       
       // Actions - Sandbox Security
+      checkSandboxPassword: (password: string) => {
+        const { user } = get();
+        if (!user || !user.settings.sandboxPassword) return false;
+        return password === user.settings.sandboxPassword;
+      },
+
       unlockSandbox: () => {
         set(state => ({
           sandboxAuth: {

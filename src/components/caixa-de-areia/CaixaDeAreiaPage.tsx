@@ -1,65 +1,62 @@
 'use client';
 
-// ============================================================================
-// PÁGINA CAIXA DE AREIA - REFINADA - Sistema de notas em lista organizada por data
-// Navegação + Segurança obrigatória + Design moderno refinado
-// ATUALIZAÇÕES: Bordas arredondadas + Containers ajustados + Altura automática
-// ============================================================================
-
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Plus, 
-  RotateCcw, 
-  Calendar,
-  Clock,
-  Lock,
-  Edit3,
-  Trash2,
-  Archive,
-  Sparkles
-} from 'lucide-react';
-import { useTasksStore } from '@/stores/tasksStore';
+import { Trash2, Lock, Sparkles, Edit3, Archive, Plus, SortAsc, SortDesc } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useNotesStore } from '@/stores/notesStore';
 import { useAuthStore } from '@/stores/authStore';
+import { useModalsStore } from '@/stores/modalsStore';
+
 import { TaskEditModal } from '@/components/shared/TaskEditModal';
+import { TransformModal } from '@/components/protocols/TransformModal';
+import { NewTaskModal } from '@/components/shared/NewTaskModal';
+import { NewProjectModal } from '@/components/shared/NewProjectModal';
 
 export function CaixaDeAreiaPage() {
-  const { 
-    notes, 
-    newNoteContent, 
-    saveNote, 
+  const [sortBy, setSortBy] = useState<'created' | 'updated'>('updated');
+  const [showAddNote, setShowAddNote] = useState(false);
+  const router = useRouter();
+  const {
+    notes,
+    newNoteContent,
+    saveNote,
     updateNote,
     archiveNote,
     deleteNote,
-    setShowTransformModal,
-    editingNote
-  } = useTasksStore();
-  
-  const { sandboxAuth, user, unlockSandbox, lockSandbox } = useAuthStore();
-  const [showAddNote, setShowAddNote] = useState(false);
+    editingNote,
+    setNewNoteContent,
+    setEditingNote
+  } = useNotesStore();
+  const { setShowTransformModal } = useModalsStore();
+  const { sandboxAuth, user, unlockSandbox } = useAuthStore();
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
-  const [sortBy, setSortBy] = useState<'created' | 'updated'>('updated');
 
-  // Sempre verificar autenticação - senha obrigatória
   const needsAuth = !sandboxAuth.isUnlocked;
+  const activeNotes = notes.filter(note => note.status === 'active');
 
-  // Organizar notas por data
+  const handleNewNote = () => {
+    setShowAddNote(true);
+  };
+
+  const handleSortToggle = () => {
+    setSortBy(prev => prev === 'created' ? 'updated' : 'created');
+  };
+
   const sortedNotes = [...notes]
     .filter(note => note.status === 'active')
     .sort((a, b) => {
       const dateA = new Date(sortBy === 'created' ? a.createdAt : a.updatedAt);
       const dateB = new Date(sortBy === 'created' ? b.createdAt : b.updatedAt);
-      return dateB.getTime() - dateA.getTime(); // Mais recente primeiro
+      return dateB.getTime() - dateA.getTime();
     });
 
-  // Handler para verificar senha
   const handlePasswordSubmit = () => {
     if (!user?.settings?.sandboxPassword) {
       setPasswordError('Senha não configurada. Configure na tela de Segurança.');
       return;
     }
-    
     if (password === user.settings.sandboxPassword) {
       unlockSandbox();
       setPassword('');
@@ -70,7 +67,10 @@ export function CaixaDeAreiaPage() {
     }
   };
 
-  // Handler para adicionar nova nota
+  const handleConfigurePassword = () => {
+    router.push('/settings?tab=security');
+  };
+
   const handleAddNote = () => {
     if (newNoteContent.trim()) {
       saveNote(newNoteContent);
@@ -78,7 +78,6 @@ export function CaixaDeAreiaPage() {
     }
   };
 
-  // Handler para Enter na textarea
   const handleTextareaKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && e.ctrlKey) {
       e.preventDefault();
@@ -86,141 +85,167 @@ export function CaixaDeAreiaPage() {
     }
     if (e.key === 'Escape') {
       setShowAddNote(false);
-      useTasksStore.setState({ newNoteContent: '' });
+      setNewNoteContent('');
     }
   };
 
-  // Se precisa de autenticação, mostrar tela de login
   if (needsAuth) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
-        {/* Background decorativo */}
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 via-orange-500/20 to-yellow-500/20"></div>
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIzIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-30"></div>
-        
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0, rotateY: -10 }}
-          animate={{ scale: 1, opacity: 1, rotateY: 0 }}
-          transition={{ type: "spring", duration: 0.8 }}
-          className="relative bg-white/10 backdrop-blur-xl rounded-3xl p-10 w-full max-w-lg shadow-2xl border border-white/20"
-        >
-          <div className="text-center mb-8">
-            <motion.div 
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: "spring" }}
-              className="w-20 h-20 rounded-full bg-gradient-to-r from-amber-400 via-orange-500 to-yellow-500 flex items-center justify-center mx-auto mb-6 shadow-lg"
-            >
-              <Lock className="w-10 h-10 text-text-primary-on-primary" />
-            </motion.div>
-            <motion.h2 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="text-3xl font-bold text-text-primary-on-primary mb-3 bg-gradient-to-r from-amber-300 to-orange-300 bg-clip-text text-transparent"
-            >
-              🏖️ Caixa de Areia Privada
-            </motion.h2>
-            <motion.p 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="text-text-primary-on-primary/80 text-lg"
-            >
-              Seu espaço seguro para pensamentos livres
-            </motion.p>
-          </div>
-          
-          <div className="space-y-4">
-            <div>
-              <motion.input
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 }}
-                type="password"
-                placeholder="✨ Digite sua senha mágica"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handlePasswordSubmit()}
-                className="w-full p-5 bg-white/20 backdrop-blur-sm border border-white/30 rounded-2xl focus:outline-none focus:ring-4 focus:ring-energia-normal/40 focus:border-energia-normal text-text-primary-on-primary placeholder-gray-400 text-lg"
-                autoFocus
-              />
-              {passwordError && (
-                <p className="text-red-500 text-sm mt-2">{passwordError}</p>
-              )}
+      <div className="max-w-7xl mx-auto p-4 sm:p-6">
+        <div className="mb-8">
+          <div className="bg-gradient-to-r from-amber-600 to-orange-600 rounded-2xl p-8 text-white">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-4">
+                <Lock className="w-8 h-8 text-white" />
+              </div>
+              <h1 className="text-3xl font-bold mb-2">🏖️ Caixa de Areia Privada</h1>
+              <p className="text-amber-100">Seu espaço seguro para pensamentos livres</p>
             </div>
-            
-            <motion.button
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handlePasswordSubmit}
-              disabled={!password.trim()}
-              className={`w-full py-4 rounded-2xl font-bold text-lg transition-all duration-300 ${
-                password.trim()
-                  ? 'bg-gradient-to-r from-energia-normal via-energia-alta to-semantic-warning text-text-primary-on-primary hover:from-energia-alta hover:to-semantic-warning shadow-lg hover:shadow-xl'
-                  : 'bg-white/20 text-text-primary-on-primary/40 cursor-not-allowed'
-              }`}
-            >
-              🚀 Acessar Caixa de Areia
-            </motion.button>
           </div>
-          
-          <div className="mt-6 text-center">
-            <motion.p 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.7 }}
-              className="text-sm text-text-primary-on-primary/70"
-            >
-              Senha não configurada?{' '}
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => useTasksStore.setState({ currentPage: 'profile' })}
-                className="text-energia-normal hover:text-energia-normal font-semibold underline underline-offset-2 transition-colors"
+        </div>
+
+        <div className="max-w-lg mx-auto">
+          <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200">
+            <div className="space-y-6">
+              <div>
+                <input
+                  type="password"
+                  placeholder="✨ Digite sua senha mágica"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handlePasswordSubmit()}
+                  className="w-full p-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-amber-500/20 focus:border-amber-500 text-gray-700 placeholder-gray-400"
+                  autoFocus
+                />
+                {passwordError && (
+                  <p className="text-red-500 text-sm mt-2">{passwordError}</p>
+                )}
+              </div>
+              <button
+                onClick={handlePasswordSubmit}
+                disabled={!password.trim()}
+                className={`w-full py-3 rounded-xl font-semibold transition-all duration-300 ${
+                  password.trim()
+                    ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white hover:from-amber-700 hover:to-orange-700 shadow-lg'
+                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                }`}
               >
-                Configure aqui ✨
-              </motion.button>
-            </motion.p>
+                🚀 Acessar Caixa de Areia
+              </button>
+            </div>
+            <div className="mt-6 text-center">
+              <p className="text-sm text-gray-600">
+                Senha não configurada?{' '}
+                <button
+                  onClick={handleConfigurePassword}
+                  className="text-amber-600 hover:text-amber-700 font-semibold underline underline-offset-2 transition-colors"
+                >
+                  Configure aqui ✨
+                </button>
+              </p>
+            </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     );
   }
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50">
-        {/* Header removido - usando sistema global */}
+      <div className="max-w-7xl mx-auto p-4 sm:p-6">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="bg-gradient-to-r from-amber-600 to-orange-600 rounded-2xl p-8 text-white">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
+              <div className="flex items-center space-x-4 mb-4 sm:mb-0">
+                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                  <Sparkles className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold">🏖️ Caixa de Areia Privada</h1>
+                  <p className="text-amber-100 mt-1">{activeNotes.length} nota(s) • Organizada por {sortBy === 'created' ? 'criação' : 'edição'}</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1 bg-white/20 backdrop-blur-sm rounded-2xl p-1">
+                  <button
+                    onClick={handleSortToggle}
+                    className={`p-2 rounded-xl transition-all duration-200 ${
+                      sortBy === 'updated'
+                        ? 'bg-white/20 text-white shadow-md'
+                        : 'text-white hover:bg-white/20'
+                    }`}
+                    title="Ordenar por atualização"
+                  >
+                    <SortDesc className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={handleSortToggle}
+                    className={`p-2 rounded-xl transition-all duration-200 ${
+                      sortBy === 'created'
+                        ? 'bg-white/20 text-white shadow-md'
+                        : 'text-white hover:bg-white/20'
+                    }`}
+                    title="Ordenar por criação"
+                  >
+                    <SortAsc className="w-4 h-4" />
+                  </button>
+                </div>
+                <button
+                  onClick={handleNewNote}
+                  className="flex items-center space-x-2 px-6 py-3 bg-white/20 backdrop-blur-sm text-white rounded-xl hover:bg-white/30 transition-colors border border-white/30 w-full sm:w-auto justify-center"
+                >
+                  <Plus className="w-5 h-5" />
+                  <span>Nova Nota</span>
+                </button>
+              </div>
+            </div>
 
-        {/* Lista de notas - CONTAINER MENOR */}
-        <div className="max-w-3xl mx-auto p-8">
+            {/* Quick Stats */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
+                <div className="text-2xl font-bold">{activeNotes.length}</div>
+                <div className="text-sm text-amber-100">Notas Ativas</div>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
+                <div className="text-2xl font-bold">{notes.filter(n => n.status === 'archived').length}</div>
+                <div className="text-sm text-amber-100">Arquivadas</div>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
+                <div className="text-2xl font-bold">{notes.length}</div>
+                <div className="text-sm text-amber-100">Total</div>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
+                <div className="text-2xl font-bold">{sortBy === 'created' ? 'Criação' : 'Edição'}</div>
+                <div className="text-sm text-amber-100">Ordenação</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-3xl mx-auto">
           {sortedNotes.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center py-20"
-            >
-              <div className="text-6xl mb-4">🏖️</div>
-              <h3 className="text-2xl font-semibold text-text-primary mb-2 font-serif">
-                Sua caixa de areia está vazia
-              </h3>
-              <p className="text-text-secondary mb-6 max-w-md mx-auto">
-                Este é seu espaço privado para pensamentos livres. <br />
-                Crie sua primeira nota!
-              </p>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowAddNote(true)}
-                className="px-6 py-3 bg-gradient-to-r from-energia-normal to-energia-alta text-text-primary-on-primary rounded-2xl font-semibold shadow-lg hover:from-energia-alta hover:to-semantic-warning transition-all duration-300"
-              >
-                Criar primeira nota
-              </motion.button>
-            </motion.div>
+            <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200">
+              <div className="text-center py-12">
+                <div className="w-20 h-20 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <Sparkles className="w-10 h-10 text-amber-600" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                  Sua caixa de areia está vazia
+                </h3>
+                <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                  Este é seu espaço privado para pensamentos livres. <br />
+                  Crie sua primeira nota!
+                </p>
+                <button
+                  onClick={() => setShowAddNote(true)}
+                  className="px-8 py-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl font-semibold shadow-lg hover:from-amber-700 hover:to-orange-700 transition-all duration-300"
+                >
+                  ✨ Criar primeira nota
+                </button>
+              </div>
+            </div>
           ) : (
             <div className="space-y-6">
               <AnimatePresence>
@@ -233,7 +258,6 @@ export function CaixaDeAreiaPage() {
                     transition={{ delay: index * 0.05 }}
                     className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-lg border border-energia-normal/20/50 hover:shadow-2xl hover:scale-[1.02] transition-all duration-500"
                   >
-                    {/* Header da nota */}
                     <div className="flex items-center justify-between mb-6">
                       <div className="flex items-center space-x-3">
                         <div className="text-2xl">📝</div>
@@ -259,7 +283,6 @@ export function CaixaDeAreiaPage() {
                           )}
                         </div>
                       </div>
-                      
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => setShowTransformModal(note)}
@@ -268,15 +291,13 @@ export function CaixaDeAreiaPage() {
                         >
                           <Sparkles className="w-4 h-4" />
                         </button>
-                        
                         <button
-                          onClick={() => useTasksStore.setState({ editingNote: editingNote === note.id ? null : note.id })}
+                          onClick={() => setEditingNote(editingNote === note.id ? null : note.id)}
                           className="p-2 text-gray-400 hover:text-text-secondary transition-colors bg-gray-50 rounded-xl hover:bg-gray-100"
                           title="Editar"
                         >
                           <Edit3 className="w-4 h-4" />
                         </button>
-                        
                         <button
                           onClick={() => archiveNote(note.id)}
                           className="p-2 text-gray-400 hover:text-text-secondary transition-colors bg-gray-50 rounded-xl hover:bg-gray-100"
@@ -284,7 +305,6 @@ export function CaixaDeAreiaPage() {
                         >
                           <Archive className="w-4 h-4" />
                         </button>
-                        
                         <button
                           onClick={() => deleteNote(note.id)}
                           className="p-2 text-gray-400 hover:text-red-500 transition-colors bg-gray-50 rounded-xl hover:bg-red-50"
@@ -294,8 +314,6 @@ export function CaixaDeAreiaPage() {
                         </button>
                       </div>
                     </div>
-
-                    {/* Conteúdo da nota - ALTURA AUTOMÁTICA */}
                     {editingNote === note.id ? (
                       <textarea
                         className="w-full min-h-[100px] p-4 border border-energia-normal/20 rounded-2xl resize-y focus:outline-none focus:ring-4 focus:ring-energia-normal/20 focus:border-energia-normal font-serif text-text-secondary leading-relaxed"
@@ -314,71 +332,70 @@ export function CaixaDeAreiaPage() {
             </div>
           )}
         </div>
-
-        {/* Modal de adicionar nota - BORDAS MAIS ARREDONDADAS */}
-        <AnimatePresence>
-          {showAddNote && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-              onClick={() => setShowAddNote(false)}
-            >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-white rounded-3xl p-8 w-full max-w-lg shadow-2xl"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <h3 className="text-xl font-semibold text-text-primary mb-4">
-                  ✍️ Nova nota na caixa de areia
-                </h3>
-                
-                <textarea
-                  className="w-full min-h-[120px] p-4 border border-energia-normal/20 rounded-2xl resize-y focus:outline-none focus:ring-4 focus:ring-energia-normal/20 focus:border-energia-normal font-serif text-text-secondary leading-relaxed"
-                  placeholder="Escreva seus pensamentos livremente... (Ctrl+Enter para salvar, Esc para cancelar)"
-                  value={newNoteContent}
-                  onChange={(e) => useTasksStore.setState({ newNoteContent: e.target.value })}
-                  onKeyDown={handleTextareaKeyDown}
-                  autoFocus
-                />
-                
-                <div className="flex justify-between items-center mt-4">
-                  <p className="text-xs text-energia-alta">
-                    💡 Ctrl+Enter para salvar • Esc para cancelar
-                  </p>
-                  
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => setShowAddNote(false)}
-                      className="px-4 py-2 text-text-secondary hover:text-text-primary transition-colors"
-                    >
-                      Cancelar
-                    </button>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={handleAddNote}
-                      disabled={!newNoteContent.trim()}
-                      className={`px-6 py-2 rounded-2xl font-semibold transition-all duration-300 ${
-                        newNoteContent.trim()
-                          ? 'bg-gradient-to-r from-energia-normal to-energia-alta text-text-primary-on-primary hover:from-energia-alta hover:to-semantic-warning'
-                          : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      }`}
-                    >
-                      Criar Nota
-                    </motion.button>
-                  </div>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
 
+      <AnimatePresence>
+        {showAddNote && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowAddNote(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-3xl p-8 w-full max-w-lg shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-xl font-semibold text-text-primary mb-4">
+                ✍️ Nova nota na caixa de areia
+              </h3>
+              <textarea
+                className="w-full min-h-[120px] p-4 border border-energia-normal/20 rounded-2xl resize-y focus:outline-none focus:ring-4 focus:ring-energia-normal/20 focus:border-energia-normal font-serif text-text-secondary leading-relaxed"
+                placeholder="Escreva seus pensamentos livremente... (Ctrl+Enter para salvar, Esc para cancelar)"
+                value={newNoteContent}
+                onChange={(e) => setNewNoteContent(e.target.value)}
+                onKeyDown={handleTextareaKeyDown}
+                autoFocus
+              />
+              <div className="flex justify-between items-center mt-4">
+                <p className="text-xs text-energia-alta">
+                  💡 Ctrl+Enter para salvar • Esc para cancelar
+                </p>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => setShowAddNote(false)}
+                    className="px-4 py-2 text-text-secondary hover:text-text-primary transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleAddNote}
+                    disabled={!newNoteContent.trim()}
+                    className={`px-6 py-2 rounded-2xl font-semibold transition-all duration-300 ${
+                      newNoteContent.trim()
+                        ? 'bg-gradient-to-r from-energia-normal to-energia-alta text-text-primary-on-primary hover:from-energia-alta hover:to-semantic-warning'
+                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    }`}
+                  >
+                    Criar Nota
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <TaskEditModal />
+      <TransformModal />
+      <NewTaskModal />
+      <NewProjectModal />
     </>
   );
 }

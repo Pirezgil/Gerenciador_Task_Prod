@@ -1,10 +1,12 @@
 'use client';
 
 // ============================================================================
-// SIDEBAR - Navegação lateral moderna com design responsivo
+// SIDEBAR - Navegação lateral "Sentinela" 
+// Seguindo princípios de design gentil e compassivo para usuários neurodivergentes
+// Design Philosophy: "Assistente Gentil, Não um Chefe"
 // ============================================================================
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter, usePathname } from 'next/navigation';
 import { 
@@ -13,12 +15,18 @@ import {
   Home,
   Flame,
   Building2,
+  CheckSquare,
   Box,
+  Target,
   Settings,
   User,
   Menu,
-  X
+  X,
+  Battery,
+  Brain,
+  Zap
 } from 'lucide-react';
+import { useTasksStore } from '@/stores/tasksStore';
 
 interface SidebarProps {
   className?: string;
@@ -29,62 +37,109 @@ export function Sidebar({ className = '' }: SidebarProps) {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  
+  // Energy budget para mostrar informações contextuais - seletores específicos
+  const todayTasks = useTasksStore(state => state.todayTasks);
+  const postponedTasks = useTasksStore(state => state.postponedTasks);
+  const calculateEnergyBudget = useTasksStore(state => state.calculateEnergyBudget);
+  const energyBudget = useMemo(() => calculateEnergyBudget(), [todayTasks, postponedTasks, calculateEnergyBudget]);
 
+  // Navegação principal seguindo filosofia "Sentinela"
   const navigationItems = [
     {
       key: 'bombeiro',
       label: 'Bombeiro',
-      description: 'Extintor de tarefas urgentes',
+      description: 'Extintor gentil de urgências',
       icon: Flame,
       emoji: '🚒',
       path: '/bombeiro',
-      color: 'bg-semantic-warning',
-      bgColor: 'bg-semantic-warning/10 hover:bg-semantic-warning/20 border-semantic-warning/30',
-      textColor: 'text-semantic-warning',
-      iconColor: 'text-semantic-warning'
+      energyType: 'baixa',
+      gradient: 'from-red-400/80 to-orange-500/80',
+      bgColor: 'sentinela-card bg-red-50/50 hover:bg-red-100/50 border-red-200/30',
+      textColor: 'text-red-700',
+      iconColor: 'text-red-600',
+      hoverShadow: 'hover:shadow-red-500/10'
     },
     {
       key: 'arquiteto',
-      label: 'Arquiteto',
-      description: 'Construtor de projetos',
+      label: 'Arquiteto', 
+      description: 'Construtor de sonhos',
       icon: Building2,
       emoji: '🏗️',
-      path: '/arquiteto', 
-      color: 'bg-energia-alta',
-      bgColor: 'bg-energia-alta/10 hover:bg-energia-alta/20 border-energia-alta/30',
-      textColor: 'text-energia-alta',
-      iconColor: 'text-energia-alta'
+      path: '/arquiteto',
+      energyType: 'alta', 
+      gradient: 'from-purple-400/80 to-indigo-500/80',
+      bgColor: 'sentinela-card bg-purple-50/50 hover:bg-purple-100/50 border-purple-200/30',
+      textColor: 'text-purple-700',
+      iconColor: 'text-purple-600',
+      hoverShadow: 'hover:shadow-purple-500/10'
+    },
+    {
+      key: 'tarefas',
+      label: 'Tarefas',
+      description: 'Central de ações gentis',
+      icon: CheckSquare,
+      emoji: '📋',
+      path: '/tarefas',
+      energyType: 'normal',
+      gradient: 'from-green-400/80 to-emerald-500/80',
+      bgColor: 'sentinela-card bg-green-50/50 hover:bg-green-100/50 border-green-200/30',
+      textColor: 'text-green-700',
+      iconColor: 'text-green-600',
+      hoverShadow: 'hover:shadow-green-500/10'
+    },
+    {
+      key: 'habitos',
+      label: 'Hábitos',
+      description: 'Construa rotinas',
+      icon: Target,
+      emoji: '🎯',
+      path: '/habitos',
+      energyType: 'normal',
+      gradient: 'from-teal-400/80 to-cyan-500/80',
+      bgColor: 'sentinela-card bg-teal-50/50 hover:bg-teal-100/50 border-teal-200/30',
+      textColor: 'text-teal-700',
+      iconColor: 'text-teal-600',
+      hoverShadow: 'hover:shadow-teal-500/10'
     },
     {
       key: 'caixa-de-areia',
       label: 'Caixa de Areia',
-      description: 'Espaço criativo e experimental',
+      description: 'Espaço criativo livre',
       icon: Box,
       emoji: '🏖️',
       path: '/caixa-de-areia',
-      color: 'from-amber-500 to-orange-500',
-      bgColor: 'bg-amber-50 hover:bg-amber-100 border-amber-200',
+      energyType: 'baixa',
+      gradient: 'from-amber-400/80 to-orange-400/80',
+      bgColor: 'sentinela-card bg-amber-50/50 hover:bg-amber-100/50 border-amber-200/30',
       textColor: 'text-amber-700',
-      iconColor: 'text-amber-600'
+      iconColor: 'text-amber-600',
+      hoverShadow: 'hover:shadow-amber-500/10'
     }
   ];
 
+  // Utilitários com design gentil e acessível
   const utilityItems = [
-    {
-      key: 'profile',
-      label: 'Perfil',
-      icon: User,
-      path: '/profile',
-      color: 'text-text-primary-secondary hover:text-energia-normal'
-    },
     {
       key: 'settings',
       label: 'Configurações',
+      description: 'Ajustes do sistema',
       icon: Settings,
       path: '/settings',
-      color: 'text-text-primary-secondary hover:text-energia-normal'
+      color: 'text-gray-600 hover:text-blue-600',
+      bgColor: 'hover:bg-blue-50/50'
     }
   ];
+  
+  // Função para obter ícone de energia baseado no orçamento
+  const getEnergyIcon = () => {
+    const percentage = (energyBudget.used / energyBudget.total) * 100;
+    if (percentage < 30) return { icon: Battery, color: 'text-green-500', label: 'Energia Alta' };
+    if (percentage < 70) return { icon: Brain, color: 'text-blue-500', label: 'Energia Normal' };
+    return { icon: Zap, color: 'text-orange-500', label: 'Energia Baixa' };
+  };
+  
+  const energyStatus = getEnergyIcon();
 
   const handleNavigation = (path: string) => {
     router.push(path);
@@ -93,26 +148,42 @@ export function Sidebar({ className = '' }: SidebarProps) {
 
   const isActive = (path: string) => pathname === path;
 
+  // Animações gentis e suaves seguindo diretrizes do projeto
   const sidebarVariants = {
-    expanded: { width: 280 },
-    collapsed: { width: 80 }
+    expanded: { width: 320 }, // Mais espaço para melhor legibilidade
+    collapsed: { width: 88 }  // Ligeiramente maior para melhor usabilidade
   };
 
   const contentVariants = {
-    expanded: { opacity: 1, x: 0 },
-    collapsed: { opacity: 0, x: -20 }
+    expanded: { opacity: 1, x: 0, transition: { duration: 0.2, ease: "easeOut" } },
+    collapsed: { opacity: 0, x: -20, transition: { duration: 0.2, ease: "easeIn" } }
+  };
+  
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: (i: number) => ({
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: i * 0.1,
+        duration: 0.3,
+        ease: "easeOut"
+      }
+    })
   };
 
-  // Mobile Sidebar
+  // Mobile Sidebar com design "Sentinela"
   const MobileSidebar = () => (
     <>
-      {/* Mobile Toggle Button */}
-      <button
+      {/* Mobile Toggle Button - Design gentil e acessível */}
+      <motion.button
         onClick={() => setIsMobileOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-50 sentinela-btn sentinela-btn-secondary rounded-xl shadow-soft hover:shadow-medium sentinela-transition"
+        whileHover={{ scale: 1.05, y: -1 }}
+        whileTap={{ scale: 0.95 }}
+        className="lg:hidden fixed top-6 left-6 z-50 p-3 bg-white/90 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200"
       >
-        <Menu className="w-5 h-5 text-text-primary-secondary" />
-      </button>
+        <Menu className="w-5 h-5 text-gray-600" />
+      </motion.button>
 
       {/* Mobile Overlay */}
       <AnimatePresence>
@@ -130,31 +201,65 @@ export function Sidebar({ className = '' }: SidebarProps) {
               initial={{ x: -320 }}
               animate={{ x: 0 }}
               exit={{ x: -320 }}
-              transition={{ type: "spring", damping: 20 }}
-              className="lg:hidden fixed left-0 top-0 h-full w-80 bg-surface/95 backdrop-blur-xl shadow-large z-50 border-r border-border"
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="lg:hidden fixed left-0 top-0 h-full w-80 bg-white/95 backdrop-blur-xl shadow-2xl z-50 border-r border-gray-200/50"
             >
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-8">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                      <Home className="w-5 h-5 text-text-primary-on-primary" />
+              <div className="p-6 h-full flex flex-col">
+                {/* Header gentil e acolhedor */}
+                <motion.div 
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center justify-between mb-8"
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className="relative">
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-400/80 to-purple-500/80 rounded-2xl flex items-center justify-center shadow-lg">
+                        <Home className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white animate-pulse"></div>
                     </div>
                     <div>
-                      <h2 className="font-bold text-text-primary">Cérebro-Compatível</h2>
-                      <p className="text-xs text-text-primary-muted">Sistema Inteligente</p>
+                      <h2 className="font-bold text-gray-800 text-lg">Sentinela</h2>
+                      <p className="text-sm text-gray-500">Assistente Gentil</p>
                     </div>
                   </div>
-                  <button
+                  <motion.button
                     onClick={() => setIsMobileOpen(false)}
-                    className="p-2 hover:bg-surface rounded-lg transition-colors"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
                   >
-                    <X className="w-5 h-5 text-text-primary-muted" />
-                  </button>
-                </div>
+                    <X className="w-5 h-5 text-gray-500" />
+                  </motion.button>
+                </motion.div>
+                
+                {/* Status de Energia - Visual gentil */}
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.1 }}
+                  className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border border-blue-100"
+                >
+                  <div className="flex items-center space-x-3">
+                    <energyStatus.icon className={`w-5 h-5 ${energyStatus.color}`} />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-700">{energyStatus.label}</p>
+                      <p className="text-xs text-gray-500">{energyBudget.remaining} de {energyBudget.total} disponível</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${(energyBudget.remaining / energyBudget.total) * 100}%` }}
+                      transition={{ duration: 1, delay: 0.5 }}
+                      className={`h-2 rounded-full ${energyBudget.remaining > energyBudget.total * 0.5 ? 'bg-green-400' : energyBudget.remaining > energyBudget.total * 0.2 ? 'bg-blue-400' : 'bg-orange-400'}`}
+                    />
+                  </div>
+                </motion.div>
 
-                {/* Mobile Navigation Items */}
-                <div className="responsive-nav space-y-2">
-                  {navigationItems.map((item) => {
+                {/* Mobile Navigation Items - Design compassivo */}
+                <div className="flex-1 space-y-3 overflow-y-auto">
+                  {navigationItems.map((item, index) => {
                     const Icon = item.icon;
                     const active = isActive(item.path);
                     
@@ -162,23 +267,52 @@ export function Sidebar({ className = '' }: SidebarProps) {
                       <motion.button
                         key={item.key}
                         onClick={() => handleNavigation(item.path)}
-                        className={`w-full p-4 rounded-xl border transition-all duration-200 text-left ${
-                          active 
-                            ? `bg-gradient-to-r ${item.color} text-text-primary-on-primary shadow-lg` 
-                            : item.bgColor
-                        }`}
-                        whileHover={{ scale: 1.02 }}
+                        custom={index}
+                        variants={itemVariants}
+                        initial="hidden"
+                        animate="visible"
+                        whileHover={{ 
+                          scale: 1.02, 
+                          y: -2,
+                          transition: { duration: 0.2 }
+                        }}
                         whileTap={{ scale: 0.98 }}
+                        className={`relative w-full p-3 rounded-2xl transition-all duration-300 text-left overflow-hidden group ${
+                          active 
+                            ? `bg-gradient-to-r ${item.gradient} text-white shadow-xl ${item.hoverShadow}` 
+                            : `${item.bgColor} shadow-sm hover:shadow-md border transition-all duration-200`
+                        }`}
                       >
-                        <div className="flex items-center space-x-4">
-                          <div className={`p-2 rounded-lg ${active ? 'bg-white/20' : 'bg-white/50'}`}>
-                            <Icon className={`w-5 h-5 ${active ? 'text-text-primary-on-primary' : item.iconColor}`} />
+                        {/* Background pattern sutil para item ativo */}
+                        {active && (
+                          <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50" />
+                        )}
+                        
+                        <div className="relative z-10 flex items-center space-x-4">
+                          <div className={`p-3 rounded-xl transition-all duration-200 ${
+                            active 
+                              ? 'bg-white/20 backdrop-blur-sm shadow-lg' 
+                              : 'bg-white/70 group-hover:bg-white group-hover:shadow-md'
+                          }`}>
+                            <Icon className={`w-5 h-5 transition-colors ${
+                              active 
+                                ? 'text-white' 
+                                : `${item.iconColor} group-hover:scale-110 transition-transform`
+                            }`} />
                           </div>
-                          <div>
-                            <div className={`font-semibold ${active ? 'text-text-primary-on-primary' : item.textColor}`}>
-                              {item.emoji} {item.label}
+                          <div className="flex-1">
+                            <div className={`font-semibold text-base transition-colors ${
+                              active 
+                                ? 'text-white' 
+                                : `${item.textColor} group-hover:text-gray-800`
+                            }`}>
+                              <span className="mr-2">{item.emoji}</span>{item.label}
                             </div>
-                            <div className={`text-sm ${active ? 'text-text-primary-on-primary/80' : 'text-text-primary-muted'}`}>
+                            <div className={`text-sm transition-colors ${
+                              active 
+                                ? 'text-white/90' 
+                                : 'text-gray-500 group-hover:text-gray-600'
+                            }`}>
                               {item.description}
                             </div>
                           </div>
@@ -188,20 +322,25 @@ export function Sidebar({ className = '' }: SidebarProps) {
                   })}
                 </div>
 
-                {/* Mobile Utility Items */}
-                <div className="mt-8 pt-6 border-t border-gray-200/50">
-                  <div className="space-y-1">
-                    {utilityItems.map((item) => {
+                {/* Mobile Utility Items - Design gentil */}
+                <div className="mt-6 pt-6 border-t border-gray-200/50">
+                  <div className="space-y-2">
+                    {utilityItems.map((item, index) => {
                       const Icon = item.icon;
                       return (
-                        <button
+                        <motion.button
                           key={item.key}
                           onClick={() => handleNavigation(item.path)}
-                          className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${item.color} hover:bg-primary-50`}
+                          whileHover={{ x: 4, transition: { duration: 0.2 } }}
+                          whileTap={{ scale: 0.98 }}
+                          className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${item.color} ${item.bgColor} group`}
                         >
-                          <Icon className="w-5 h-5" />
-                          <span className="font-medium">{item.label}</span>
-                        </button>
+                          <Icon className="w-5 h-5 transition-transform group-hover:scale-110" />
+                          <div className="flex-1 text-left">
+                            <div className="font-medium text-sm">{item.label}</div>
+                            <div className="text-xs text-gray-500">{item.description}</div>
+                          </div>
+                        </motion.button>
                       );
                     })}
                   </div>
@@ -214,16 +353,15 @@ export function Sidebar({ className = '' }: SidebarProps) {
     </>
   );
 
-  // Desktop Sidebar
+  // Desktop Sidebar - Design "Sentinela"
   const DesktopSidebar = () => (
-    <motion.div
-      variants={sidebarVariants}
-      animate={isCollapsed ? 'collapsed' : 'expanded'}
-      transition={{ duration: 0.3, ease: "easeInOut" }}
-      className={`hidden lg:flex flex-col h-screen bg-white/90 backdrop-blur-xl border-r border-gray-200/50 shadow-xl ${className}`}
+    <div
+      className={`hidden lg:flex flex-col h-full min-h-screen bg-white/95 backdrop-blur-xl border-r border-gray-200/30 shadow-2xl fixed left-0 top-0 z-40 transition-all duration-300 ease-in-out ${
+        isCollapsed ? 'w-[88px]' : 'w-80'
+      } ${className}`}
     >
-      {/* Header */}
-      <div className="p-6 border-b border-border">
+      {/* Header - Design acolhedor e gentil */}
+      <div className="p-6 border-b border-gray-200/30">
         <div className="flex items-center justify-between">
           <AnimatePresence>
             {!isCollapsed && (
@@ -234,33 +372,71 @@ export function Sidebar({ className = '' }: SidebarProps) {
                 exit="collapsed"
                 className="flex items-center space-x-3"
               >
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                  <Home className="w-5 h-5 text-text-primary-on-primary" />
+                <div 
+                  className="w-10 h-10 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-400 transition-all duration-200"
+                  onClick={() => handleNavigation('/profile')}
+                >
+                  <img 
+                    src="/api/placeholder/40/40" 
+                    alt="Perfil do usuário"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-                <div>
-                  <h2 className="font-bold text-text-primary">Cérebro-Compatível</h2>
-                  <p className="text-xs text-text-primary-muted">Sistema Inteligente</p>
+                <div className="flex-1 text-left">
+                  <div className="font-medium text-sm">Usuário</div>
+                  <div className="text-xs text-gray-500">Configurações pessoais</div>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
           
-          <button
+          <motion.button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-2 hover:bg-surface rounded-lg transition-colors ml-auto"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            className="p-2 hover:bg-gray-100 rounded-xl transition-colors ml-auto"
           >
             {isCollapsed ? (
-              <ChevronRight className="w-4 h-4 text-text-primary-muted" />
+              <ChevronRight className="w-4 h-4 text-gray-500" />
             ) : (
-              <ChevronLeft className="w-4 h-4 text-text-primary-muted" />
+              <ChevronLeft className="w-4 h-4 text-gray-500" />
             )}
-          </button>
+          </motion.button>
         </div>
+        
+        {/* Status de Energia Desktop - Apenas quando expandido */}
+        <AnimatePresence>
+          {!isCollapsed && (
+            <motion.div 
+              variants={contentVariants}
+              initial="collapsed"
+              animate="expanded"
+              exit="collapsed"
+              className="mt-6 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl border border-blue-100"
+            >
+              <div className="flex items-center space-x-3">
+                <energyStatus.icon className={`w-5 h-5 ${energyStatus.color}`} />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-700">{energyStatus.label}</p>
+                  <p className="text-xs text-gray-500">{energyBudget.remaining} de {energyBudget.total} disponível</p>
+                </div>
+              </div>
+              <div className="mt-3 w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                <motion.div 
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(energyBudget.remaining / energyBudget.total) * 100}%` }}
+                  transition={{ duration: 1, delay: 0.5 }}
+                  className={`h-2 rounded-full ${energyBudget.remaining > energyBudget.total * 0.5 ? 'bg-green-400' : energyBudget.remaining > energyBudget.total * 0.2 ? 'bg-blue-400' : 'bg-orange-400'}`}
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* Navigation Items */}
-      <div className="flex-1 p-4 space-y-2">
-        {navigationItems.map((item) => {
+      {/* Navigation Items - Design compassivo e acessível */}
+      <div className="flex-1 p-6 space-y-3 overflow-y-auto">
+        {navigationItems.map((item, index) => {
           const Icon = item.icon;
           const active = isActive(item.path);
           
@@ -268,18 +444,39 @@ export function Sidebar({ className = '' }: SidebarProps) {
             <motion.button
               key={item.key}
               onClick={() => handleNavigation(item.path)}
-              className={`w-full p-4 rounded-xl border transition-all duration-200 text-left ${
-                active 
-                  ? `bg-gradient-to-r ${item.color} text-text-primary-on-primary shadow-lg transform scale-105` 
-                  : item.bgColor
-              }`}
-              whileHover={{ scale: active ? 1.05 : 1.02 }}
+              custom={index}
+              variants={itemVariants}
+              initial="hidden"
+              animate="visible"
+              whileHover={{ 
+                scale: active ? 1.03 : 1.02,
+                y: -2,
+                transition: { duration: 0.2 }
+              }}
               whileTap={{ scale: 0.98 }}
               title={isCollapsed ? item.label : undefined}
+              className={`relative w-full p-3 rounded-2xl transition-all duration-300 text-left overflow-hidden group ${
+                active 
+                  ? `bg-gradient-to-r ${item.gradient} text-white shadow-xl transform scale-105 ${item.hoverShadow}` 
+                  : `${item.bgColor} shadow-sm hover:shadow-lg border transition-all duration-200`
+              }`}
             >
-              <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-4'}`}>
-                <div className={`p-2 rounded-lg ${active ? 'bg-white/20' : 'bg-white/50'}`}>
-                  <Icon className={`w-5 h-5 ${active ? 'text-text-primary-on-primary' : item.iconColor}`} />
+              {/* Background pattern sutil para item ativo */}
+              {active && (
+                <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50" />
+              )}
+              
+              <div className={`relative z-10 flex items-center ${isCollapsed ? 'justify-center' : 'space-x-4'}`}>
+                <div className={`p-3 rounded-xl transition-all duration-200 ${
+                  active 
+                    ? 'bg-white/20 backdrop-blur-sm shadow-lg' 
+                    : 'bg-white/70 group-hover:bg-white group-hover:shadow-md'
+                }`}>
+                  <Icon className={`w-5 h-5 transition-all duration-200 ${
+                    active 
+                      ? 'text-white' 
+                      : `${item.iconColor} group-hover:scale-110`
+                  }`} />
                 </div>
                 
                 <AnimatePresence>
@@ -289,11 +486,20 @@ export function Sidebar({ className = '' }: SidebarProps) {
                       initial="collapsed"
                       animate="expanded"
                       exit="collapsed"
+                      className="flex-1"
                     >
-                      <div className={`font-semibold ${active ? 'text-text-primary-on-primary' : item.textColor}`}>
-                        {item.emoji} {item.label}
+                      <div className={`font-semibold text-base transition-colors ${
+                        active 
+                          ? 'text-white' 
+                          : `${item.textColor} group-hover:text-gray-800`
+                      }`}>
+                        <span className="mr-2">{item.emoji}</span>{item.label}
                       </div>
-                      <div className={`text-sm ${active ? 'text-text-primary-on-primary/80' : 'text-text-primary-muted'}`}>
+                      <div className={`text-sm transition-colors ${
+                        active 
+                          ? 'text-white/90' 
+                          : 'text-gray-500 group-hover:text-gray-600'
+                      }`}>
                         {item.description}
                       </div>
                     </motion.div>
@@ -305,38 +511,45 @@ export function Sidebar({ className = '' }: SidebarProps) {
         })}
       </div>
 
-      {/* Utility Items */}
-      <div className="p-4 border-t border-border">
-        <div className="space-y-1">
+      {/* Utility Items - Design gentil e acessível */}
+      <div className="p-6 border-t border-gray-200/30">
+        <div className="space-y-2">
           {utilityItems.map((item) => {
             const Icon = item.icon;
             return (
-              <button
+              <motion.button
                 key={item.key}
                 onClick={() => handleNavigation(item.path)}
-                className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} px-4 py-3 rounded-lg transition-all duration-200 ${item.color} hover:bg-primary-50`}
+                whileHover={{ 
+                  x: isCollapsed ? 0 : 4, 
+                  scale: isCollapsed ? 1.05 : 1,
+                  transition: { duration: 0.2 } 
+                }}
+                whileTap={{ scale: 0.98 }}
+                className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} px-4 py-3 rounded-xl transition-all duration-200 ${item.color} ${item.bgColor} group`}
                 title={isCollapsed ? item.label : undefined}
               >
-                <Icon className="w-5 h-5" />
+                <Icon className="w-5 h-5 transition-transform group-hover:scale-110" />
                 <AnimatePresence>
                   {!isCollapsed && (
-                    <motion.span
+                    <motion.div
                       variants={contentVariants}
                       initial="collapsed"
                       animate="expanded"
                       exit="collapsed"
-                      className="font-medium"
+                      className="flex-1 text-left"
                     >
-                      {item.label}
-                    </motion.span>
+                      <div className="font-medium text-sm">{item.label}</div>
+                      <div className="text-xs text-gray-500">{item.description}</div>
+                    </motion.div>
                   )}
                 </AnimatePresence>
-              </button>
+              </motion.button>
             );
           })}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 
   return (

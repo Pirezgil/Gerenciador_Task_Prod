@@ -6,24 +6,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Palette, 
-  Monitor, 
-  Sun, 
-  Moon, 
-  Type, 
-  Maximize, 
-  Minimize, 
-  Circle, 
-  Square,
-  Download,
-  Upload,
-  RotateCcw,
-  Save,
-  Eye
-} from 'lucide-react';
-import { useThemeStore } from '@/stores/themeStore';
-import type { ThemeConfig } from '@/types';
+import { Palette, Sun, Moon, Monitor, Eye, Download, Upload, RotateCcw, Save, Circle, Maximize, Type } from 'lucide-react';
+import { useThemeStore } from '../../stores/themeStore';
+
+import { ThemePreset } from '@/types';
 
 export function ThemeCustomizer() {
   const {
@@ -183,7 +169,7 @@ export function ThemeCustomizer() {
             >
               <h3 className="text-lg font-semibold theme-text">Temas Predefinidos</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {presets.map((preset) => (
+                {presets.map((preset: ThemePreset) => (
                   <motion.button
                     key={preset.id}
                     onClick={() => applyPreset(preset.id)}
@@ -517,7 +503,7 @@ export function ThemeCustomizer() {
                     Modo de Cor
                   </label>
                   <div className="grid grid-cols-3 gap-3">
-                    {(['light', 'dark', 'auto'] as const).map((mode) => (
+                    {(['light', 'dark'] as const).map((mode) => (
                       <button
                         key={mode}
                         onClick={() => updateTheme({ mode })}
@@ -529,9 +515,9 @@ export function ThemeCustomizer() {
                       >
                         {mode === 'light' && <Sun className="w-5 h-5 mx-auto mb-1" />}
                         {mode === 'dark' && <Moon className="w-5 h-5 mx-auto mb-1" />}
-                        {mode === 'auto' && <Monitor className="w-5 h-5 mx-auto mb-1" />}
+                        
                         <span className="text-xs capitalize">
-                          {mode === 'light' ? 'Claro' : mode === 'dark' ? 'Escuro' : 'Auto'}
+                          {mode === 'light' ? 'Claro' : 'Escuro'}
                         </span>
                       </button>
                     ))}

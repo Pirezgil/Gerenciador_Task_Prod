@@ -7,10 +7,12 @@
 // de tarefa em uma experiência visual viciante e satisfatória
 // ============================================================================
 
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
-import { useTasksStore } from '@/stores/tasksStore';
 import type { Task } from '@/types';
+
+// Funções puras movidas para fora do componente para otimização
+
 
 interface CelebrationState {
   isActive: boolean;
@@ -41,8 +43,7 @@ interface SoundWave {
 }
 
 export function UltraRewardingCelebration() {
-  const { todayTasks, calculateEnergyBudget } = useTasksStore();
-  const [celebration, setCelebration] = useState<CelebrationState>({
+  const [celebration] = useState<CelebrationState>({
     isActive: false,
     type: 'energy_3',
     intensity: 'medium',
@@ -50,111 +51,18 @@ export function UltraRewardingCelebration() {
     showSpecialEffect: false
   });
   
-  const [particles, setParticles] = useState<ParticleProps[]>([]);
-  const [soundWaves, setSoundWaves] = useState<SoundWave[]>([]);
-  const [comboMultiplier, setComboMultiplier] = useState(1);
-  const [showComboText, setShowComboText] = useState(false);
+  const [particles] = useState<ParticleProps[]>([]);
+  const [soundWaves] = useState<SoundWave[]>([]);
+  const [showComboText] = useState(false);
   
   const canvasRef = useRef<HTMLDivElement>(null);
   const mainAnimation = useAnimation();
   const comboAnimation = useAnimation();
-  const lastCompletionTime = useRef<number>(0);
 
-  // Detectar quando uma tarefa é completada
-  useEffect(() => {
-    // Detectar tarefas completadas automaticamente
-    const completedTasks = todayTasks.filter(task => task.status === 'done');
-    const lastTask = completedTasks[completedTasks.length - 1];
-      
-    if (lastTask && completedTasks.length > 0) {
-        detectAndTriggerCelebration(lastTask, completedTasks.length);
-      }
-  }, [todayTasks]);
-
-  const detectAndTriggerCelebration = useCallback((task: Task, totalCompleted: number) => {
-    const now = Date.now();
-    const timeSinceLastCompletion = now - lastCompletionTime.current;
-    const isCombo = timeSinceLastCompletion < 30000; // 30 segundos para combo
-    
-    lastCompletionTime.current = now;
-    
-    let type: CelebrationState['type'] = 'energy_3';
-    let intensity: CelebrationState['intensity'] = 'medium';
-    let comboCount = isCombo ? comboMultiplier + 1 : 1;
-    
-    // Determinar tipo baseado na energia da tarefa
-    if (task.energyPoints === 1) {
-      type = 'energy_1';
-      intensity = 'gentle';
-    } else if (task.energyPoints === 3) {
-      type = 'energy_3';
-      intensity = 'medium';
-    } else if (task.energyPoints === 5) {
-      type = 'energy_5';
-      intensity = 'explosive';
-    }
-    
-    // Detectar combos especiais
-    if (comboCount >= 3) {
-      type = 'combo';
-      intensity = 'legendary';
-    }
-    
-    // Verificar se completou o dia perfeito
-    const energyBudget = calculateEnergyBudget();
-    if (energyBudget.percentage >= 100 && energyBudget.used === energyBudget.total) {
-      type = 'perfect_day';
-      intensity = 'legendary';
-    }
-    
-    setComboMultiplier(comboCount);
-    
-    triggerEpicCelebration(type, intensity, task, comboCount);
-  }, [comboMultiplier, calculateEnergyBudget]);
-
-  const triggerEpicCelebration = useCallback((
+  /*
+  const _generateEpicParticles = useCallback((
     type: CelebrationState['type'],
-    intensity: CelebrationState['intensity'],
-    task: Task,
-    comboCount: number
-  ) => {
-    setCelebration({
-      isActive: true,
-      type,
-      intensity,
-      task,
-      comboCount,
-      showSpecialEffect: intensity === 'legendary'
-    });
-
-    // Gerar partículas épicas
-    generateEpicParticles(type, intensity, comboCount);
-    
-    // Criar ondas sonoras visuais
-    generateSoundWaves(intensity);
-    
-    // Iniciar sequência de animações
-    startEpicAnimationSequence(type, intensity, comboCount);
-    
-    // Mostrar texto de combo
-    if (comboCount > 1) {
-      setShowComboText(true);
-      setTimeout(() => setShowComboText(false), 2000);
-    }
-    
-    // Duração baseada na intensidade
-    const duration = getDurationByIntensity(intensity);
-    setTimeout(() => {
-      setCelebration(prev => ({ ...prev, isActive: false }));
-      setParticles([]);
-      setSoundWaves([]);
-    }, duration);
-  }, []);
-
-  const generateEpicParticles = (
-    type: CelebrationState['type'],
-    intensity: CelebrationState['intensity'],
-    comboCount: number
+    intensity: CelebrationState['intensity']
   ) => {
     const particleCount = {
       gentle: 15,
@@ -169,7 +77,6 @@ export function UltraRewardingCelebration() {
 
     for (let i = 0; i < particleCount; i++) {
       const angle = (i / particleCount) * Math.PI * 2;
-      const radius = 50 + Math.random() * 100;
       const speed = 2 + Math.random() * 4;
       
       newParticles.push({
@@ -189,9 +96,9 @@ export function UltraRewardingCelebration() {
     }
 
     setParticles(newParticles);
-  };
+  }, []);
 
-  const generateSoundWaves = (intensity: CelebrationState['intensity']) => {
+  const _generateSoundWaves = useCallback((intensity: CelebrationState['intensity']) => {
     const waveCount = intensity === 'legendary' ? 6 : intensity === 'explosive' ? 4 : 2;
     const newWaves: SoundWave[] = [];
 
@@ -205,18 +112,18 @@ export function UltraRewardingCelebration() {
     }
 
     setSoundWaves(newWaves);
-  };
+  }, []);
 
-  const startEpicAnimationSequence = async (
+  const _startEpicAnimationSequence = useCallback(async (
     type: CelebrationState['type'],
     intensity: CelebrationState['intensity'],
     comboCount: number
   ) => {
     // Sequência 1: Impacto inicial
     await mainAnimation.start({
-      scale: [1, intensity === 'legendary' ? 1.3 : 1.1, 1],
+      scale: [1, intensity === 'legendary' ? 1.3 : 1.1],
       rotate: [0, intensity === 'legendary' ? 5 : 2, 0],
-      transition: { duration: 0.6, ease: "backOut" }
+      transition: { duration: 0.6, type: "tween", ease: "backOut" }
     });
 
     // Sequência 2: Combo especial
@@ -233,41 +140,20 @@ export function UltraRewardingCelebration() {
       await mainAnimation.start({
         scale: [1, 1.5, 1.2, 1],
         rotate: [0, 10, -10, 0],
-        transition: { duration: 1.2, ease: "anticipate" }
+        transition: { duration: 1.2, type: "tween", ease: "anticipate" }
       });
     }
-  };
+  }, [mainAnimation, comboAnimation]);
 
-  const getColorsForType = (type: CelebrationState['type']): string[] => {
-    switch (type) {
-      case 'energy_1': return ['#fbbf24', '#f59e0b', '#d97706']; // Amarelos
-      case 'energy_3': return ['#3b82f6', '#1d4ed8', '#1e40af']; // Azuis
-      case 'energy_5': return ['#8b5cf6', '#7c3aed', '#6d28d9']; // Roxos
-      case 'combo': return ['#ef4444', '#dc2626', '#b91c1c', '#fbbf24']; // Vermelhos + dourado
-      case 'perfect_day': return ['#10b981', '#059669', '#047857', '#fbbf24', '#f59e0b']; // Verdes + dourado
-      default: return ['#3b82f6', '#1d4ed8'];
-    }
-  };
-
-  const getParticleTypesForType = (type: CelebrationState['type']): ParticleProps['type'][] => {
-    switch (type) {
-      case 'energy_1': return ['sparkle', 'star'];
-      case 'energy_3': return ['sparkle', 'star', 'diamond'];
-      case 'energy_5': return ['lightning', 'diamond', 'star'];
-      case 'combo': return ['lightning', 'diamond', 'heart'];
-      case 'perfect_day': return ['leaf', 'star', 'diamond', 'heart'];
-      default: return ['sparkle', 'star'];
-    }
-  };
-
-  const getDurationByIntensity = (intensity: CelebrationState['intensity']) => {
+  const _getDurationByIntensity = useCallback((intensity: CelebrationState['intensity']) => {
     return {
       gentle: 2000,
       medium: 3500,
       explosive: 5000,
       legendary: 7000
     }[intensity];
-  };
+  }, []);
+  */
 
   const getParticleIcon = (type: ParticleProps['type']) => {
     switch (type) {
@@ -282,7 +168,7 @@ export function UltraRewardingCelebration() {
   };
 
   const getCelebrationMessage = () => {
-    const { type, comboCount, task } = celebration;
+    const { type, comboCount } = celebration;
     
     switch (type) {
       case 'energy_1':
@@ -396,9 +282,6 @@ export function UltraRewardingCelebration() {
           {showComboText && celebration.comboCount > 1 && (
             <motion.div
               animate={comboAnimation}
-              className="absolute top-20 left-1/2 transform -translate-x-1/2 z-60"
-              initial={{ opacity: 0, scale: 0, y: -50 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0, y: -50 }}
               transition={{ type: "spring", stiffness: 200, damping: 15 }}
             >
@@ -428,7 +311,6 @@ export function UltraRewardingCelebration() {
               }
             `}
             initial={{ scale: 0, y: 50, opacity: 0 }}
-            animate={{ scale: 1, y: 0, opacity: 1 }}
             transition={{ 
               type: "spring", 
               stiffness: 150, 
@@ -451,11 +333,12 @@ export function UltraRewardingCelebration() {
                 celebration.intensity === 'legendary' ? 'filter drop-shadow-lg' : ''
               }`}
               animate={{
-                scale: celebration.intensity === 'legendary' ? [1, 1.3, 1] : [1, 1.1, 1],
+                scale: celebration.intensity === 'legendary' ? [1, 1.3] : [1, 1.1],
                 rotate: celebration.intensity === 'legendary' ? [0, 10, -10, 0] : [0, 5, -5, 0]
               }}
               transition={{
                 duration: 1.5,
+                type: "tween",
                 repeat: celebration.intensity === 'legendary' ? 2 : 1,
                 repeatType: "reverse"
               }}
@@ -503,7 +386,7 @@ export function UltraRewardingCelebration() {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.9 }}
               >
-                "{celebration.task.description}"
+                &quot;{celebration.task.description}&quot;
               </motion.p>
             )}
 

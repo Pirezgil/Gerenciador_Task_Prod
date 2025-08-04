@@ -24,8 +24,8 @@ export default function WeeklyStats() {
   const [isHydrated, setIsHydrated] = useState(false);
   const [weeklyStats, setWeeklyStats] = useState<WeeklyStatsData | null>(null);
   
-  const { tasks } = useTasksStore();
-  const { currentEnergy, maxEnergy } = useEnergyBudget();
+  const { todayTasks, postponedTasks, projects } = useTasksStore();
+  const { used: currentEnergy, total: maxEnergy } = useEnergyBudget();
 
   // ✅ Garantir que só renderiza após hidratação
   useEffect(() => {
@@ -34,19 +34,25 @@ export default function WeeklyStats() {
 
   // ✅ Calcular estatísticas apenas no cliente
   const calculatedStats = useMemo(() => {
-    if (!isHydrated || !tasks) return null;
+    if (!isHydrated) return null;
+
+    const allTasks = [
+      ...todayTasks,
+      ...postponedTasks,
+      ...projects.flatMap(p => p.backlog),
+    ];
 
     const now = new Date();
     const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     
     // Filtrar tarefas da última semana
-    const weeklyTasks = tasks.filter(task => {
+    const weeklyTasks = allTasks.filter(task => {
       const taskDate = new Date(task.createdAt || now);
       return taskDate >= oneWeekAgo && taskDate <= now;
     });
     
     const completedTasks = weeklyTasks.filter(task => task.status === 'completed');
-    const totalEnergy = completedTasks.reduce((sum, task) => sum + (task.energyCost || 0), 0);
+    const totalEnergy = completedTasks.reduce((sum, task) => sum + (task.energyPoints || 0), 0);
     
     // Calcular estatísticas por dia
     const dailyStats: Record<string, number> = {};
@@ -67,7 +73,7 @@ export default function WeeklyStats() {
       completionRate: weeklyTasks.length > 0 ? Math.round((completedTasks.length / weeklyTasks.length) * 100) : 0,
       totalTasks: weeklyTasks.length
     };
-  }, [tasks, isHydrated]);
+  }, [todayTasks, postponedTasks, projects, isHydrated]);
 
   // ✅ Atualizar estado apenas no cliente
   useEffect(() => {
@@ -107,7 +113,7 @@ export default function WeeklyStats() {
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {/* Tarefas Completadas */}
-        <div className="text-center p-3 bg-energia-baixa/10 dark:bg-green-900/20 rounded-lg">
+        <div className="flex flex-col items-center justify-center p-3 bg-energia-baixa/10 dark:bg-green-900/20 rounded-lg">
           <div className="text-2xl font-bold text-energia-baixa dark:text-green-400">
             {weeklyStats.tasksCompleted}
           </div>
@@ -117,7 +123,7 @@ export default function WeeklyStats() {
         </div>
 
         {/* Energia Gasta */}
-        <div className="text-center p-3 bg-energia-normal/10 dark:bg-blue-900/20 rounded-lg">
+        <div className="flex flex-col items-center justify-center p-3 bg-energia-normal/10 dark:bg-blue-900/20 rounded-lg">
           <div className="text-2xl font-bold text-energia-normal dark:text-energia-normal">
             {weeklyStats.energySpent}
           </div>
@@ -127,7 +133,7 @@ export default function WeeklyStats() {
         </div>
 
         {/* Taxa de Conclusão */}
-        <div className="text-center p-3 bg-energia-alta/10 dark:bg-purple-900/20 rounded-lg">
+        <div className="flex flex-col items-center justify-center p-3 bg-energia-alta/10 dark:bg-purple-900/20 rounded-lg">
           <div className="text-2xl font-bold text-energia-alta dark:text-energia-alta">
             {weeklyStats.completionRate}%
           </div>
@@ -137,7 +143,7 @@ export default function WeeklyStats() {
         </div>
 
         {/* Média por Tarefa */}
-        <div className="text-center p-3 bg-energia-baixa/10 dark:bg-orange-900/20 rounded-lg">
+        <div className="flex flex-col items-center justify-center p-3 bg-energia-baixa/10 dark:bg-orange-900/20 rounded-lg">
           <div className="text-2xl font-bold text-energia-baixa dark:text-orange-400">
             {weeklyStats.averageEnergy}
           </div>

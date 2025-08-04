@@ -8,7 +8,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
-import { Button } from '@/components/shared/Button';
+import { Button } from '@/components/ui/button';
 
 export default function AuthPage() {
   const router = useRouter();
@@ -49,7 +49,7 @@ export default function AuthPage() {
             <span className="text-3xl">🧠</span>
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Cérebro-Compatível
+            Sentinela
           </h1>
           <p className="text-gray-600">
             Entre em sua conta para acessar o sistema

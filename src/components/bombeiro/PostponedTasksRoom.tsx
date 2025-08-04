@@ -4,7 +4,7 @@ import React from 'react';
 import { useTasksStore } from '@/stores/tasksStore';
 
 export function PostponedTasksRoom() {
-  const { postponedTasks, canAddTask, getRemainingEnergy, addTaskToToday } = useTasksStore();
+  const { postponedTasks, canAddTask, getRemainingEnergy, addTaskToToday, removePostponedTask } = useTasksStore();
 
   return (
     <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-2xl p-6 shadow-xl border border-yellow-200/50">
@@ -19,7 +19,7 @@ export function PostponedTasksRoom() {
         {postponedTasks.map((postponedTask) => (
           <div key={postponedTask.id} className="flex items-center justify-between p-3 bg-white/70 rounded-xl border border-yellow-200">
             <div className="flex-1">
-              <p className="text-sm text-gray-800">{postponedTask.description}</p>
+              <p className="text-sm text-gray-800 whitespace-pre-wrap">{postponedTask.description}</p>
               <p className="text-xs text-yellow-600">Adiado {postponedTask.postponedCount}x</p>
             </div>
             <button
@@ -29,9 +29,7 @@ export function PostponedTasksRoom() {
                   const success = addTaskToToday(postponedTask.description, postponedTask.energyPoints, postponedTask.projectId);
                   if (success) {
                     // Remover manualmente da lista de postponed pois addTaskToToday não faz isso
-                    const updatedPostponed = postponedTasks.filter(t => t.id !== postponedTask.id);
-                    // Atualizar store - precisa implementar removePostponedTask
-                    console.log('Tarefa movida para hoje:', postponedTask.id);
+                    removePostponedTask(postponedTask.id);
                   }
                 } else {
                   alert(`⚡ Energia insuficiente! Precisa de ${postponedTask.energyPoints} pontos, mas você só tem ${getRemainingEnergy()} disponíveis.`);

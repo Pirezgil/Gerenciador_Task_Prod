@@ -1,921 +1,389 @@
-import { syncedUpdate } from '../lib/syncManager';
-
-
-// Sistema de energia simplificado - sem proteções excessivas
-
-// ============================================================================
-// TASKS STORE - Gerenciamento completo de tarefas com Protocolos Críticos
-// PROTOCOLOS IMPLEMENTADOS: Baixa Energia, Decomposição, Incêndio
-// ============================================================================
-
 import { create } from 'zustand';
-import { useEnergyStore } from './energyStore';
-import type { EnergyBudget } from './energyStore';
-import { useModalsStore } from './modalsStore';
-
-import { useAuthStore } from './authStore';
 import { persist } from 'zustand/middleware';
-import type { 
-  Task,
-  SandboxLayout,
-  MovableNote, 
-  Project, 
-  Note, 
-  EnergyBudget, 
-  PostponedTask,
-  CaptureState,
-  DecompositionRequest,
-  TransformNoteRequest,
-  TaskEditRequest,
-  TaskEditModalState,
-  TaskComment,
-  TaskCommentEdit
-} from '@/types';
+import { useEnergyStore, type EnergyBudget } from './energyStore';
+import { useModalsStore } from './modalsStore';
+import { useNotesStore } from './notesStore';
+import type { Task, Project, Comment } from '@/types/task';
+import type { CaptureState } from '@/types';
 
-// Tarefas de emergência (1 ponto de energia)
-const LIGHT_TASKS = [
-  "Beber um copo d'água",
-  "Organizar a mesa por 5 minutos",
-  "Responder 1 mensagem importante",
-  "Fazer 3 respirações profundas",
-  "Escrever uma coisa boa que aconteceu hoje",
-  "Alongar por 2 minutos",
-  "Ler 1 parágrafo de algo interessante",
-  "Limpar 1 item da lista de downloads",
-  "Mandar um 'oi' para alguém querido",
-  "Olhar pela janela por 1 minuto"
-];
-
-interface EmergencyTask {
-  description: string;
-  energyPoints: 1 | 3 | 5;
-  projectId?: string;
-}
+// ============================================================================
+// TASKS STORE - Versão Refatorada e Simplificada
+// ============================================================================
 
 interface TasksState {
-  // Estados principais
   todayTasks: Task[];
   projects: Project[];
-  notes: Note[];
-  postponedTasks: PostponedTask[];
+  postponedTasks: Task[]; // Usando o tipo Task diretamente
+  lastCompletedTask: Task | null; // Rastreia a última tarefa para celebrações
+  selectedProjectId: string | null; // Rastreia o projeto selecionado para expandir/recolher
   
-  // Estados de UI
-  currentPage: 'bombeiro' | 'arquiteto' | 'caixa-de-areia';
-  selectedProjectId: string | null;
-  editingNote: string | null;
-  
-  // Estados de Modal
-  // Estados de modal movidos para modalsStore.ts
-  
-  // Estados dos Protocolos Críticos
-  showEmergencyModal: boolean;
-  emergencyTaskToAdd: EmergencyTask | null;
-  
-  // Estados de Captura
+  // Capture System
   captureState: CaptureState;
-  
-  // Estados de formulário
-  newNoteContent: string;  
-  
-  sandboxLayout: SandboxLayout;
+  showCaptureModal: boolean;
 
-  addingTaskToProject: string | null;
-  newTaskDescription: string;
-  newTaskEnergy: 1 | 3 | 5;
-  
-  // Configurações
-  energyBudget: {
-    total: number;
-  };
-  
-  // Actions - Navegação
-  setCurrentPage: (page: 'bombeiro' | 'arquiteto' | 'caixa-de-areia') => void;
-  setSelectedProjectId: (id: string | null) => void;
-  
-  // Actions - Tarefas
-  addTaskToToday: (description: string, energyPoints: 1 | 3 | 5, projectId?: string) => boolean;
-  completeTask: (taskId: string) => void;
-  postponeTask: (taskId: string, reason?: string) => void;
-  moveTaskToToday: (projectId: string, taskId: string) => void;
-  deleteTask: (taskId: string) => void;
-  
-  // Actions - Edição de Tarefas
-  openTaskEditModal: (task: Task) => void;
-  setTaskEditModal: (state: TaskEditModalState) => void;
-  updateTaskEditData: (updates: Partial<TaskEditModalState['editData']>) => void;
-  saveTaskEdit: (request: TaskEditRequest) => void;
-  
-  // Actions - Comentários
-  editTaskComment: (commentEdit: TaskCommentEdit) => void;
-  deleteTaskComment: (taskId: string, commentId: string) => void;
-  
-  // Actions - Projetos
-  addTaskToProject: (projectId: string, description: string, energyPoints: 1 | 3 | 5) => void;
-  updateProjectNotes: (projectId: string, notes: string) => void;
-  createProject: (name: string, icon: string, notes: string) => void;
-  
-  // Actions - Gerenciamento de Tijolos
+  // Ações
+  addTaskToProject: (projectId: string, description: string, energyPoints: 1 | 3 | 5, deadline?: string) => void;
   editProjectTask: (projectId: string, taskId: string, description: string, energyPoints: 1 | 3 | 5) => void;
   deleteProjectTask: (projectId: string, taskId: string) => void;
-  createProjectWithTasks: (name: string, icon: string, notes: string, initialTasks: Array<{description: string, energyPoints: 1 | 3 | 5}>) => void;
-  
-  // Actions - Notas
-  saveNote: (content: string) => void;
-  updateNote: (noteId: string, content: string) => void;
-  archiveNote: (noteId: string) => void;
-  deleteNote: (noteId: string) => void;
-  transformNoteToAction: (request: TransformNoteRequest) => void;
-  
-  // Actions - Modais
-  setShowCaptureModal: (show: boolean) => void;
-  setShowLowEnergyModal: (show: boolean) => void;
-  setShowDecompositionModal: (task: Task | null) => void;
-  setShowTransformModal: (note: Note | null) => void;
-  
-  // Actions - Protocolos Críticos
-  setShowEmergencyModal: (show: boolean) => void;
-  triggerEmergencyModal: (task: EmergencyTask) => void;
-  replaceWithLightTasks: () => void;
-  postponeAllTasks: () => void;
-  
-  // Actions - Captura
-  updateCaptureState: (updates: Partial<CaptureState>) => void;
-  resetCaptureState: () => void;
-  handleCaptureSubmit: () => void;
-  handleTriageChoice: (choice: 'sandbox' | 'task') => void;
-  handleClassifyChoice: (type: 'task' | 'project') => void;
-  handleScheduleChoice: (when: 'today' | 'future', date?: string) => void;
-  
-  // Actions - Protocolos
-  handleDecomposition: (request: DecompositionRequest) => void;
-  
-  // Actions - Remoção
+  moveTaskToToday: (projectId: string, taskId: string) => void;
+  updateProjectNotes: (projectId: string, notes: string) => void;
+  setSelectedProjectId: (projectId: string | null) => void;
+  addTask: (taskData: Omit<Task, 'id' | 'status' | 'createdAt'>) => boolean;
+  completeTask: (taskId: string) => void;
+  postponeTask: (taskId: string) => void;
+  deleteTask: (taskId: string) => void;
+  updateTask: (taskId: string, updates: Partial<Task>) => void;
+  addComment: (taskId: string, comment: Omit<Comment, 'id' | 'createdAt'>) => void;
+  clearLastCompletedTask: () => void; // Limpa o estado da celebração
+
+  // Funções de cálculo (selectors)
+  calculateEnergyBudget: () => EnergyBudget; 
+  canAddTask: (energyCost: number) => boolean;
+  getRemainingEnergy: () => number;
+  addTaskToToday: (description: string, energyPoints: 1 | 3 | 5, projectId?: string) => boolean;
   removePostponedTask: (taskId: string) => void;
   
-  // Actions - Energia
-  canAddTask: (energyPoints: number) => boolean;
-  getRemainingEnergy: () => number;
-  calculateEnergyBudget: () => EnergyBudget;
-
-
-};
+  // Capture System Actions
+  resetCaptureState: () => void;
+  updateCaptureState: (updates: Partial<CaptureState>) => void;
+  handleCaptureSubmit: () => void;
+  handleTriageChoice: (choice: 'sandbox' | 'task') => void;
+  handleClassifyChoice: (classification: 'task' | 'project') => void;
+  handleScheduleChoice: (schedule: 'today' | 'future', date?: string) => void;
+  
+  // Project Creation
+  createProjectWithTasks: (data: { name: string; icon: string; color: string; tasks: string[] }) => void;
+}
 
 export const useTasksStore = create<TasksState>()(
   persist(
     (set, get) => ({
-      // Estados iniciais
+      // Estado Inicial
       todayTasks: [],
       projects: [],
-      notes: [],
       postponedTasks: [],
-      
-      // Estados de UI
-      currentPage: 'bombeiro',
+      lastCompletedTask: null,
       selectedProjectId: null,
-      editingNote: null,
       
-      // Estados de Modal
+      // Capture System State
+      captureState: {
+        step: 'capture',
+        content: '',
+        selectedDate: '',
+        type: undefined,
+        classification: undefined,
+      },
       showCaptureModal: false,
-      showLowEnergyModal: false,
-      showDecompositionModal: null,
-      showTransformModal: null,
-      taskEditModal: initialTaskEditModal,
-      
-      // Estados dos Protocolos Críticos
-      showEmergencyModal: false,
-      emergencyTaskToAdd: null,
-      
-      // Estados de Captura
-      captureState: initialCaptureState,
-      
-      // Estados de formulário
-      newNoteContent: '',
-      
-      // Estados de Sandbox com Layout Customizável
-      sandboxLayout: {
-        notes: [],
-        selectedNoteId: null,
-        gridSize: 20,
-        showGrid: false,
-        layoutMode: 'free',
-        snapToGrid: true,
-        density: 'normal',
+
+      // Implementação das Ações
+      setSelectedProjectId: (projectId) => set({ selectedProjectId: projectId }),
+
+      addTaskToProject: (projectId, description, energyPoints, deadline) => {
+        const newTask: Task = {
+          id: Date.now().toString(),
+          description,
+          energyPoints,
+          status: 'pending',
+          projectId,
+          type: 'brick',
+          createdAt: new Date().toISOString(),
+          deadline,
+          comments: [],
+          attachments: [],
+          history: [],
+        };
+
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === projectId ? { ...p, backlog: [...p.backlog, newTask] } : p
+          ),
+        }));
       },
-      
-      addingTaskToProject: null,
-      newTaskDescription: '',
-      newTaskEnergy: 3,
-      
-      // Orçamento de energia
-      energyBudget: {
-        total: 12,
+
+      editProjectTask: (projectId, taskId, description, energyPoints) => {
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === projectId
+              ? {
+                  ...p,
+                  backlog: p.backlog.map((t) =>
+                    t.id === taskId
+                      ? { ...t, description, energyPoints }
+                      : t
+                  ),
+                }
+              : p
+          ),
+        }));
       },
-      
-      
-      // Actions - Energia
-      canAddTask: (energyPoints) => {
-        const state = get();
-        const energyStore = useEnergyStore.getState();
-        const usedEnergy = state.todayTasks
-          .filter(task => task.status === 'pending' || task.status === 'done')
-          .reduce((sum, task) => sum + task.energyPoints, 0);
-        return energyStore.canPerformAction(energyPoints, usedEnergy);
+
+      deleteProjectTask: (projectId, taskId) => {
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === projectId
+              ? { ...p, backlog: p.backlog.filter((t) => t.id !== taskId) }
+              : p
+          ),
+        }));
       },
-      
-      getRemainingEnergy: () => {
-        const state = get();
-        const energyStore = useEnergyStore.getState();
-        const usedEnergy = state.todayTasks
-          .filter(task => task.status === 'pending' || task.status === 'done')
-          .reduce((sum, task) => sum + task.energyPoints, 0);
-        return energyStore.getRemainingEnergy(usedEnergy);
+
+      updateProjectNotes: (projectId, notes) => {
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === projectId ? { ...p, sandboxNotes: notes } : p
+          ),
+        }));
       },
-      
+
+      moveTaskToToday: (projectId, taskId) => {
+        const project = get().projects.find((p) => p.id === projectId);
+        if (!project) return;
+
+        const task = project.backlog.find((t) => t.id === taskId);
+        if (!task) return;
+
+        set((state) => ({
+          todayTasks: [...state.todayTasks, task],
+          projects: state.projects.map((p) =>
+            p.id === projectId
+              ? { ...p, backlog: p.backlog.filter((t) => t.id !== taskId) }
+              : p
+          ),
+        }));
+      },
+      addTask: (taskData) => {
+        const budget = get().calculateEnergyBudget();
+
+        if (budget.remaining < taskData.energyPoints) {
+          useModalsStore.getState().setShowLowEnergyModal(true);
+          return false;
+        }
+
+        const newTask: Task = {
+          ...taskData,
+          id: Date.now().toString(),
+          status: 'pending',
+          type: 'task',
+          createdAt: new Date().toISOString(),
+          comments: [],
+          attachments: [],
+        };
+
+        set((state) => ({ todayTasks: [...state.todayTasks, newTask] }));
+        return true;
+      },
+
+      addComment: (taskId, commentData) => {
+        const newComment: Comment = {
+          ...commentData,
+          id: Date.now().toString(),
+          createdAt: new Date().toISOString(),
+        };
+        const task = get().todayTasks.find(t => t.id === taskId) || get().postponedTasks.find(t => t.id === taskId);
+        if (task) {
+          get().updateTask(taskId, { comments: [...task.comments, newComment] });
+        }
+      },
+
+      updateTask: (taskId, updates) => {
+        set((state) => {
+          const taskToUpdate = state.todayTasks.find((t) => t.id === taskId) || state.postponedTasks.find((t) => t.id === taskId);
+          if (!taskToUpdate) return state;
+
+          const updatedTask = { ...taskToUpdate, ...updates };
+
+          return {
+            todayTasks: state.todayTasks.map((t) => (t.id === taskId ? updatedTask : t)),
+            postponedTasks: state.postponedTasks.map((t) => (t.id === taskId ? updatedTask : t)),
+          };
+        });
+      },
+
+      completeTask: (taskId) => {
+        const task = get().todayTasks.find((t) => t.id === taskId);
+        if (task) {
+            get().updateTask(taskId, { status: 'completed', completedAt: new Date().toISOString() });
+            set({ lastCompletedTask: { ...task, status: 'completed' } });
+        }
+      },
+
+      postponeTask: (taskId, reason?: string, newDate?: string) => {
+        const task = get().todayTasks.find((t) => t.id === taskId);
+        if (task) {
+          const postponementCount = (task.postponementCount || 0) + 1;
+          
+          // Adicionar entrada no histórico
+          const historyEntry = {
+            id: Date.now().toString(),
+            action: 'postponed' as const,
+            timestamp: new Date().toISOString(),
+            details: {
+              reason: reason || 'Sem motivo especificado',
+              newDate: newDate || 'Data não especificada',
+              postponementCount
+            }
+          };
+
+          const updatedTask = { 
+            ...task, 
+            status: 'postponed' as const, 
+            postponedAt: new Date().toISOString(),
+            postponementCount,
+            postponementReason: reason,
+            rescheduleDate: newDate,
+            history: [...(task.history || []), historyEntry]
+          };
+          
+          set((state) => ({
+            todayTasks: state.todayTasks.filter((t) => t.id !== taskId),
+            postponedTasks: [...state.postponedTasks, updatedTask],
+          }));
+        }
+      },
+
+      clearLastCompletedTask: () => set({ lastCompletedTask: null }),
+
+      deleteTask: (taskId) => {
+        set((state) => ({
+          todayTasks: state.todayTasks.filter((t) => t.id !== taskId),
+          postponedTasks: state.postponedTasks.filter((t) => t.id !== taskId),
+        }));
+      },
+
+      // Implementação dos Selectors
       calculateEnergyBudget: () => {
-        const state = get();
         const energyStore = useEnergyStore.getState();
-        const usedEnergy = state.todayTasks
-          .filter(task => task.status === 'pending' || task.status === 'done')
+        const usedEnergy = get().todayTasks
+          .filter(task => task.status === 'pending' || task.status === 'completed')
           .reduce((sum, task) => sum + task.energyPoints, 0);
         return energyStore.calculateBudget(usedEnergy);
       },
 
-      // Actions - Navegação
-      setCurrentPage: (page) => set({ currentPage: page }),
-      setSelectedProjectId: (id) => set({ selectedProjectId: id }),
-      
-      // Actions - Tarefas (com Protocolo de Incêndio)
+      canAddTask: (energyCost) => {
+        return get().calculateEnergyBudget().remaining >= energyCost;
+      },
+
+      getRemainingEnergy: () => {
+        return get().calculateEnergyBudget().remaining;
+      },
+
       addTaskToToday: (description, energyPoints, projectId) => {
-        const state = get();
-        
-        // Energia gerenciada pelo // Função movida para energyStore.ts
-calculateEnergyBudget: () => {
-  const energyStore = useEnergyStore.getState();
-  const state = get();
-  const usedEnergy = state.todayTasks
-    .filter(task => task.status === 'pending' || task.status === 'done')
-    .reduce((sum, task) => sum + task.energyPoints, 0);
-  return energyStore.calculateBudget(usedEnergy);
-},
+        const canAdd = get().canAddTask(energyPoints);
+        if (canAdd) {
+          get().addTask({ 
+            description, 
+            energyPoints, 
+            projectId,
+            type: 'brick', // Todas as tarefas criadas pelo addTaskToToday são tijolos
+            comments: [], 
+            attachments: [], 
+            history: [] 
+          });
+          return true;
+        }
+        return false;
+      },
 
-      
-      completeTask: (taskId) => {
-        set(state => ({
-          todayTasks: state.todayTasks.map(t => 
-            t.id === taskId 
-              ? { ...t, status: 'done', completedAt: new Date().toISOString() }
-              : t
-          )
+      removePostponedTask: (taskId) => {
+        set((state) => ({
+          postponedTasks: state.postponedTasks.filter((t) => t.id !== taskId),
         }));
       },
-      
-      // PROTOCOLO DE DECOMPOSIÇÃO: Melhorado
-      postponeTask: (taskId, reason = 'manual') => {
-        const state = get();
-        
-        // Energia gerenciada pelo // Função movida para energyStore.ts
-calculateEnergyBudget: () => {
-  const energyStore = useEnergyStore.getState();
-  const state = get();
-  const usedEnergy = state.todayTasks
-    .filter(task => task.status === 'pending' || task.status === 'done')
-    .reduce((sum, task) => sum + task.energyPoints, 0);
-  return energyStore.calculateBudget(usedEnergy);
-},
 
-      
-      moveTaskToToday: (projectId, taskId) => {
-        const state = get();
-        
-        // Energia gerenciada pelo // Função movida para energyStore.ts
-calculateEnergyBudget: () => {
-  const energyStore = useEnergyStore.getState();
-  const state = get();
-  const usedEnergy = state.todayTasks
-    .filter(task => task.status === 'pending' || task.status === 'done')
-    .reduce((sum, task) => sum + task.energyPoints, 0);
-  return energyStore.calculateBudget(usedEnergy);
-},
-
-          projectId: project.id,
-        };
-        
-        set(state => ({
-          todayTasks: [...state.todayTasks, newTask],
-          projects: state.projects.map(p =>
-            p.id === projectId
-              ? { ...p, backlog: p.backlog.filter(t => t.id !== taskId) }
-              : p
-          )
-        }));
-      },
-      
-      // NOVA: Função deleteTask que estava faltando
-      deleteTask: (taskId) => {
-        set(state => ({
-          todayTasks: state.todayTasks.filter(t => t.id !== taskId),
-          postponedTasks: state.postponedTasks.filter(t => t.id !== taskId),
-        }));
-      },
-      
-      // Actions - Edição de Tarefas
-      openTaskEditModal: (task) => {
-        set({
-          taskEditModal: {
-            isOpen: true,
-            task,
-            editData: {
-              description: task.description,
-              energyPoints: task.energyPoints,
-              projectId: task.projectId,
-              comment: '',
-            },
-          },
-        });
-      },
-      
-      setTaskEditModal: (state) => {
-        set({ taskEditModal: state });
-      },
-      
-      updateTaskEditData: (updates) => {
-        set(state => ({
-          taskEditModal: {
-            ...state.taskEditModal,
-            editData: {
-              ...state.taskEditModal.editData,
-              ...updates,
-            },
-          },
-        }));
-      },
-      
-      saveTaskEdit: (request) => {
-        const state = get();
-        
-        // Energia gerenciada pelo // Função movida para energyStore.ts
-calculateEnergyBudget: () => {
-  const energyStore = useEnergyStore.getState();
-  const state = get();
-  const usedEnergy = state.todayTasks
-    .filter(task => task.status === 'pending' || task.status === 'done')
-    .reduce((sum, task) => sum + task.energyPoints, 0);
-  return energyStore.calculateBudget(usedEnergy);
-},
-
-      
-      // Actions - Comentários
-      editTaskComment: (commentEdit) => {
-        const { commentId, taskId, newContent } = commentEdit;
-        
-        const updateTaskComments = (task: Task) => {
-          if (task.id !== taskId) return task;
-          
-          return {
-            ...task,
-            comments: task.comments?.map(comment =>
-              comment.id === commentId
-                ? { ...comment, content: newContent, updatedAt: new Date().toISOString() }
-                : comment
-            ) || [],
-            updatedAt: new Date().toISOString(),
-          };
-        };
-        
-        set(state => ({
-          todayTasks: state.todayTasks.map(updateTaskComments),
-          postponedTasks: state.postponedTasks.map(updateTaskComments),
-          projects: state.projects.map(project => ({
-            ...project,
-            backlog: project.backlog.map(updateTaskComments),
-          })),
-        }));
-      },
-      
-      deleteTaskComment: (taskId, commentId) => {
-        const updateTaskComments = (task: Task) => {
-          if (task.id !== taskId) return task;
-          
-          return {
-            ...task,
-            comments: task.comments?.filter(comment => comment.id !== commentId) || [],
-            updatedAt: new Date().toISOString(),
-          };
-        };
-        
-        set(state => ({
-          todayTasks: state.todayTasks.map(updateTaskComments),
-          postponedTasks: state.postponedTasks.map(updateTaskComments),
-          projects: state.projects.map(project => ({
-            ...project,
-            backlog: project.backlog.map(updateTaskComments),
-          })),
-        }));
-      },
-      
-      // Actions - Projetos
-      addTaskToProject: (projectId, description, energyPoints) => {
-        const state = get();
-        
-        // Energia gerenciada pelo // Função movida para energyStore.ts
-calculateEnergyBudget: () => {
-  const energyStore = useEnergyStore.getState();
-  const state = get();
-  const usedEnergy = state.todayTasks
-    .filter(task => task.status === 'pending' || task.status === 'done')
-    .reduce((sum, task) => sum + task.energyPoints, 0);
-  return energyStore.calculateBudget(usedEnergy);
-},
-
-      
-      updateProjectNotes: (projectId, notes) => {
-        set(state => ({
-          projects: state.projects.map(p =>
-            p.id === projectId
-              ? { ...p, sandboxNotes: notes, updatedAt: new Date().toISOString() }
-              : p
-          )
-        }));
-      },
-      
-      createProject: (name, icon, notes) => {
-        const state = get();
-        
-        // Energia gerenciada pelo // Função movida para energyStore.ts
-calculateEnergyBudget: () => {
-  const energyStore = useEnergyStore.getState();
-  const state = get();
-  const usedEnergy = state.todayTasks
-    .filter(task => task.status === 'pending' || task.status === 'done')
-    .reduce((sum, task) => sum + task.energyPoints, 0);
-  return energyStore.calculateBudget(usedEnergy);
-},
-
-      
-      // Actions - Gerenciamento de Tijolos
-      editProjectTask: (projectId, taskId, description, energyPoints) => {
-        set(state => ({
-          projects: state.projects.map(project =>
-            project.id === projectId
-              ? {
-                  ...project,
-                  backlog: project.backlog.map(task =>
-                    task.id === taskId
-                      ? { ...task, description, energyPoints, updatedAt: new Date().toISOString() }
-                      : task
-                  ),
-                  updatedAt: new Date().toISOString()
-                }
-              : project
-          )
-        }));
-      },
-      
-      deleteProjectTask: (projectId, taskId) => {
-        set(state => ({
-          projects: state.projects.map(project =>
-            project.id === projectId
-              ? {
-                  ...project,
-                  backlog: project.backlog.filter(task => task.id !== taskId),
-                  updatedAt: new Date().toISOString()
-                }
-              : project
-          )
-        }));
-      },
-      
-      createProjectWithTasks: (name, icon, notes, initialTasks) => {
-        const state = get();
-        
-        // Energia gerenciada pelo // Função movida para energyStore.ts
-calculateEnergyBudget: () => {
-  const energyStore = useEnergyStore.getState();
-  const state = get();
-  const usedEnergy = state.todayTasks
-    .filter(task => task.status === 'pending' || task.status === 'done')
-    .reduce((sum, task) => sum + task.energyPoints, 0);
-  return energyStore.calculateBudget(usedEnergy);
-},
-
-      
-      // Actions - Notas
-      saveNote: (content) => {
-        const state = get();
-        
-        // Energia gerenciada pelo // Função movida para energyStore.ts
-calculateEnergyBudget: () => {
-  const energyStore = useEnergyStore.getState();
-  const state = get();
-  const usedEnergy = state.todayTasks
-    .filter(task => task.status === 'pending' || task.status === 'done')
-    .reduce((sum, task) => sum + task.energyPoints, 0);
-  return energyStore.calculateBudget(usedEnergy);
-},
-
-      
-      updateNote: (noteId, content) => {
-        set(state => ({
-          notes: state.notes.map(note =>
-            note.id === noteId 
-              ? { ...note, content, updatedAt: new Date().toISOString() }
-              : note
-          ),
-          editingNote: null,
-        }));
-      },
-      
-      archiveNote: (noteId) => {
-        set(state => ({
-          notes: state.notes.map(note =>
-            note.id === noteId 
-              ? { ...note, status: 'archived', updatedAt: new Date().toISOString() }
-              : note
-          )
-        }));
-      },
-      
-      deleteNote: (noteId) => {
-        set(state => ({
-          notes: state.notes.filter(note => note.id !== noteId),
-          sandboxLayout: {
-            ...state.sandboxLayout,
-            notes: state.sandboxLayout.notes.filter(note => note.id !== noteId)
-          }
-        }));
-      },
-      
-      transformNoteToAction: (request) => {
-        const state = get();
-        
-        // Energia gerenciada pelo // Função movida para energyStore.ts
-calculateEnergyBudget: () => {
-  const energyStore = useEnergyStore.getState();
-  const state = get();
-  const usedEnergy = state.todayTasks
-    .filter(task => task.status === 'pending' || task.status === 'done')
-    .reduce((sum, task) => sum + task.energyPoints, 0);
-  return energyStore.calculateBudget(usedEnergy);
-},
-
-      
-      // Actions - Modais
-      setShowCaptureModal: (show) => set({ showCaptureModal: show }),
-      setShowLowEnergyModal: (show) => set({ showLowEnergyModal: show }),
-      setShowDecompositionModal: (task) => set({ showDecompositionModal: task }),
-      setShowTransformModal: (note) => set({ showTransformModal: note }),
-      
-      // Actions - Protocolos Críticos
-      setShowEmergencyModal: (show) => set({ showEmergencyModal: show }),
-      
-      triggerEmergencyModal: (task) => {
-        set({
-          showEmergencyModal: true,
-          emergencyTaskToAdd: task
-        });
-      },
-      
-      // PROTOCOLO DE BAIXA ENERGIA: Substituir por tarefas leves
-      replaceWithLightTasks: () => {
-        const state = get();
-        
-        // Energia gerenciada pelo // Função movida para energyStore.ts
-calculateEnergyBudget: () => {
-  const energyStore = useEnergyStore.getState();
-  const state = get();
-  const usedEnergy = state.todayTasks
-    .filter(task => task.status === 'pending' || task.status === 'done')
-    .reduce((sum, task) => sum + task.energyPoints, 0);
-  return energyStore.calculateBudget(usedEnergy);
-},
-
-      
-      // PROTOCOLO DE BAIXA ENERGIA: Adiar o dia inteiro
-      postponeAllTasks: () => {
-        const state = get();
-        
-        // Energia gerenciada pelo // Função movida para energyStore.ts
-calculateEnergyBudget: () => {
-  const energyStore = useEnergyStore.getState();
-  const state = get();
-  const usedEnergy = state.todayTasks
-    .filter(task => task.status === 'pending' || task.status === 'done')
-    .reduce((sum, task) => sum + task.energyPoints, 0);
-  return energyStore.calculateBudget(usedEnergy);
-},
-
-      
-      // Actions - Captura
-      updateCaptureState: (updates) => {
-        set(state => ({
-          captureState: { ...state.captureState, ...updates }
-        }));
-      },
-      
+      // Capture System Implementation
       resetCaptureState: () => {
         set({
+          captureState: {
+            step: 'capture',
+            content: '',
+            selectedDate: '',
+            type: undefined,
+            classification: undefined,
+          },
           showCaptureModal: false,
-          captureState: initialCaptureState,
         });
       },
-      
+
+      updateCaptureState: (updates) => {
+        set((state) => ({
+          captureState: { ...state.captureState, ...updates },
+        }));
+      },
+
       handleCaptureSubmit: () => {
-        const state = get();
-        
-        // Energia gerenciada pelo // Função movida para energyStore.ts
-calculateEnergyBudget: () => {
-  const energyStore = useEnergyStore.getState();
-  const state = get();
-  const usedEnergy = state.todayTasks
-    .filter(task => task.status === 'pending' || task.status === 'done')
-    .reduce((sum, task) => sum + task.energyPoints, 0);
-  return energyStore.calculateBudget(usedEnergy);
-},
+        set((state) => ({
+          captureState: { ...state.captureState, step: 'triage' },
+        }));
+      },
 
-      
       handleTriageChoice: (choice) => {
-        const state = get();
-        
-        // Energia gerenciada pelo // Função movida para energyStore.ts
-calculateEnergyBudget: () => {
-  const energyStore = useEnergyStore.getState();
-  const state = get();
-  const usedEnergy = state.todayTasks
-    .filter(task => task.status === 'pending' || task.status === 'done')
-    .reduce((sum, task) => sum + task.energyPoints, 0);
-  return energyStore.calculateBudget(usedEnergy);
-},
-
-      
-      handleClassifyChoice: (type) => {
-        const state = get();
-        
-        // Energia gerenciada pelo // Função movida para energyStore.ts
-calculateEnergyBudget: () => {
-  const energyStore = useEnergyStore.getState();
-  const state = get();
-  const usedEnergy = state.todayTasks
-    .filter(task => task.status === 'pending' || task.status === 'done')
-    .reduce((sum, task) => sum + task.energyPoints, 0);
-  return energyStore.calculateBudget(usedEnergy);
-},
-
-      
-      handleScheduleChoice: (when, date) => {
-        const state = get();
-        
-        // Energia gerenciada pelo // Função movida para energyStore.ts
-calculateEnergyBudget: () => {
-  const energyStore = useEnergyStore.getState();
-  const state = get();
-  const usedEnergy = state.todayTasks
-    .filter(task => task.status === 'pending' || task.status === 'done')
-    .reduce((sum, task) => sum + task.energyPoints, 0);
-  return energyStore.calculateBudget(usedEnergy);
-},
-
-      
-      // Actions - Protocolos
-      handleDecomposition: (request) => {
-        const state = get();
-        
-        // Energia gerenciada pelo // Função movida para energyStore.ts
-calculateEnergyBudget: () => {
-  const energyStore = useEnergyStore.getState();
-  const state = get();
-  const usedEnergy = state.todayTasks
-    .filter(task => task.status === 'pending' || task.status === 'done')
-    .reduce((sum, task) => sum + task.energyPoints, 0);
-  return energyStore.calculateBudget(usedEnergy);
-},
-
-      
-      // Actions - Remoção
-      removePostponedTask: (taskId) => {
-        set(state => ({
-          postponedTasks: state.postponedTasks.filter(t => t.id !== taskId)
-        }));
-      },
-      
-      // Actions - Energia
-      canAddTask: (energyPoints) => {
-  const state = get();
-  const energyStore = useEnergyStore.getState();
-  const usedEnergy = state.todayTasks
-    .filter(task => task.status === 'pending' || task.status === 'done')
-    .reduce((sum, task) => sum + task.energyPoints, 0);
-  return energyStore.canPerformAction(energyPoints, usedEnergy);
-},
-
-
-      
-      getRemainingEnergy: () => {
-        const state = get();
-        
-        // Energia gerenciada pelo // Função movida para energyStore.ts
-calculateEnergyBudget: () => {
-  const energyStore = useEnergyStore.getState();
-  const state = get();
-  const usedEnergy = state.todayTasks
-    .filter(task => task.status === 'pending' || task.status === 'done')
-    .reduce((sum, task) => sum + task.energyPoints, 0);
-  return energyStore.calculateBudget(usedEnergy);
-},
-
-      
-      // Função movida para energyStore.ts
-calculateEnergyBudget: () => {
-  const energyStore = useEnergyStore.getState();
-  const state = get();
-  const usedEnergy = state.todayTasks
-    .filter(task => task.status === 'pending' || task.status === 'done')
-    .reduce((sum, task) => sum + task.energyPoints, 0);
-  return energyStore.calculateBudget(usedEnergy);
-},
-
-      
-      // Actions - Sandbox Movível
-      convertNotesToMovable: () => {
-        const state = get();
-        
-        // Energia gerenciada pelo // Função movida para energyStore.ts
-calculateEnergyBudget: () => {
-  const energyStore = useEnergyStore.getState();
-  const state = get();
-  const usedEnergy = state.todayTasks
-    .filter(task => task.status === 'pending' || task.status === 'done')
-    .reduce((sum, task) => sum + task.energyPoints, 0);
-  return energyStore.calculateBudget(usedEnergy);
-},
-
-            size: { width: 300, height: 200 },
-            isExpanded: false,
-            color: '#fbbf24',
-            zIndex: 1 + index,
-            createdAt: note.createdAt,
-            updatedAt: note.updatedAt,
+        if (choice === 'sandbox') {
+          const { content } = get().captureState;
+          useNotesStore.getState().saveNote(content);
+          get().resetCaptureState();
+        } else {
+          set((state) => ({
+            captureState: { ...state.captureState, step: 'classify', type: choice },
           }));
-        
-        set(state => ({
-          sandboxLayout: {
-            ...state.sandboxLayout,
-            notes: [...existingNotes, ...newMovableNotes],
-          },
-        }));
+        }
       },
-      
-      updateNotePosition: (noteId, x, y) => {
-        set(state => ({
-          sandboxLayout: {
-            ...state.sandboxLayout,
-            notes: state.sandboxLayout.notes.map(note =>
-              note.id === noteId
-                ? { ...note, position: { x, y }, updatedAt: new Date().toISOString() }
-                : note
-            ),
-          },
-        }));
-      },
-      
-      updateNoteSize: (noteId, width, height) => {
-        set(state => ({
-          sandboxLayout: {
-            ...state.sandboxLayout,
-            notes: state.sandboxLayout.notes.map(note =>
-              note.id === noteId
-                ? { ...note, size: { width, height }, updatedAt: new Date().toISOString() }
-                : note
-            ),
-          },
-        }));
-      },
-      
-      updateNoteZIndex: (noteId, zIndex) => {
-        set(state => ({
-          sandboxLayout: {
-            ...state.sandboxLayout,
-            notes: state.sandboxLayout.notes.map(note =>
-              note.id === noteId
-                ? { ...note, zIndex, updatedAt: new Date().toISOString() }
-                : note
-            ),
-          },
-        }));
-      },
-      
-      toggleNoteExpanded: (noteId) => {
-        set(state => ({
-          sandboxLayout: {
-            ...state.sandboxLayout,
-            notes: state.sandboxLayout.notes.map(note =>
-              note.id === noteId
-                ? { ...note, isExpanded: !note.isExpanded, updatedAt: new Date().toISOString() }
-                : note
-            ),
-          },
-        }));
-      },
-      
-      updateNoteColor: (noteId, color) => {
-        set(state => ({
-          sandboxLayout: {
-            ...state.sandboxLayout,
-            notes: state.sandboxLayout.notes.map(note =>
-              note.id === noteId
-                ? { ...note, color, updatedAt: new Date().toISOString() }
-                : note
-            ),
-          },
-        }));
-      },
-      
-      selectNote: (noteId) => {
-        set(state => ({
-          sandboxLayout: {
-            ...state.sandboxLayout,
-            selectedNoteId: noteId,
-          },
+
+      handleClassifyChoice: (classification) => {
+        set((state) => ({
+          captureState: { ...state.captureState, step: 'schedule', classification },
         }));
       },
 
-      // Actions - Layout Management
-      setLayoutMode: (mode) => {
-        set(state => ({
-          sandboxLayout: { ...state.sandboxLayout, layoutMode: mode }
-        }));
-      },
-      
-      setSnapToGrid: (snap) => {
-        set(state => ({
-          sandboxLayout: { ...state.sandboxLayout, snapToGrid: snap }
-        }));
-      },
-      
-      setGridSize: (size) => {
-        set(state => ({
-          sandboxLayout: { ...state.sandboxLayout, gridSize: size }
-        }));
-      },
-      
-      setShowGrid: (show) => {
-        set(state => ({
-          sandboxLayout: { ...state.sandboxLayout, showGrid: show }
-        }));
-      },
-      
-      reorganizeNotes: (mode) => {
-        const state = get();
+      handleScheduleChoice: (schedule, date) => {
+        const { content, classification } = get().captureState;
         
-        // Energia gerenciada pelo // Função movida para energyStore.ts
-calculateEnergyBudget: () => {
-  const energyStore = useEnergyStore.getState();
-  const state = get();
-  const usedEnergy = state.todayTasks
-    .filter(task => task.status === 'pending' || task.status === 'done')
-    .reduce((sum, task) => sum + task.energyPoints, 0);
-  return energyStore.calculateBudget(usedEnergy);
-},
-
-      
-      // Utilities
-      generateUniqueId: () => Date.now().toString() + Math.random().toString(36).substr(2, 9),
-    }),
-    {
-      name: 'cerebro-compativel-tasks',
-      version: 5,
-      migrate: (persistedState: any, version: number) => {
-        // Função de migração para preservar dados existentes
-        console.log('🔄 Migrando store do Zustand, versão:', version);
-        
-        // Se é versão anterior, adicionar novos campos dos protocolos críticos
-        if (version < 5) {
-          return {
-            ...persistedState,
-            // Novos campos dos protocolos críticos
-            showEmergencyModal: false,
-            emergencyTaskToAdd: null,
-            // Preservar todos os dados existentes
-            todayTasks: persistedState.todayTasks || [],
-            projects: persistedState.projects || [],
-            notes: persistedState.notes || [],
-            postponedTasks: persistedState.postponedTasks || [],
-            currentPage: persistedState.currentPage || 'bombeiro',
-            energyBudget: persistedState.energyBudget || { total: 12 },
-            sandboxLayout: persistedState.sandboxLayout || {
-              notes: [],
-              selectedNoteId: null,
-              gridSize: 20,
-              showGrid: false,
-              layoutMode: 'free',
-              snapToGrid: true,
-              density: 'normal',
-            }
-          };
+        if (schedule === 'today') {
+          if (classification === 'task') {
+            get().addTaskToToday(content, 3);
+          } else {
+            // TODO: Implementar criação de projeto
+            console.log('Criando projeto:', content);
+          }
+        } else if (schedule === 'future' && date) {
+          // TODO: Implementar agendamento futuro
+          console.log('Agendando para:', date, content);
         }
         
-        // Versão atual, retornar como está
-        return persistedState;
-      }
+        get().resetCaptureState();
+      },
+
+      // Project Creation Implementation
+      createProjectWithTasks: (data) => {
+        const projectId = Date.now().toString();
+        const newProject: Project = {
+          id: projectId,
+          name: data.name,
+          icon: data.icon,
+          color: data.color,
+          status: 'active',
+          sandboxNotes: '',
+          backlog: data.tasks.map((description, index) => ({
+            id: `${Date.now()}_${index}`,
+            description,
+            energyPoints: 3 as const,
+            status: 'pending' as const,
+            projectId: projectId,
+            type: 'brick' as const,
+            createdAt: new Date().toISOString(),
+            comments: [],
+            attachments: [],
+            history: [],
+          })),
+        };
+
+        set((state) => ({
+          projects: [...state.projects, newProject],
+        }));
+      },
+    }),
+    {
+      name: 'gerenciador-tasks-store',
+      version: 1,
     }
   )
 );

@@ -14,8 +14,6 @@ import {
   Download, 
   Eye, 
   Trash2, 
-  Plus,
-  X,
   Paperclip
 } from 'lucide-react';
 import type { Attachment } from '@/types';
@@ -62,7 +60,7 @@ export function FileUpload({
     
     try {
       await onUpload(filesArray);
-    } catch (error) {
+    } catch {
       alert('Erro ao fazer upload dos arquivos');
     } finally {
       setIsUploading(false);

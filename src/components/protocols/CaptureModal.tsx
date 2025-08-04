@@ -40,9 +40,21 @@ export function CaptureModal() {
             </h3>
             <textarea
               className="w-full h-36 p-4 border border-gray-200/50 rounded-2xl resize-none focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-400 transition-all duration-300 bg-white/70 backdrop-blur-sm"
-              placeholder="Digite qualquer pensamento, ideia ou tarefa..."
+              placeholder="Digite qualquer pensamento, ideia ou tarefa... (Ctrl+Enter para nova linha)"
               value={captureState.content}
               onChange={(e) => updateCaptureState({ content: e.target.value })}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && e.ctrlKey) {
+                  const textarea = e.currentTarget;
+                  const start = textarea.selectionStart;
+                  const end = textarea.selectionEnd;
+                  const newValue = captureState.content.substring(0, start) + '\n' + captureState.content.substring(end);
+                  updateCaptureState({ content: newValue });
+                  setTimeout(() => {
+                    textarea.selectionStart = textarea.selectionEnd = start + 1;
+                  }, 0);
+                }
+              }}
               autoFocus
             />
             <div className="flex justify-center mt-6">
@@ -69,7 +81,7 @@ export function CaptureModal() {
               🤔 O que fazer com esta ideia?
             </h3>
             <div className="bg-gray-50 rounded-xl p-4 mb-6">
-              <p className="text-sm text-gray-700 italic">"{captureState.content}"</p>
+              <p className="text-sm text-gray-700 italic">&quot;{captureState.content}&quot;</p>
             </div>
             <div className="space-y-4">
               <motion.button 
@@ -100,7 +112,7 @@ export function CaptureModal() {
               🏗️ Que tipo de ação é esta?
             </h3>
             <div className="bg-gray-50 rounded-xl p-4 mb-6">
-              <p className="text-sm text-gray-700 italic">"{captureState.content}"</p>
+              <p className="text-sm text-gray-700 italic">&quot;{captureState.content}&quot;</p>
             </div>
             <div className="space-y-4">
               <motion.button 
@@ -131,7 +143,7 @@ export function CaptureModal() {
               📅 Para quando é essa tarefa?
             </h3>
             <div className="bg-gray-50 rounded-xl p-4 mb-6">
-              <p className="text-sm text-gray-700 italic">"{captureState.content}"</p>
+              <p className="text-sm text-gray-700 italic">&quot;{captureState.content}&quot;</p>
             </div>
             <div className="space-y-4">
               <motion.button 

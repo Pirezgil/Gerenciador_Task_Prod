@@ -6,19 +6,11 @@
 
 import React from 'react';
 import { usePageContext } from './PageContext';
-import { useAuthStore } from '@/stores/authStore';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import * as ThemeToggleModule from '@/components/ui/ThemeToggle';
 
 export function Header() {
   const pageContext = usePageContext();
-  const { user } = useAuthStore();
   
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Bom dia';
-    if (hour < 18) return 'Boa tarde';
-    return 'Boa noite';
-  };
 
   const getThemeStyles = (theme: string) => {
     const themes = {
@@ -42,7 +34,7 @@ export function Header() {
               <div className="flex items-center space-x-3">
                 <div>
                   <h1 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-                    Sistema Cérebro-Compatível
+                    Sistema Sentinela
                   </h1>
                   <p className="text-sm text-text-secondary">Organização inteligente para sua mente</p>
                 </div>
@@ -51,10 +43,10 @@ export function Header() {
             
             {/* User Info - Sempre visível */}
             <div className="flex items-center space-x-4 ml-auto">
-              $1
+              
               
               {/* Theme Toggle */}
-              <ThemeToggle variant="icon" className="ml-4" />
+              <ThemeToggleModule.ThemeToggle variant="icon" className="ml-4" />
             </div>
           </div>
         </div>

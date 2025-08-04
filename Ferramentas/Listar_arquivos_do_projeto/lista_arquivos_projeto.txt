@@ -1,36 +1,41 @@
 ================================================================================
 LISTAGEM COMPLETA DE ARQUIVOS DO PROJETO
 ================================================================================
-Gerado em: 30/07/2025 às 20:00:54
+Gerado em: 31/07/2025 às 14:39:53
 Diretório: C:\Users\Gilmar Pires\Desktop\Projetos\Gerenciador_Task
-Total de arquivos: 145
-Tamanho total: 1.62 MB
+Total de arquivos: 156
+Tamanho total: 1.77 MB
 ================================================================================
 
 RESUMO POR CATEGORIA:
 ----------------------------------------
-Codigo Fonte: 93 arquivos (0.68 MB)
-Configuracao: 9 arquivos (0.28 MB)
-Documentacao: 21 arquivos (0.18 MB)
+Codigo Fonte: 95 arquivos (0.69 MB)
+Configuracao: 12 arquivos (0.31 MB)
+Documentacao: 23 arquivos (0.19 MB)
 Scripts Automacao: 19 arquivos (0.46 MB)
-Backups: 2 arquivos (0.02 MB)
+Backups: 6 arquivos (0.12 MB)
 Outros: 1 arquivos (0.0 MB)
 
 ================================================================================
 CÓDIGO FONTE
 ================================================================================
+.backup_critical_fix\EnergyMeter.tsx (0.004 MB)
+.backup_critical_fix\NoSSR.tsx (429 bytes)
+.backup_critical_fix\TaskItem.tsx (0.009 MB)
+.backup_critical_fix\tasksStore.ts (0.037 MB)
+.backup_critical_fix\useEnergyBudget.ts (874 bytes)
+.backup_critical_fix\useHydration.ts (420 bytes)
 Ferramentas\Listar_arquivos_do_projeto\executar_listagem.py (0.002 MB)
 Ferramentas\Listar_arquivos_do_projeto\listar_arquivos.py (0.008 MB)
 analisar_mcp.py (0.003 MB)
-fix_bombeiro_errors.py (0.007 MB)
-fix_taskitem_prop.py (0.003 MB)
-force_compile.py (0.009 MB)
+fix_syntax_error.py (0.008 MB)
 mcp_server.py (0.027 MB)
 next-env.d.ts (216 bytes)
 next.config.js (531 bytes)
 postcss.config.js (164 bytes)
 public\hydration-debug.js (682 bytes)
 public\limpar-cache.html (0.004 MB)
+run.py (0.014 MB)
 scripts\Novo_visual_e_segurança_caixa_de_areia\Melhorias_visuais.py (0.013 MB)
 scripts\Novo_visual_e_segurança_caixa_de_areia\Novo_visual_caixa_de_areia.py (0.019 MB)
 scripts\Novo_visual_e_segurança_caixa_de_areia\python fix_auth_store_sandbox.py (0.006 MB)
@@ -48,7 +53,6 @@ src\app\(main)\settings\page.tsx (0.004 MB)
 src\app\auth\page.tsx (0.005 MB)
 src\app\layout.tsx (0.002 MB)
 src\app\page.tsx (194 bytes)
-src\components\CerebroCompativel.tsx (0.015 MB)
 src\components\ColorDebug.tsx (0.004 MB)
 src\components\SentinelaTest.tsx (0.002 MB)
 src\components\arquiteto\ArquitetoPage.tsx (0.002 MB)
@@ -57,20 +61,18 @@ src\components\auth\AuthMiddleware.tsx (0.003 MB)
 src\components\bombeiro\AchievementCelebration.tsx (0.012 MB)
 src\components\bombeiro\BombeiroPage.tsx (549 bytes)
 src\components\bombeiro\BombeiroPageClient.tsx (0.011 MB)
-src\components\bombeiro\BombeiroPageWrapper.tsx (939 bytes)
 src\components\bombeiro\EnergyMeter.tsx (0.004 MB)
 src\components\bombeiro\PostponedTasksRoom.tsx (0.002 MB)
-src\components\bombeiro\TaskItem.tsx (0.009 MB)
+src\components\bombeiro\TaskItem.tsx (0.005 MB)
 src\components\bombeiro\UltraRewardingCelebration.tsx (0.018 MB)
 src\components\bombeiro\WeeklyStats.tsx (0.008 MB)
-src\components\caixa-de-areia\CaixaDeAreiaPage.tsx (0.017 MB)
+src\components\caixa-de-areia\CaixaDeAreiaPage.tsx (0.015 MB)
 src\components\caixa-de-areia\MovableNoteItem.tsx (0.012 MB)
 src\components\caixa-de-areia\NoteItem.tsx (0.005 MB)
 src\components\caixa-de-areia\SandboxAuth.tsx (0.008 MB)
 src\components\debug\ThemeColorTest.tsx (1485 bytes)
 src\components\layout\Header.tsx (0.005 MB)
 src\components\layout\Navigation.tsx (0.003 MB)
-src\components\layout\NavigationHorizontal.tsx (0.003 MB)
 src\components\layout\PageContext.tsx (1037 bytes)
 src\components\layout\Sidebar.tsx (0.012 MB)
 src\components\profile\DataManagement.tsx (0.007 MB)
@@ -84,36 +86,36 @@ src\components\protocols\EmergencyChoiceModal.tsx (0.006 MB)
 src\components\protocols\LowEnergyModal.tsx (0.005 MB)
 src\components\protocols\TransformModal.tsx (0.006 MB)
 src\components\providers\ThemeProvider.tsx (0.002 MB)
-src\components\shared\Button.tsx (0.002 MB)
-src\components\shared\EnergyMonitor.tsx (0.004 MB)
 src\components\shared\FileUpload.tsx (0.009 MB)
 src\components\shared\Modal.tsx (0.002 MB)
 src\components\shared\NewProjectModal.tsx (0.015 MB)
 src\components\shared\NewTaskModal.tsx (0.011 MB)
-src\components\shared\NoSSR.tsx (429 bytes)
 src\components\shared\TaskEditModal.tsx (0.011 MB)
 src\components\ui\ThemeToggle.tsx (0.004 MB)
 src\components\ui\avatar.tsx (1475 bytes)
 src\components\ui\badge.tsx (1177 bytes)
-src\components\ui\button.tsx (0.003 MB)
+src\components\ui\button.tsx (0.002 MB)
 src\components\ui\card.tsx (0.002 MB)
 src\components\ui\dropdown-menu.tsx (0.007 MB)
-src\hooks\useEnergyBudget.ts (0.003 MB)
-src\hooks\useHydration.ts (420 bytes)
+src\hooks\useEnergyBudget.ts (1345 bytes)
+src\hooks\useHydration.ts (0.003 MB)
 src\hooks\useLocalStorage.ts (1468 bytes)
 src\hooks\useTheme.ts (0.003 MB)
 src\lib\constants.ts (0.004 MB)
 src\lib\syncManager.ts (0.006 MB)
 src\lib\utils.ts (0.006 MB)
 src\stores\authStore.ts (0.005 MB)
-src\stores\tasksStore.ts (0.040 MB)
+src\stores\energyStore.ts (0.002 MB)
+src\stores\modalsStore.ts (0.003 MB)
+src\stores\notesStore.ts (0.007 MB)
+src\stores\tasksStore.ts (0.011 MB)
 src\stores\themeStore.ts (0.025 MB)
 src\styles\globals.css (0.010 MB)
 src\styles\responsive.css (0.007 MB)
 src\types\index.ts (0.002 MB)
 tailwind.config.js (0.007 MB)
 
-Subtotal: 93 arquivos
+Subtotal: 95 arquivos
 
 ================================================================================
 ARQUIVOS DE CONFIGURAÇÃO
@@ -122,13 +124,16 @@ ARQUIVOS DE CONFIGURAÇÃO
 Ferramentas\Listar_arquivos_do_projeto\manifest_listagem.yaml (252 bytes)
 cleanup_report_20250730_193528.json (0.024 MB)
 data\tasks.json (282 bytes)
+fase1_report_20250730_201239.json (533 bytes)
+fase1_report_20250730_201308.json (0.003 MB)
+manifest.yaml (0.024 MB)
 mcp_config.json (583 bytes)
 navigation_standardization_log.json (0.002 MB)
 package-lock.json (0.256 MB)
 package.json (1054 bytes)
 tsconfig.json (920 bytes)
 
-Subtotal: 9 arquivos
+Subtotal: 12 arquivos
 
 ================================================================================
 DOCUMENTAÇÃO
@@ -148,14 +153,16 @@ Documentação\development.md (576 bytes)
 Documentação\py_simples_vs_py+yaml .md (0.004 MB)
 Ferramentas\Prompts\Desenvolvedor_frontend .md (0.003 MB)
 Ferramentas\Prompts\Lixeiro_do_projeto .md (0.003 MB)
-README.md (51 bytes)
+Problemas_encontrados.md (0.009 MB)
+README.md (1538 bytes)
 claude_desktop_setup.txt (841 bytes)
+critical_fix_log.txt (0.004 MB)
 docs\dark-mode-responsive\README.md (0.005 MB)
 docs\sistema-sentinela\README.md (0.005 MB)
 docs\sistema-sentinela\classes-reference.md (0.004 MB)
 docs\sistema-sentinela\migration-guide.md (1178 bytes)
 
-Subtotal: 21 arquivos
+Subtotal: 23 arquivos
 
 ================================================================================
 SCRIPTS DE AUTOMAÇÃO
@@ -185,10 +192,14 @@ Subtotal: 19 arquivos
 ================================================================================
 ARQUIVOS DE BACKUP
 ================================================================================
-src\components\bombeiro\TaskItem.tsx.backup (0.009 MB)
-src\components\bombeiro\TaskItem.tsx.backup_prop (0.009 MB)
+.automation_backups\EnergyMonitor.tsx_20250730_201308.backup (0.004 MB)
+.automation_backups\TaskItem.tsx_20250730_201308.backup (0.009 MB)
+.automation_backups\tasksStore.ts_20250730_201308.backup (0.040 MB)
+.automation_backups\useEnergyBudget.ts_20250730_201308.backup (0.003 MB)
+src\stores\tasksStore.ts.backup_20250731_092449 (0.037 MB)
+src\stores\tasksStore.ts.backup_emergency_100759 (0.028 MB)
 
-Subtotal: 2 arquivos
+Subtotal: 6 arquivos
 
 ================================================================================
 OUTROS ARQUIVOS

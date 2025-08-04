@@ -3,9 +3,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Edit3, Trash2, Archive, Sparkles, Paperclip, ChevronDown, ChevronUp } from 'lucide-react';
-import { useTasksStore } from '@/stores/tasksStore';
+import { useNotesStore } from '@/stores/notesStore';
+import { useModalsStore } from '@/stores/modalsStore';
 import { FileUpload, useFileUpload } from '@/components/shared/FileUpload';
-import type { Note, Attachment } from '@/types';
+import type { Note } from '@/types';
 
 interface NoteItemProps {
   note: Note;
@@ -14,12 +15,13 @@ interface NoteItemProps {
 export function NoteItem({ note }: NoteItemProps) {
   const {
     editingNote,
-    setShowTransformModal,
+    setEditingNote,
     updateNote,
     archiveNote,
     deleteNote,
     updateNoteAttachments,
-  } = useTasksStore();
+  } = useNotesStore();
+  const { setShowTransformModal } = useModalsStore();
   
   const [showAttachments, setShowAttachments] = useState(false);
   const { uploadFiles } = useFileUpload();
@@ -58,7 +60,7 @@ export function NoteItem({ note }: NoteItemProps) {
               className="flex items-center space-x-1 text-xs text-blue-600 hover:text-blue-700 transition-colors"
             >
               <Paperclip className="w-3 h-3" />
-              <span>{note.attachments.length}</span>
+              <span>{note.attachments?.length || 0}</span>
               {showAttachments ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             </button>
           )}
@@ -77,7 +79,7 @@ export function NoteItem({ note }: NoteItemProps) {
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            onClick={() => useTasksStore.setState({ editingNote: isEditing ? null : note.id })}
+            onClick={() => setEditingNote(isEditing ? null : note.id)}
             className="p-2 text-gray-400 hover:text-gray-600 transition-colors bg-gray-50 rounded-xl hover:bg-gray-100"
             title="Editar"
           >
@@ -110,6 +112,19 @@ export function NoteItem({ note }: NoteItemProps) {
             className="w-full h-36 p-4 border border-amber-200/50 rounded-2xl resize-none focus:outline-none focus:ring-4 focus:ring-amber-400/20 focus:border-amber-400 font-serif text-gray-700 bg-white/50 backdrop-blur-sm transition-all duration-300"
             defaultValue={note.content}
             onBlur={(e) => updateNote(note.id, e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && e.ctrlKey) {
+                const textarea = e.currentTarget;
+                const start = textarea.selectionStart;
+                const end = textarea.selectionEnd;
+                const newValue = textarea.value.substring(0, start) + '\n' + textarea.value.substring(end);
+                textarea.value = newValue;
+                setTimeout(() => {
+                  textarea.selectionStart = textarea.selectionEnd = start + 1;
+                }, 0);
+              }
+            }}
+            placeholder="Editar nota... (Ctrl+Enter para nova linha)"
             autoFocus
           />
         </div>

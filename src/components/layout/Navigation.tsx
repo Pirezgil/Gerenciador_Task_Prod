@@ -15,6 +15,8 @@ export function Navigation() {
   const pages = [
     { key: 'bombeiro', label: '🏎️ Bombeiro', color: 'blue', path: '/bombeiro' },
     { key: 'arquiteto', label: '🏗️ Arquiteto', color: 'purple', path: '/arquiteto' },
+    { key: 'planejamento', label: '📅 Planejamento', color: 'indigo', path: '/planejamento' },
+    { key: 'tarefas', label: '📋 Tarefas', color: 'green', path: '/tarefas' },
     { key: 'caixa-de-areia', label: '🏖️ Caixa de Areia', color: 'amber', path: '/caixa-de-areia' }
   ] as const;
 
@@ -26,6 +28,9 @@ export function Navigation() {
       purple: isActive 
         ? 'bg-gradient-to-r from-purple-500 to-purple-600 theme-button-text shadow-lg shadow-purple-500/25 transform scale-105'
         : 'theme-text-secondary hover:bg-purple-50 hover:text-purple-700',
+      indigo: isActive 
+        ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 theme-button-text shadow-lg shadow-indigo-500/25 transform scale-105'
+        : 'theme-text-secondary hover:bg-indigo-50 hover:text-indigo-700',
       amber: isActive 
         ? 'bg-gradient-to-r from-amber-500 to-orange-500 theme-button-text shadow-lg shadow-amber-500/25 transform scale-105'
         : 'theme-text-secondary hover:bg-amber-50 hover:text-amber-700',

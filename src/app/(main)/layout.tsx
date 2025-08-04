@@ -16,12 +16,12 @@ export default function MainLayout({
       <Sidebar />
       
       {/* Conteúdo Principal */}
-      <div className="flex-1 flex flex-col min-h-screen lg:ml-0">
+      <div className="flex-1 flex flex-col min-h-screen lg:ml-80">
         <Header />
         
         {/* Área de Conteúdo */}
         <main className="flex-1 overflow-auto">
-          <div className="p-6 ml-0 lg:ml-4">
+          <div className="p-6">
             {children}
           </div>
         </main>

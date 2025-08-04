@@ -1,8 +1,8 @@
 // ============================================================================
-// CONSTANTS - Constantes para o Cérebro-Compatível
+// CONSTANTS - Constantes para o Sentinela
 // ============================================================================
 
-import type { EnergyLevel } from '@/types';
+
 
 /**
  * Configurações padrão de energia
@@ -174,11 +174,11 @@ export const BREAKPOINTS = {
  * Configurações de localStorage
  */
 export const STORAGE_KEYS = {
-  TASKS: 'cerebro-compativel-tasks',
-  PROJECTS: 'cerebro-compativel-projects',
-  NOTES: 'cerebro-compativel-notes',
-  SETTINGS: 'cerebro-compativel-settings',
-  TREES: 'cerebro-compativel-trees',
+  TASKS: 'sentinela-tasks',
+  PROJECTS: 'sentinela-projects',
+  NOTES: 'sentinela-notes',
+  SETTINGS: 'sentinela-settings',
+  TREES: 'sentinela-trees',
 } as const;
 
 /**

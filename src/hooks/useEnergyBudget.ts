@@ -19,10 +19,19 @@ export const useEnergyBudget = (): EnergyBudget & {
   const { todayTasks } = useTasksStore();
   
   const energyData = useMemo(() => {
-    // Calcular energia usada hoje
+    // Calcular energia total usada hoje (pendentes + completadas)
     const usedEnergy = todayTasks
-      .filter(task => task.status === 'pending' || task.status === 'done')
+      .filter(task => task.status === 'pending' || task.status === 'completed')
       .reduce((sum, task) => sum + task.energyPoints, 0);
+    
+    // Debug: Log para verificar cálculo
+    console.log('🔍 useEnergyBudget - Debug:', {
+      todayTasksCount: todayTasks.length,
+      pendingTasks: todayTasks.filter(t => t.status === 'pending').length,
+      completedTasks: todayTasks.filter(t => t.status === 'completed').length,
+      usedEnergy,
+      todayTasks: todayTasks.map(t => ({ id: t.id, status: t.status, energy: t.energyPoints }))
+    });
     
     const budget = calculateBudget(usedEnergy);
     

@@ -5,7 +5,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { storage } from '@/lib/utils';
 
 export function useLocalStorage<T>(key: string, defaultValue: T) {
   const [value, setValue] = useState<T>(defaultValue);
@@ -13,7 +12,8 @@ export function useLocalStorage<T>(key: string, defaultValue: T) {
 
   useEffect(() => {
     try {
-      const storedValue = storage.get(key, defaultValue);
+      const item = localStorage.getItem(key);
+      const storedValue = item ? JSON.parse(item) : defaultValue;
       setValue(storedValue);
     } catch (error) {
       console.warn(`Erro ao carregar ${key} do localStorage:`, error);
@@ -30,7 +30,7 @@ export function useLocalStorage<T>(key: string, defaultValue: T) {
         : newValue;
       
       setValue(valueToStore);
-      storage.set(key, valueToStore);
+      localStorage.setItem(key, JSON.stringify(valueToStore));
     } catch (error) {
       console.warn(`Erro ao salvar ${key} no localStorage:`, error);
     }
@@ -39,7 +39,7 @@ export function useLocalStorage<T>(key: string, defaultValue: T) {
   const removeValue = () => {
     try {
       setValue(defaultValue);
-      storage.remove(key);
+      localStorage.removeItem(key);
     } catch (error) {
       console.warn(`Erro ao remover ${key} do localStorage:`, error);
     }

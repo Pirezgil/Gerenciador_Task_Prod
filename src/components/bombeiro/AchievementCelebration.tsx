@@ -29,7 +29,7 @@ interface ParticleProps {
 }
 
 export function AchievementCelebration() {
-  const { dopamineAnimation, todayTasks, calculateEnergyBudget } = useTasksStore();
+  const { todayTasks, calculateEnergyBudget, lastCompletedTask, clearLastCompletedTask } = useTasksStore();
   const [celebration, setCelebration] = useState<CelebrationState>({
     isActive: false,
     type: 'task_complete',
@@ -43,37 +43,68 @@ export function AchievementCelebration() {
   const mainAnimation = useAnimation();
   const treeAnimation = useAnimation();
 
-  // Detectar quando uma tarefa é completada e disparar celebração
-  useEffect(() => {
-    if (dopamineAnimation.isActive && dopamineAnimation.lastCompletedTask) {
-      const completedTasks = todayTasks.filter(task => task.status === 'done').length;
-      const energyBudget = calculateEnergyBudget();
-      
-      // Determinar tipo e intensidade da celebração
-      let type: CelebrationState['type'] = 'task_complete';
-      let intensity: CelebrationState['intensity'] = 'small';
-      let message = dopamineAnimation.lastCompletedTask;
-      let icon = '🎉';
-      
-      // Lógica de intensidade baseada em contexto
-      if (energyBudget.percentage >= 100) {
-        type = 'energy_milestone';
-        intensity = 'epic';
-        message = 'Energia do dia COMPLETA! 🔥';
-        icon = '⚡';
-      } else if (completedTasks % 3 === 0 && completedTasks > 0) {
-        type = 'streak_bonus';
-        intensity = 'large';
-        message = `Sequência de ${completedTasks} tarefas! 🔥`;
-        icon = '🏆';
-      } else if (energyBudget.percentage >= 75) {
-        intensity = 'medium';
-        icon = '💪';
-      }
-      
-      triggerCelebration(type, intensity, message, icon);
+  const getDurationByIntensity = useCallback((intensity: CelebrationState['intensity']) => {
+    return {
+      small: 2000,
+      medium: 3500,
+      large: 5000,
+      epic: 7000
+    }[intensity];
+  }, []);
+
+  const generateParticles = useCallback((intensity: CelebrationState['intensity']) => {
+    const particleCount = {
+      small: 12,
+      medium: 24,
+      large: 36,
+      epic: 48
+    }[intensity];
+
+    const newParticles: ParticleProps[] = [];
+    const colors = ['#10b981', '#059669', '#fbbf24', '#f59e0b', '#ef4444', '#dc2626'];
+    const types: ParticleProps['type'][] = ['sparkle', 'leaf', 'star', 'heart'];
+
+    for (let i = 0; i < particleCount; i++) {
+      newParticles.push({
+        id: i,
+        startX: 50 + (Math.random() * 40 - 20), // Centro da tela ±20%
+        startY: 50 + (Math.random() * 30 - 15), // Centro ±15%
+        color: colors[Math.floor(Math.random() * colors.length)],
+        size: 0.5 + Math.random() * 1.5,
+        type: types[Math.floor(Math.random() * types.length)]
+      });
     }
-  }, [dopamineAnimation.isActive, dopamineAnimation.lastCompletedTask]);
+
+    setParticles(newParticles);
+  }, []);
+
+  const startCelebrationSequence = useCallback(async (intensity: CelebrationState['intensity']) => {
+    // Sequência 1: Pulse inicial
+    await mainAnimation.start({
+      scale: [1, 1.1, 1],
+      transition: { duration: 0.6, ease: "backOut" }
+    });
+
+    // Sequência 2: Mostrar árvore se intensidade média ou maior
+    if (intensity !== 'small') {
+      setShowTree(true);
+      setTreeGrowth(prev => prev + 1);
+      
+      await treeAnimation.start({
+        scale: [0, 1.2, 1],
+        rotate: [0, 5, -5, 0],
+        transition: { duration: 1, type: "tween", ease: "backOut" }
+      });
+    }
+
+    // Sequência 3: Pulse final épico para conquistas máximas
+    if (intensity === 'epic') {
+      await mainAnimation.start({
+        scale: [1, 1.3],
+        transition: { duration: 0.4, ease: "anticipate" }
+      });
+    }
+  }, [mainAnimation, treeAnimation]);
 
   const triggerCelebration = useCallback((
     type: CelebrationState['type'],
@@ -102,70 +133,40 @@ export function AchievementCelebration() {
       setParticles([]);
       setShowTree(false);
     }, duration);
-  }, []);
+  }, [generateParticles, getDurationByIntensity, startCelebrationSequence]);
 
-  const generateParticles = (intensity: CelebrationState['intensity']) => {
-    const particleCount = {
-      small: 12,
-      medium: 24,
-      large: 36,
-      epic: 48
-    }[intensity];
-
-    const newParticles: ParticleProps[] = [];
-    const colors = ['#10b981', '#059669', '#fbbf24', '#f59e0b', '#ef4444', '#dc2626'];
-    const types: ParticleProps['type'][] = ['sparkle', 'leaf', 'star', 'heart'];
-
-    for (let i = 0; i < particleCount; i++) {
-      newParticles.push({
-        id: i,
-        startX: 50 + (Math.random() * 40 - 20), // Centro da tela ±20%
-        startY: 50 + (Math.random() * 30 - 15), // Centro ±15%
-        color: colors[Math.floor(Math.random() * colors.length)],
-        size: 0.5 + Math.random() * 1.5,
-        type: types[Math.floor(Math.random() * types.length)]
-      });
-    }
-
-    setParticles(newParticles);
-  };
-
-  const startCelebrationSequence = async (intensity: CelebrationState['intensity']) => {
-    // Sequência 1: Pulse inicial
-    await mainAnimation.start({
-      scale: [1, 1.1, 1],
-      transition: { duration: 0.6, ease: "backOut" }
-    });
-
-    // Sequência 2: Mostrar árvore se intensidade média ou maior
-    if (intensity !== 'small') {
-      setShowTree(true);
-      setTreeGrowth(prev => prev + 1);
+  // Detectar quando uma tarefa é completada e disparar celebração
+  useEffect(() => {
+    if (lastCompletedTask) {
+      const completedTasks = todayTasks.filter(task => task.status === 'completed').length;
+      const energyBudget = calculateEnergyBudget();
       
-      await treeAnimation.start({
-        scale: [0, 1.2, 1],
-        rotate: [0, 5, -5, 0],
-        transition: { duration: 1, ease: "elasticOut" }
-      });
+      // Determinar tipo e intensidade da celebração
+      let type: CelebrationState['type'] = 'task_complete';
+      let intensity: CelebrationState['intensity'] = 'small';
+      let message = lastCompletedTask.description;
+      let icon = '🎉';
+      
+      // Lógica de intensidade baseada em contexto
+      if (energyBudget.percentage >= 100) {
+        type = 'energy_milestone';
+        intensity = 'epic';
+        message = 'Energia do dia COMPLETA! 🔥';
+        icon = '⚡';
+      } else if (completedTasks % 3 === 0 && completedTasks > 0) {
+        type = 'streak_bonus';
+        intensity = 'large';
+        message = `Sequência de ${completedTasks} tarefas! 🔥`;
+        icon = '🏆';
+      } else if (energyBudget.percentage >= 75) {
+        intensity = 'medium';
+        icon = '💪';
+      }
+      
+      triggerCelebration(type, intensity, message, icon);
+      clearLastCompletedTask(); // Limpa a tarefa para não celebrar de novo
     }
-
-    // Sequência 3: Pulse final épico para conquistas máximas
-    if (intensity === 'epic') {
-      await mainAnimation.start({
-        scale: [1, 1.3, 1],
-        transition: { duration: 0.8, ease: "anticipate" }
-      });
-    }
-  };
-
-  const getDurationByIntensity = (intensity: CelebrationState['intensity']) => {
-    return {
-      small: 2000,
-      medium: 3500,
-      large: 5000,
-      epic: 7000
-    }[intensity];
-  };
+  }, [lastCompletedTask, clearLastCompletedTask, todayTasks, calculateEnergyBudget, triggerCelebration]);
 
   const ParticleComponent = ({ particle }: { particle: ParticleProps }) => {
     const getParticleIcon = (type: ParticleProps['type']) => {
@@ -204,6 +205,7 @@ export function AchievementCelebration() {
         }}
         transition={{ 
           duration: 3,
+          type: "tween",
           delay: particle.id * 0.05,
           ease: "easeOut"
         }}
@@ -244,7 +246,7 @@ export function AchievementCelebration() {
                 left: `${20 + (index % 4) * 20}%`,
               }}
               initial={{ scale: 0 }}
-              animate={{ scale: [0, 1.3, 1] }}
+              animate={{ scale: [0, 1] }}
               transition={{ 
                 delay: 0.8 + (index * 0.1),
                 duration: 0.6,
@@ -337,6 +339,7 @@ export function AchievementCelebration() {
               }}
               transition={{
                 duration: 1,
+                type: "tween",
                 repeat: celebration.intensity === 'epic' ? 2 : 1,
                 repeatType: "reverse"
               }}

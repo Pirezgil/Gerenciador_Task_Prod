@@ -1,22 +1,10 @@
-
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, PanInfo } from 'framer-motion';
-import { 
-  Edit3, 
-  Trash2, 
-  Archive, 
-  Sparkles, 
-  Maximize2, 
-  Minimize2,
-  Move,
-  Pin,
-  Palette,
-  Grid3X3,
-  AlignLeft
-} from 'lucide-react';
-import { useTasksStore } from '@/stores/tasksStore';
+import { Trash2, Palette, Move, Minimize2, Maximize2, Sparkles, Edit3, Archive } from 'lucide-react';
+import { useNotesStore } from '@/stores/notesStore';
+import { useModalsStore } from '@/stores/modalsStore';
 import type { MovableNote } from '@/types';
 
 interface MovableNoteItemProps {
@@ -63,11 +51,12 @@ export function MovableNoteItem({
 }: MovableNoteItemProps) {
   const {
     editingNote,
-    setShowTransformModal,
+    setEditingNote,
     updateNote,
     archiveNote,
     deleteNote,
-  } = useTasksStore();
+  } = useNotesStore();
+  const { setShowTransformModal } = useModalsStore();
 
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -111,11 +100,11 @@ export function MovableNoteItem({
     setDragOffset({ x: 0, y: 0 });
   };
 
-  const handleDrag = (event: any, info: PanInfo) => {
+  const handleDrag = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     setDragOffset({ x: info.offset.x, y: info.offset.y });
   };
 
-  const handleDragEnd = (event: any, info: PanInfo) => {
+  const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     setIsDragging(false);
     
     // Calcular nova posição
@@ -311,7 +300,7 @@ export function MovableNoteItem({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                useTasksStore.setState({ editingNote: isEditing ? null : note.id });
+                setEditingNote(isEditing ? null : note.id);
               }}
               className="p-1.5 text-gray-400 hover:text-gray-600 transition-colors bg-white/50 rounded-lg hover:bg-white/80"
               title="Editar"

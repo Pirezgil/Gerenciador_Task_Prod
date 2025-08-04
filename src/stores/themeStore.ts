@@ -3,13 +3,12 @@
 // =====================================================================
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { useAuthStore } from './authStore';
 import type { ThemeConfig, ThemePreset, ColorPalette, ThemeStore } from '@/types';
 
 // =====================================================================
 // CONFIGURAÇÕES PADRÃO E PRESETS OTIMIZADOS
 // =====================================================================
-import { syncedUpdate } from '../lib/syncManager';
+
 
 const defaultTheme: ThemeConfig = {
   id: 'sentinela-system',
@@ -75,8 +74,6 @@ const defaultPresets: ThemePreset[] = [
       backgroundColor: '#f0f9ff',
       textColor: '#0c4a6e',
       textSecondaryColor: '#0369a1',
-      textColor: '#0c4a6e',
-      textSecondaryColor: '#0369a1',
       borderColor: '#bae6fd',
       shadowColor: 'rgba(14, 165, 233, 0.15)',
       mode: 'light',
@@ -97,8 +94,6 @@ const defaultPresets: ThemePreset[] = [
       secondaryColor: '#FFB36B',
       surfaceColor: '#ffffff',
       backgroundColor: '#fffbeb',
-      textColor: '#92400e',
-      textSecondaryColor: '#b45309',
       textColor: '#92400e',
       textSecondaryColor: '#b45309',
       borderColor: '#fed7aa',
@@ -123,8 +118,6 @@ const defaultPresets: ThemePreset[] = [
       backgroundColor: '#f0fdf4',
       textColor: '#064e3b',
       textSecondaryColor: '#047857',
-      textColor: '#064e3b',
-      textSecondaryColor: '#047857',
       borderColor: '#bbf7d0',
       shadowColor: 'rgba(5, 150, 105, 0.15)',
       mode: 'light',
@@ -147,8 +140,6 @@ const defaultPresets: ThemePreset[] = [
       backgroundColor: '#faf5ff',
       textColor: '#581c87',
       textSecondaryColor: '#7c3aed',
-      textColor: '#581c87',
-      textSecondaryColor: '#7c3aed',
       borderColor: '#e9d5ff',
       shadowColor: 'rgba(139, 92, 246, 0.15)',
       mode: 'light',
@@ -169,8 +160,6 @@ const defaultPresets: ThemePreset[] = [
       secondaryColor: '#f43f5e',
       surfaceColor: '#ffffff',
       backgroundColor: '#fdf2f8',
-      textColor: '#9d174d',
-      textSecondaryColor: '#be185d',
       textColor: '#9d174d',
       textSecondaryColor: '#be185d',
       borderColor: '#fbcfe8',
@@ -217,8 +206,6 @@ const defaultPresets: ThemePreset[] = [
       backgroundColor: '#0c4a6e',
       textColor: '#f0f9ff',
       textSecondaryColor: '#bae6fd',
-      textColor: '#f0f9ff',
-      textSecondaryColor: '#bae6fd',
       borderColor: '#0369a1',
       shadowColor: 'rgba(0, 0, 0, 0.6)',
       mode: 'dark',
@@ -239,8 +226,6 @@ const defaultPresets: ThemePreset[] = [
       secondaryColor: '#059669',
       surfaceColor: '#065f46',
       backgroundColor: '#064e3b',
-      textColor: '#f0fdf4',
-      textSecondaryColor: '#bbf7d0',
       textColor: '#f0fdf4',
       textSecondaryColor: '#bbf7d0',
       borderColor: '#047857',
@@ -265,8 +250,6 @@ const defaultPresets: ThemePreset[] = [
       backgroundColor: '#92400e',
       textColor: '#fffbeb',
       textSecondaryColor: '#fed7aa',
-      textColor: '#fffbeb',
-      textSecondaryColor: '#fed7aa',
       borderColor: '#d97706',
       shadowColor: 'rgba(0, 0, 0, 0.6)',
       mode: 'dark',
@@ -289,8 +272,6 @@ const defaultPresets: ThemePreset[] = [
       backgroundColor: '#581c87',
       textColor: '#faf5ff',
       textSecondaryColor: '#e9d5ff',
-      textColor: '#faf5ff',
-      textSecondaryColor: '#e9d5ff',
       borderColor: '#9333ea',
       shadowColor: 'rgba(0, 0, 0, 0.6)',
       mode: 'dark',
@@ -311,8 +292,6 @@ const defaultPresets: ThemePreset[] = [
       secondaryColor: '#4b5563',
       surfaceColor: '#ffffff',
       backgroundColor: '#f9fafb',
-      textColor: '#111827',
-      textSecondaryColor: '#374151',
       textColor: '#111827',
       textSecondaryColor: '#374151',
       borderColor: '#d1d5db',
@@ -339,8 +318,6 @@ const defaultPresets: ThemePreset[] = [
       backgroundColor: '#ffffff',
       textColor: '#000000',
       textSecondaryColor: '#1f2937',
-      textColor: '#000000',
-      textSecondaryColor: '#1f2937',
       borderColor: '#6b7280',
       shadowColor: 'rgba(0, 0, 0, 0.3)',
       mode: 'light',
@@ -361,8 +338,6 @@ const defaultPresets: ThemePreset[] = [
       secondaryColor: '#f3f4f6',
       surfaceColor: '#000000',
       backgroundColor: '#000000',
-      textColor: '#ffffff',
-      textSecondaryColor: '#e5e7eb',
       textColor: '#ffffff',
       textSecondaryColor: '#e5e7eb',
       borderColor: '#9ca3af',
@@ -387,8 +362,6 @@ const defaultPresets: ThemePreset[] = [
       backgroundColor: '#fdf5e6',
       textColor: '#8b4513',
       textSecondaryColor: '#a0522d',
-      textColor: '#8b4513',
-      textSecondaryColor: '#a0522d',
       borderColor: '#deb887',
       shadowColor: 'rgba(160, 82, 45, 0.15)',
       mode: 'light',
@@ -409,8 +382,6 @@ const defaultPresets: ThemePreset[] = [
       secondaryColor: '#5B86E5',
       surfaceColor: '#ffffff',
       backgroundColor: '#eff6ff',
-      textColor: '#1e3a8a',
-      textSecondaryColor: '#1d4ed8',
       textColor: '#1e3a8a',
       textSecondaryColor: '#1d4ed8',
       borderColor: '#bfdbfe',

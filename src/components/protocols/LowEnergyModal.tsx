@@ -3,33 +3,31 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useTasksStore } from '@/stores/tasksStore';
+import { useModalsStore } from '@/stores/modalsStore';
 
 export function LowEnergyModal() {
-  const { 
-    showLowEnergyModal, 
-    setShowLowEnergyModal, 
-    setCurrentPage,
-    replaceWithLightTasks,
-    postponeAllTasks,
-    todayTasks
-  } = useTasksStore();
+  const { showLowEnergyModal, setShowLowEnergyModal } = useModalsStore();
+  const { todayTasks } = useTasksStore();
 
   if (!showLowEnergyModal) return null;
 
   const pendingTasksCount = todayTasks.filter(task => task.status === 'pending').length;
 
   const handleSubstitute = () => {
-    replaceWithLightTasks();
+    // TODO: Implementar substituição por tarefas de 1 ponto
+    console.log('Substituindo por tarefas leves');
     setShowLowEnergyModal(false);
   };
 
   const handleGoToSandbox = () => {
-    setCurrentPage('caixa-de-areia');
+    // TODO: Implementar navegação para caixa de areia
+    console.log('Navegando para caixa de areia');
     setShowLowEnergyModal(false);
   };
 
   const handlePostponeDay = () => {
-    postponeAllTasks();
+    // TODO: Implementar adiamento de todas as tarefas
+    console.log('Adiando todas as tarefas');
     setShowLowEnergyModal(false);
   };
 

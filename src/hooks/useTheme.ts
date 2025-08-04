@@ -10,7 +10,7 @@ import { useThemeStore } from '@/stores/themeStore';
 export interface UseThemeReturn {
   // Estado atual
   isDark: boolean;
-  currentTheme: any;
+  currentTheme: unknown;
   
   // Ações principais
   toggleDarkMode: () => void;
@@ -18,7 +18,7 @@ export interface UseThemeReturn {
   
   // Temas e presets
   applyPreset: (presetId: string) => void;
-  presets: any[];
+  presets: unknown[];
   
   // Personalização
   updateColors: (colors: { primary?: string; secondary?: string }) => void;
@@ -63,7 +63,10 @@ export function useTheme(): UseThemeReturn {
   
   // Atualizar cores mantendo modo atual
   const updateColors = useCallback((colors: { primary?: string; secondary?: string }) => {
-    updateTheme(colors);
+    updateTheme({
+      primaryColor: colors.primary,
+      secondaryColor: colors.secondary,
+    });
   }, [updateTheme]);
   
   // Utilitário para classes condicionais
@@ -82,7 +85,7 @@ export function useTheme(): UseThemeReturn {
     
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     
-    const handleChange = (e: MediaQueryListEvent) => {
+    const handleChange = (_e: MediaQueryListEvent) => {
       // Opcional: auto-switch baseado no sistema
       // Descomente a linha abaixo se quiser auto-switch
       // setDarkMode(e.matches);

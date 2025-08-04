@@ -39,9 +39,10 @@ export function DataManagement() {
           try {
             const data = JSON.parse(e.target?.result as string);
             console.log('Dados importados:', data);
-            alert('Dados importados com sucesso!');
-          } catch (error) {
-            alert('Erro ao importar dados. Verifique o arquivo.');
+            alert('Dados importados com sucesso! (Simulação)');
+          } catch (err) {
+            console.error("Erro ao importar dados:", err);
+            alert('Erro ao importar o arquivo. Verifique o formato.');
           }
         };
         reader.readAsText(file);

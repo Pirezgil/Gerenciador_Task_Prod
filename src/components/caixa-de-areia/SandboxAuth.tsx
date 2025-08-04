@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, Eye, EyeOff, ShieldAlert, Key } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
@@ -10,36 +10,16 @@ interface SandboxAuthProps {
 }
 
 export function SandboxAuth({ onUnlock }: SandboxAuthProps) {
-  const { user, sandboxAuth, unlockSandbox, resetSandboxAttempts } = useAuthStore();
+  const { sandboxAuth, unlockSandbox, checkSandboxPassword } = useAuthStore();
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const hasPasswordSet = user?.settings?.sandboxEnabled && user?.settings?.sandboxPassword;
   const maxAttempts = 3;
   const isBlocked = sandboxAuth.failedAttempts >= maxAttempts;
 
-  useEffect(() => {
-    // Reset error when component mounts
-    setError('');
-    
-    // Se não tem senha configurada, libera acesso imediatamente
-    if (!hasPasswordSet) {
-      onUnlock();
-      return;
-    }
-
-    // Reset attempts after 5 minutes
-    if (isBlocked) {
-      const timer = setTimeout(() => {
-        resetSandboxAttempts();
-        setError('');
-      }, 5 * 60 * 1000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [hasPasswordSet, isBlocked, onUnlock, resetSandboxAttempts]);
+  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,9 +40,10 @@ export function SandboxAuth({ onUnlock }: SandboxAuthProps) {
     // Simular delay de verificação
     await new Promise(resolve => setTimeout(resolve, 800));
 
-    const success = unlockSandbox(password);
+    const success = checkSandboxPassword(password);
     
     if (success) {
+      unlockSandbox();
       setPassword('');
       onUnlock();
     } else {
@@ -77,7 +58,7 @@ export function SandboxAuth({ onUnlock }: SandboxAuthProps) {
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !isLoading && !isBlocked) {
-      handleSubmit(e as any);
+      handleSubmit(e as unknown as React.FormEvent);
     }
   };
 

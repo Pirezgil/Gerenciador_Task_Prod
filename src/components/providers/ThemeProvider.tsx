@@ -56,6 +56,9 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     } catch (error) {
       console.warn('Erro ao aplicar tema:', error);
     }
+    
+    // Garantir que sempre retornamos algo (mesmo que undefined)
+    return;
   }, [canApplyTheme, currentTheme, applyThemeToDocument]);
 
   return <>{children}</>;

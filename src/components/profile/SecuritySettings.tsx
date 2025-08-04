@@ -23,6 +23,15 @@ import {
 export function SecuritySettings() {
   const { user, updateSettings } = useAuthStore();
   
+  // Se não há usuário logado, não renderizar o componente
+  if (!user) {
+    return (
+      <div className="text-center p-8">
+        <p className="text-gray-500">Usuário não encontrado. Faça login novamente.</p>
+      </div>
+    );
+  }
+  
   // Estados para senha da caixa de areia
   const [sandboxPassword, setSandboxPassword] = useState('');
   const [confirmSandboxPassword, setConfirmSandboxPassword] = useState('');
@@ -65,7 +74,7 @@ export function SecuritySettings() {
       setSandboxIsError(true);
       return;
     }
-
+    
     // Salvar senha
     updateSettings({ 
       sandboxPassword: sandboxPassword,
@@ -279,6 +288,7 @@ export function SecuritySettings() {
           {/* Botões de ação */}
           <div className="flex space-x-3">
             <motion.button
+              type="button"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleSandboxPasswordSave}
@@ -294,6 +304,7 @@ export function SecuritySettings() {
             
             {isSandboxEnabled && hasSandboxPassword && (
               <motion.button
+                type="button"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleDisableSandboxPassword}

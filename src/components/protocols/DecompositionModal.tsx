@@ -3,9 +3,11 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTasksStore } from '@/stores/tasksStore';
+import { useModalsStore } from '@/stores/modalsStore';
 
 export function DecompositionModal() {
-  const { showDecompositionModal, setShowDecompositionModal, handleDecomposition } = useTasksStore();
+  const { showDecompositionModal, setShowDecompositionModal } = useModalsStore();
+  const { addTaskToToday } = useTasksStore();
   const [firstBrick, setFirstBrick] = useState('');
 
   if (!showDecompositionModal) return null;
@@ -16,12 +18,27 @@ export function DecompositionModal() {
       return;
     }
     
-    handleDecomposition({
-      originalTask: showDecompositionModal,
-      firstBrick: firstBrick.trim(),
-    });
-    
-    setFirstBrick('');
+    if (showDecompositionModal) {
+      // Cria a primeira tarefa do projeto como um tijolo (brick)
+      const task = {
+        id: Date.now().toString(),
+        description: firstBrick.trim(),
+        energyPoints: 3 as const,
+        status: 'pending' as const,
+        type: 'brick' as const,
+        createdAt: new Date().toISOString(),
+        projectId: undefined
+      };
+      
+      // Adiciona usando o método existente
+      addTaskToToday(firstBrick.trim(), 3);
+      
+      // TODO: Implementar criação do projeto completo
+      console.log('Transformando tarefa em projeto:', showDecompositionModal.description);
+      
+      setShowDecompositionModal(null);
+      setFirstBrick('');
+    }
   };
 
   return (
@@ -47,7 +64,7 @@ export function DecompositionModal() {
         </p>
         <div className="bg-gray-50 rounded-xl p-4 mb-6">
           <p className="text-sm text-gray-700 font-medium">Tarefa original:</p>
-          <p className="text-sm text-gray-600 italic mt-1">"{showDecompositionModal?.description}"</p>
+          <p className="text-sm text-gray-600 italic mt-1">&quot;{showDecompositionModal?.description}&quot;</p>
         </div>
         
         <div className="space-y-4">

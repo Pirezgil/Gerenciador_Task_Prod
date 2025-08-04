@@ -1,299 +1,221 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Flame, CheckCircle, Clock, Trophy, Target, TrendingUp, Battery } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+// ============================================================================
+// CLIENTE DA PÁGINA BOMBEIRO - VERSÃO COMPLETA E INTEGRADA
+// ============================================================================
+
+import React from 'react';
+import { PlusCircle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+
+// Stores e Hooks
 import { useTasksStore } from '@/stores/tasksStore';
-import { NewTaskModal } from '@/components/shared/NewTaskModal';
-import { TaskEditModal } from '@/components/shared/TaskEditModal';
+import { useModalsStore } from '@/stores/modalsStore';
+import { useHabitsStore } from '@/stores/habitsStore';
+import { useEnergyBudget } from '@/hooks/useEnergyBudget';
+import { useHydration } from '@/hooks/useHydration';
+
+// Componentes
 import { EnergyMeter } from './EnergyMeter';
+import WeeklyStats from './WeeklyStats';
 import { TaskItem } from './TaskItem';
 import { PostponedTasksRoom } from './PostponedTasksRoom';
-import WeeklyStats from './WeeklyStats';
-import { UltraRewardingCelebration } from './UltraRewardingCelebration';
+import { Button } from '@/components/ui/button';
+
+// Modais
+import { NewTaskModal } from '@/components/shared/NewTaskModal';
 import { LowEnergyModal } from '@/components/protocols/LowEnergyModal';
-import { DecompositionModal } from '@/components/protocols/DecompositionModal';
-import { EmergencyChoiceModal } from '@/components/protocols/EmergencyChoiceModal';
+import { AchievementCelebration } from './AchievementCelebration';
 
+export function BombeiroPageClient() {
+  const isHydrated = useHydration();
+  const router = useRouter();
 
-interface BombeiroPageClientProps {
-  showNewTaskModal: boolean;
-  setShowNewTaskModal: (show: boolean) => void;
-  showLowEnergyModal: boolean;
-  setShowLowEnergyModal: (show: boolean) => void;
-}
+  // Hooks de estado
+  const { todayTasks, postponedTasks, completeTask, postponeTask } = useTasksStore();
+  const { setShowCaptureModal, showCaptureModal, showLowEnergyModal } = useModalsStore();
+  const { getTodayHabits, completeHabit, undoHabitCompletion } = useHabitsStore();
+  const energyBudget = useEnergyBudget();
 
-export function BombeiroPageClient({
-  showNewTaskModal,
-  setShowNewTaskModal,
-  showLowEnergyModal,
-  setShowLowEnergyModal
-}: BombeiroPageClientProps) {
-  // Store state
-  const {
-    todayTasks,
-    addTaskToToday,
-    completeTask,
-    postponeTask,
-    openTaskEditModal,
-    updateTaskEditData,
-    saveTaskEdit,
-    deleteTask,
-    taskEditModal,
-    setTaskEditModal,
-    calculateEnergyBudget,
-    showEmergencyModal,
-    setShowEmergencyModal
-  } = useTasksStore();
-
-  // Local state
-
-  const [showCelebration, setShowCelebration] = useState(false);
-
-  // Derived state
   const pendingTasks = todayTasks.filter(task => task.status === 'pending');
-  const completedTasks = todayTasks.filter(task => task.status === 'done');
-  const completedToday = completedTasks.filter(task => {
-    const today = new Date().toDateString();
-    return task.completedAt && new Date(task.completedAt).toDateString() === today;
-  });
+  const completedTasks = todayTasks.filter(task => task.status === 'completed');
+  const todayHabits = getTodayHabits();
   
-  const energyBudget = calculateEnergyBudget();
+  // Verificar quais hábitos foram completados hoje
+  const today = new Date().toISOString().split('T')[0];
+  const completedHabits = todayHabits.filter(habit => 
+    habit.completions.some(c => c.date === today)
+  );
+  const pendingHabits = todayHabits.filter(habit => 
+    !habit.completions.some(c => c.date === today)
+  );
 
-  // Event handlers
-  const handleTaskComplete = useCallback(async (taskId: string) => {
-    completeTask(taskId);
-    setShowCelebration(true);
-    setTimeout(() => setShowCelebration(false), 3000);
-  }, [completeTask]);
+  // Renderiza um skeleton ou nada até a hidratação estar completa
+  if (!isHydrated) {
+    return null; // Ou um componente de loading
+  }
 
-  const handleTaskPostpone = useCallback((taskId: string) => {
-    postponeTask(taskId);
-  }, [postponeTask]);
+  return (
+    <>
+      <div className="container mx-auto p-2 sm:p-4 lg:p-6">
+        <div className="space-y-6">
+          
 
-  const handleNewTask = useCallback((task: any) => {
-    const success = addTaskToToday(task.description, task.energyPoints, task.projectId);
-    if (success) {
-      setShowNewTaskModal(false);
-    }
-  }, [addTaskToToday]);
+          {/* Seção Principal de Tarefas */}
+          <main className="w-full">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
+              <h1 className="text-xl sm:text-2xl font-bold text-text-primary">🔥 Missões de Hoje</h1>
+              <div className="flex gap-2 w-full sm:w-auto">
+                <Button onClick={() => setShowCaptureModal(true)} className="flex-1 sm:flex-none">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  <span className="sm:inline">Adicionar Tarefa</span>
+                </Button>
+                <Button 
+                  onClick={() => router.push('/planejamento')}
+                  variant="outline"
+                  className="flex-1 sm:flex-none"
+                >
+                  📋 Planejamento
+                </Button>
+              </div>
+            </div>
 
-  const handleTaskEdit = useCallback((task: any) => {
-    openTaskEditModal(task);
-  }, [openTaskEditModal]);
-
-  const handleUpdateTask = useCallback((taskId: string, updates: any) => {
-    saveTaskEdit({ taskId, ...updates });
-    setTaskEditModal({ ...taskEditModal, isOpen: false });
-  }, [saveTaskEdit, setTaskEditModal, taskEditModal]);
-
-  const handleUpdateAttachments = useCallback((taskId: string, attachments: any[]) => {
-    // TODO: Implementar atualização de anexos no store
-    console.log('Atualizando anexos para tarefa', taskId, attachments);
-  }, []);
-
-  const handleDeleteTask = useCallback((taskId: string) => {
-    deleteTask(taskId);
-    setTaskEditModal({ ...taskEditModal, isOpen: false });
-  }, [deleteTask, setTaskEditModal, taskEditModal]);
-
-  const handleLowEnergyClick = useCallback(() => {
-    setShowLowEnergyModal(true);
-  }, [setShowLowEnergyModal]);
-
-return (
-  <div className="min-h-screen bg-background sentinela-fade-in">
-    {/* Main Content */}
-
-      <main className="responsive-container py-6 space-y-6">
-        {/* Stats Grid */}
-        <div className="responsive-grid cols-2-sm cols-4-lg gap-4">
-          <Card className="sentinela-card border-l-4 border-l-energia-baixa hover:shadow-energia-baixa">
-            <CardContent className="responsive-spacing">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-energia-baixa/20 rounded-xl sentinela-transition">
-                  <Clock className="w-5 h-5 text-energia-baixa dark:text-orange-400" />
-                </div>
-                <div>
-                  <p className="sentinela-text-secondary text-xs font-medium uppercase tracking-wide">
-                    Pendentes
-                  </p>
-                  <p className="sentinela-subtitle text-energia-baixa">
-                    {pendingTasks.length}
-                  </p>
+            {/* Hábitos do Dia */}
+            {todayHabits.length > 0 && (
+              <div className="mb-8">
+                <h2 className="text-base sm:text-lg font-semibold text-text-primary mb-3">🎯 Hábitos de Hoje</h2>
+                <div className="bg-gradient-to-r from-teal-50 to-cyan-50 rounded-xl p-4 border border-teal-200">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {todayHabits.map(habit => {
+                      const isCompleted = habit.completions.some(c => c.date === today);
+                      const count = habit.completions.filter(c => c.date === today).reduce((sum, c) => sum + c.count, 0);
+                      
+                      return (
+                        <div
+                          key={habit.id}
+                          className={`p-3 rounded-lg transition-all ${
+                            isCompleted 
+                              ? 'bg-green-100 border border-green-300' 
+                              : 'bg-white border border-teal-200 hover:border-teal-300'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2 flex-1 min-w-0">
+                              <div 
+                                className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold"
+                                style={{ backgroundColor: habit.color }}
+                              >
+                                {habit.icon}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className={`font-medium text-sm truncate ${
+                                  isCompleted ? 'text-green-800' : 'text-gray-900'
+                                }`}>
+                                  {habit.name}
+                                </h4>
+                                {habit.targetCount && (
+                                  <p className="text-xs text-gray-500">
+                                    {count}/{habit.targetCount}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <button
+                              onClick={() => {
+                                if (isCompleted) {
+                                  undoHabitCompletion(habit.id, today);
+                                } else {
+                                  completeHabit(habit.id, 1);
+                                }
+                              }}
+                              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+                                isCompleted
+                                  ? 'bg-green-500 text-white hover:bg-green-600'
+                                  : 'bg-gray-100 text-gray-400 hover:bg-teal-100 hover:text-teal-600'
+                              }`}
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  <div className="mt-3 text-xs text-teal-700 flex items-center justify-between">
+                    <span>💡 Hábitos não consomem energia</span>
+                    <span>{completedHabits.length}/{todayHabits.length} concluídos</span>
+                  </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            )}
 
-          <Card className="sentinela-card border-l-4 border-l-semantic-success hover:shadow-medium">
-            <CardContent className="responsive-spacing">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-semantic-success/20 rounded-xl sentinela-transition">
-                  <CheckCircle className="w-5 h-5 text-green-500 dark:text-green-400" />
-                </div>
-                <div>
-                  <p className="sentinela-text-secondary text-xs font-medium uppercase tracking-wide">
-                    Hoje
-                  </p>
-                  <p className="sentinela-subtitle text-semantic-success">
-                    {completedToday.length}
-                  </p>
-                </div>
+            {/* Listas de Tarefas do Dia */}
+            <div className="space-y-6 lg:space-y-8">
+              {/* Tarefas Pendentes */}
+              <div>
+                <h2 className="text-base sm:text-lg font-semibold text-text-primary mb-3">⚡ Tarefas Pendentes</h2>
+                {pendingTasks.length > 0 ? (
+                  <div className="space-y-3 sm:space-y-4">
+                    {pendingTasks.map(task => (
+                      <TaskItem 
+                        key={task.id} 
+                        task={task} 
+                        onComplete={completeTask}
+                        onPostpone={postponeTask}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 sm:py-10 bg-surface-secondary rounded-lg border border-border-sentinela border-dashed">
+                    <div className="text-3xl sm:text-4xl mb-3">👍</div>
+                    <h3 className="text-base sm:text-lg font-semibold text-text-primary">Tudo em ordem!</h3>
+                    <p className="mt-1 text-sm text-text-secondary px-4">Nenhuma tarefa pendente por enquanto.</p>
+                  </div>
+                )}
               </div>
-            </CardContent>
-          </Card>
 
-          <Card className="sentinela-card border-l-4 border-l-energia-normal hover:shadow-energia-normal">
-            <CardContent className="responsive-spacing">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-energia-normal/20 rounded-xl sentinela-transition">
-                  <Trophy className="w-5 h-5 text-energia-normal dark:text-energia-normal" />
-                </div>
+              {/* Tarefas Finalizadas */}
+              {completedTasks.length > 0 && (
                 <div>
-                  <p className="sentinela-text-secondary text-xs font-medium uppercase tracking-wide">
-                    Energia
-                  </p>
-                  <p className="sentinela-subtitle text-energia-normal">
-                    {energyBudget.remaining}
-                  </p>
+                  <h2 className="text-base sm:text-lg font-semibold text-text-primary mb-3">Finalizadas</h2>
+                  <div className="space-y-3 sm:space-y-4">
+                    {completedTasks.map(task => (
+                      <TaskItem 
+                        key={task.id} 
+                        task={task} 
+                        onComplete={completeTask}
+                        onPostpone={postponeTask}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="sentinela-card border-l-4 border-l-energia-alta hover:shadow-energia-alta">
-            <CardContent className="responsive-spacing">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-energia-alta/20 rounded-xl sentinela-transition">
-                  <Target className="w-5 h-5 text-energia-alta dark:text-energia-alta" />
-                </div>
-                <div>
-                  <p className="sentinela-text-secondary text-xs font-medium uppercase tracking-wide">
-                    Total
-                  </p>
-                  <p className="sentinela-subtitle text-energia-alta">
-                    {todayTasks.length}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Energy Meter */}
-        <EnergyMeter />
-
-        {/* Weekly Stats */}
-        <WeeklyStats />
-
-        {/* Tasks Sections */}
-        <div className="responsive-grid cols-1 lg:cols-2 gap-6">
-          {/* Pending Tasks */}
-          <Card className="border-energia-baixa/30 dark:border-red-800">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Flame className="w-5 h-5 text-energia-baixa" />
-                Tarefas Pendentes
-                <Badge variant="secondary" className="ml-auto">
-                  {pendingTasks.length}
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {pendingTasks.length === 0 ? (
-                <div className="text-center py-8 sentinela-text-secondary">
-                  <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-500 dark:text-green-400 opacity-50" />
-                  <p className="text-sm">Nenhuma tarefa pendente!</p>
-                  <p className="text-xs">Você está em dia com suas tarefas 🎉</p>
-                </div>
-              ) : (
-                pendingTasks.map((task) => (
-                  <TaskItem
-                    key={task.id}
-                    task={task}
-                    onComplete={handleTaskComplete}
-                    onEdit={handleTaskEdit}
-                    onPostpone={handleTaskPostpone}
-                    onUpdateAttachments={handleUpdateAttachments}
-                  />
-                ))
               )}
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Completed Tasks */}
-          <Card className="border-green-200 dark:border-green-800">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <CheckCircle className="w-5 h-5 text-green-500 dark:text-green-400" />
-                Incêndios Controlados
-                <Badge variant="secondary" className="ml-auto">
-                  {completedTasks.length}
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {completedTasks.length === 0 ? (
-                <div className="text-center py-8 sentinela-text-secondary">
-                  <TrendingUp className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm">Ainda não há conquistas hoje</p>
-                  <p className="text-xs">Complete sua primeira tarefa!</p>
-                </div>
-              ) : (
-                completedTasks.slice(0, 5).map((task) => (
-                  <TaskItem
-                    key={task.id}
-                    task={task}
-                    onComplete={handleTaskComplete}
-                    onEdit={handleTaskEdit}
-                    onPostpone={handleTaskPostpone}
-                    onUpdateAttachments={handleUpdateAttachments}
-                  />
-                ))
-              )}
-            </CardContent>
-          </Card>
+            {/* Sala de Tarefas Adiadas */}
+            {postponedTasks.length > 0 && (
+              <div className="mt-12">
+                 <PostponedTasksRoom />
+              </div>
+            )}
+          </main>
+
+          {/* Seção de Estatísticas (abaixo de tudo) */}
+          <div className="w-full">
+            <WeeklyStats />
+          </div>
         </div>
+      </div>
 
-        {/* Postponed Tasks Room */}
-        <PostponedTasksRoom />
-      </main>
-
-      {/* Modals */}
-      <NewTaskModal
-        isOpen={showNewTaskModal}
-        onClose={() => setShowNewTaskModal(false)}
-        onSubmit={handleNewTask}
-      />
-
-      {taskEditModal.isOpen && taskEditModal.task && (
-        <TaskEditModal
-          isOpen={taskEditModal.isOpen}
-          task={taskEditModal.task}
-          onClose={() => setTaskEditModal({ ...taskEditModal, isOpen: false })}
-          onUpdate={handleUpdateTask}
-          onDelete={handleDeleteTask}
-        />
-      )}
-
-      {/* PROTOCOLOS DE EXCEÇÃO */}
-      <LowEnergyModal />
-      <DecompositionModal />
-      <EmergencyChoiceModal />
-
-      {/* Celebration */}
-      <AnimatePresence>
-        {showCelebration && (
-          <UltraRewardingCelebration
-            isVisible={showCelebration}
-            onClose={() => setShowCelebration(false)}
-          />
-        )}
-      </AnimatePresence>
-    </div>
+      {/* --- Modais Globais --- */}
+      {showCaptureModal && <NewTaskModal />}
+      {showLowEnergyModal && <LowEnergyModal />}
+      <AchievementCelebration />
+      
+    </>
   );
 }

@@ -57,7 +57,7 @@ export function formatTime(date: string | Date): string {
  */
 export function calculateEnergyBudget(tasks: Task[], totalBudget: number = 12): EnergyBudget {
   const used = tasks
-    .filter(task => task.status === 'pending' || task.status === 'done')
+    .filter(task => task.status === 'pending' || task.status === 'completed')
     .reduce((sum, task) => sum + task.energyPoints, 0);
   
   const remaining = Math.max(0, totalBudget - used);
@@ -195,7 +195,7 @@ export function truncateText(text: string, maxLength: number): string {
 /**
  * Debounce function para otimizaÃ§Ã£o de performance
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {

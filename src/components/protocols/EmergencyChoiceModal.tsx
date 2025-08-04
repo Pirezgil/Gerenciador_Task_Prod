@@ -4,21 +4,19 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Flame, AlertTriangle, Calendar, CheckCircle } from 'lucide-react';
 import { useTasksStore } from '@/stores/tasksStore';
+import { useModalsStore } from '@/stores/modalsStore';
 
 export function EmergencyChoiceModal() {
+  const { showEmergencyModal, setShowEmergencyModal } = useModalsStore();
   const { 
-    showEmergencyModal, 
-    setShowEmergencyModal,
     todayTasks,
     postponeTask,
-    addTaskToToday,
-    emergencyTaskToAdd,
     calculateEnergyBudget
   } = useTasksStore();
 
   const [selectedTaskToMove, setSelectedTaskToMove] = useState<string | null>(null);
 
-  if (!showEmergencyModal || !emergencyTaskToAdd) return null;
+  if (!showEmergencyModal) return null;
 
   const pendingTasks = todayTasks.filter(task => task.status === 'pending');
   const energyBudget = calculateEnergyBudget();
@@ -27,18 +25,10 @@ export function EmergencyChoiceModal() {
     if (!selectedTaskToMove) return;
 
     // Mover tarefa selecionada para sala de replanejamento
-    postponeTask(selectedTaskToMove, 'moved_for_emergency');
+    postponeTask(selectedTaskToMove);
 
-    // Adicionar tarefa urgente
-    const success = addTaskToToday(
-      emergencyTaskToAdd.description,
-      emergencyTaskToAdd.energyPoints,
-      emergencyTaskToAdd.projectId
-    );
-
-    if (success) {
-      setShowEmergencyModal(false);
-    }
+    // Modal será fechado para permitir adicionar nova tarefa
+    setShowEmergencyModal(false);
   };
 
   const getEnergyColor = (points: number) => {
@@ -76,16 +66,16 @@ export function EmergencyChoiceModal() {
             </p>
           </div>
 
-          {/* Tarefa urgente */}
+          {/* Situação de emergência */}
           <div className="bg-gradient-to-r from-red-50 to-orange-50 rounded-2xl p-4 mb-6 border border-red-200">
             <div className="flex items-center mb-2">
               <AlertTriangle className="w-5 h-5 text-red-500 mr-2" />
-              <span className="font-semibold text-red-700">Tarefa Urgente:</span>
+              <span className="font-semibold text-red-700">Situação de Emergência</span>
             </div>
-            <p className="text-gray-800 mb-2">{emergencyTaskToAdd.description}</p>
-            <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getEnergyColor(emergencyTaskToAdd.energyPoints)}`}>
-              {emergencyTaskToAdd.energyPoints} ponto{emergencyTaskToAdd.energyPoints !== 1 ? 's' : ''}
-            </div>
+            <p className="text-gray-800 text-sm">
+              Você precisa adicionar uma tarefa urgente, mas seu orçamento de energia está completo. 
+              Escolha uma tarefa para reagendar e liberar espaço.
+            </p>
           </div>
 
           {/* Estratégia */}
@@ -111,9 +101,9 @@ export function EmergencyChoiceModal() {
                       <p className="text-sm text-gray-800 font-medium truncate">
                         {task.description}
                       </p>
-                      {task.project && (
+                      {task.projectId && (
                         <p className="text-xs text-gray-500 mt-1">
-                          {task.project.icon} {task.project.name}
+                          📁 Projeto ID: {task.projectId}
                         </p>
                       )}
                     </div>

@@ -21,13 +21,13 @@ const lora = Lora({
 });
 
 export const metadata: Metadata = {
-  title: 'Cérebro-Compatível | Gerenciador de Tarefas',
+  title: 'Sentinela | Gerenciador de Tarefas',
   description: 'Sistema de gerenciamento de tarefas especialmente projetado para usuários neurodivergentes',
   keywords: ['neurodivergente', 'tdah', 'ansiedade', 'produtividade', 'bem-estar'],
   authors: [{ name: 'Arquiteto de Software' }],
   robots: 'index, follow',
   openGraph: {
-    title: 'Cérebro-Compatível | Gerenciador de Tarefas',
+    title: 'Sentinela | Gerenciador de Tarefas',
     description: 'Sistema de gerenciamento de tarefas especialmente projetado para usuários neurodivergentes',
     type: 'website',
     locale: 'pt_BR',
