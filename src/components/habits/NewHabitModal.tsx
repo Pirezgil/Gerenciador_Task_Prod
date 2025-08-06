@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Target, Calendar, Hash } from 'lucide-react';
-import { useHabitsStore } from '@/stores/habitsStore';
+import { useCreateHabit } from '@/hooks/api/useHabits';
 import type { HabitFrequency } from '@/types/habit';
 
 interface NewHabitModalProps {
@@ -13,7 +13,7 @@ interface NewHabitModalProps {
 }
 
 export function NewHabitModal({ isOpen, onClose, template }: NewHabitModalProps) {
-  const { addHabit } = useHabitsStore();
+  const createHabitMutation = useCreateHabit();
   
   const [formData, setFormData] = useState({
     name: template?.name || '',
@@ -28,7 +28,7 @@ export function NewHabitModal({ isOpen, onClose, template }: NewHabitModalProps)
     template?.suggestedFrequency?.daysOfWeek || []
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const frequency: HabitFrequency = {
@@ -36,13 +36,17 @@ export function NewHabitModal({ isOpen, onClose, template }: NewHabitModalProps)
       daysOfWeek: formData.frequency.type !== 'daily' ? selectedDays : undefined,
     };
 
-    addHabit({
-      ...formData,
-      frequency,
-      daysOfWeek: frequency.daysOfWeek,
-    });
+    try {
+      await createHabitMutation.mutateAsync({
+        ...formData,
+        frequency,
+        isActive: true,
+      });
 
-    handleClose();
+      handleClose();
+    } catch (error) {
+      console.error('Erro ao criar hábito:', error);
+    }
   };
 
   const handleClose = () => {
@@ -291,10 +295,10 @@ export function NewHabitModal({ isOpen, onClose, template }: NewHabitModalProps)
                 </button>
                 <button
                   type="submit"
-                  disabled={!formData.name.trim()}
+                  disabled={!formData.name.trim() || createHabitMutation.isPending}
                   className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Criar Hábito
+                  {createHabitMutation.isPending ? 'Criando...' : 'Criar Hábito'}
                 </button>
               </div>
             </form>

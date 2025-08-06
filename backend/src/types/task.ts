@@ -11,12 +11,15 @@ export interface CreateTaskRequest {
   isRecurring?: boolean;
   isAppointment?: boolean;
   externalLinks?: string[];
+  comments?: CreateTaskCommentRequest[];
+  attachments?: TaskAttachmentRequest[];
   recurrence?: CreateTaskRecurrenceRequest;
   appointment?: CreateTaskAppointmentRequest;
 }
 
 export interface UpdateTaskRequest {
   description?: string;
+  status?: TaskStatus;
   energyPoints?: 1 | 3 | 5;
   type?: TaskType;
   projectId?: string;
@@ -54,6 +57,7 @@ export interface TaskResponse {
   };
   comments: TaskCommentResponse[];
   attachments: TaskAttachmentResponse[];
+  history: TaskHistoryResponse[];
   recurrence?: TaskRecurrenceResponse;
   appointment?: TaskAppointmentResponse;
 }
@@ -116,4 +120,26 @@ export interface PostponeTaskRequest {
 
 export interface CompleteTaskRequest {
   completedAt?: string;
+}
+
+export interface TaskHistoryResponse {
+  id: string;
+  field: string;
+  oldValue: string;
+  newValue: string;
+  timestamp: string;
+}
+
+export interface TaskAttachmentRequest {
+  name: string;
+  url: string;
+  type: string;
+  size: string;
+}
+
+export interface EnergyBudgetResponse {
+  used: number;
+  remaining: number;
+  total: number;
+  completedTasks: number;
 }

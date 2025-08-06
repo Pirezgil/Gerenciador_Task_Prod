@@ -12,6 +12,10 @@ router.post('/login', validate(loginSchema), authController.login);
 router.post('/logout', authController.logout);
 router.post('/refresh', authController.refreshToken);
 
+// Google OAuth
+router.get('/google', authController.googleAuth);
+router.get('/google/callback', authController.googleCallback);
+
 // Rotas protegidas
 router.get('/me', authenticate, authController.me);
 router.put('/profile', authenticate, validate(updateUserSchema), authController.updateProfile);

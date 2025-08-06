@@ -5,6 +5,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { tasksApi } from '@/lib/api';
 import { queryKeys, invalidateQueries } from '@/lib/queryClient';
+import { useAuthStore } from '@/stores/authStore';
 import type { Task, Comment } from '@/types/task';
 
 // ============================================================================
@@ -13,19 +14,24 @@ import type { Task, Comment } from '@/types/task';
 
 // Hook para buscar todas as tarefas do usuário
 export function useTasks() {
+  const { isAuthenticated } = useAuthStore();
+  
   return useQuery({
     queryKey: queryKeys.tasks.all,
     queryFn: tasksApi.getTasks,
     staleTime: 2 * 60 * 1000, // 2 minutos (dados mais frescos para tarefas)
+    enabled: isAuthenticated, // Só fazer requisição se autenticado
   });
 }
 
 // Hook para buscar uma tarefa específica
 export function useTask(taskId: string) {
+  const { isAuthenticated } = useAuthStore();
+  
   return useQuery({
     queryKey: queryKeys.tasks.detail(taskId),
-    queryFn: () => tasksApi.getTasks().then(tasks => tasks.find(t => t.id === taskId)),
-    enabled: !!taskId,
+    queryFn: () => tasksApi.getTask(taskId),
+    enabled: !!taskId && isAuthenticated, // Só fazer requisição se autenticado e taskId válido
   });
 }
 
@@ -87,30 +93,23 @@ export function useUpdateTask() {
   return useMutation({
     mutationFn: ({ taskId, updates }: { taskId: string; updates: Partial<Task> }) =>
       tasksApi.updateTask(taskId, updates),
-    onMutate: async ({ taskId, updates }) => {
-      await queryClient.cancelQueries({ queryKey: queryKeys.tasks.all });
-
+    onSuccess: (updatedTask, { taskId }) => {
+      // Atualizar cache com dados reais do servidor
       const previousTasks = queryClient.getQueryData<Task[]>(queryKeys.tasks.all);
-
-      // Otimistic update
+      
       if (previousTasks) {
         const updatedTasks = previousTasks.map(task =>
-          task.id === taskId
-            ? { ...task, ...updates, updatedAt: new Date().toISOString() }
-            : task
+          task.id === taskId ? updatedTask : task
         );
         queryClient.setQueryData(queryKeys.tasks.all, updatedTasks);
       }
 
-      return { previousTasks };
+      // Invalidar cache de energia quando plannedForToday muda
+      queryClient.invalidateQueries({ queryKey: ['energy', 'budget'] });
     },
-    onError: (err, variables, context) => {
-      if (context?.previousTasks) {
-        queryClient.setQueryData(queryKeys.tasks.all, context.previousTasks);
-      }
-    },
-    onSettled: () => {
+    onError: () => {
       invalidateQueries.tasks();
+      queryClient.invalidateQueries({ queryKey: ['energy', 'budget'] });
     },
   });
 }
@@ -150,6 +149,7 @@ export function useCompleteTask() {
     },
     onSettled: () => {
       invalidateQueries.tasks();
+      queryClient.invalidateQueries({ queryKey: ['energy', 'budget'] });
     },
   });
 }
@@ -159,7 +159,7 @@ export function usePostponeTask() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ taskId, reason }: { taskId: string; reason?: string }) =>
+    mutationFn: ({ taskId, reason }: { taskId: string; reason: string }) =>
       tasksApi.postponeTask(taskId, reason),
     onMutate: async ({ taskId }) => {
       await queryClient.cancelQueries({ queryKey: queryKeys.tasks.all });
@@ -175,6 +175,8 @@ export function usePostponeTask() {
                 status: 'postponed' as const,
                 postponedAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
+                plannedForToday: false,
+                postponementCount: (task.postponementCount || 0) + 1,
               }
             : task
         );
@@ -190,6 +192,7 @@ export function usePostponeTask() {
     },
     onSettled: () => {
       invalidateQueries.tasks();
+      queryClient.invalidateQueries({ queryKey: ['energy', 'budget'] });
     },
   });
 }
@@ -220,6 +223,7 @@ export function useDeleteTask() {
     },
     onSettled: () => {
       invalidateQueries.tasks();
+      queryClient.invalidateQueries({ queryKey: ['energy', 'budget'] });
     },
   });
 }
@@ -285,15 +289,27 @@ export function useTodayTasks() {
 
   const todayTasks = tasks.filter(task => {
     // Tarefas planejadas para hoje OU tarefas com data de hoje
-    if (task.plannedForToday) return task.status === 'pending' || task.status === 'postponed';
+    if (task.plannedForToday === true) {
+      return task.status === 'pending' || task.status === 'postponed';
+    }
     
     // Fallback: tarefas com data de hoje (comportamento original)
     if (task.dueDate === today) return task.status === 'pending' || task.status === 'postponed';
     
     // Tarefas sem data de vencimento que estão pendentes
-    if (!task.dueDate) return task.status === 'pending';
+    if (!task.dueDate || task.dueDate === 'Sem vencimento') return task.status === 'pending';
     
     return false;
+  });
+
+  // Debug log
+  console.log('🔍 useTodayTasks Debug:', {
+    totalTasks: tasks.length,
+    todayTasksFiltered: todayTasks.length,
+    today,
+    plannedTasks: tasks.filter(t => t.plannedForToday === true).length,
+    dueTodayTasks: tasks.filter(t => t.dueDate === today).length,
+    noDueDatePending: tasks.filter(t => (!t.dueDate || t.dueDate === 'Sem vencimento') && t.status === 'pending').length
   });
 
   return {
@@ -301,4 +317,16 @@ export function useTodayTasks() {
     isLoading,
     error
   };
+}
+
+// Hook para buscar orçamento/status de energia do usuário
+export function useEnergyBudget() {
+  const { isAuthenticated } = useAuthStore();
+  
+  return useQuery({
+    queryKey: ['energy', 'budget'],
+    queryFn: tasksApi.getEnergyBudget,
+    staleTime: 30 * 1000, // 30 segundos - dados mais frescos para energia
+    enabled: isAuthenticated,
+  });
 }

@@ -5,11 +5,15 @@ import {
   TaskResponse, 
   PostponeTaskRequest,
   CreateTaskCommentRequest,
-  TaskCommentResponse
+  TaskCommentResponse,
+  EnergyBudgetResponse
 } from '../types/task';
 
 export const getUserTasks = async (userId: string, filters?: any): Promise<TaskResponse[]> => {
-  const whereClause: any = { userId };
+  const whereClause: any = { 
+    userId,
+    isDeleted: false // Filtrar tarefas excluídas
+  };
 
   if (filters?.status) {
     whereClause.status = filters.status;
@@ -52,7 +56,10 @@ export const getUserTasks = async (userId: string, filters?: any): Promise<TaskR
       },
       attachments: true,
       recurrence: true,
-      appointment: true
+      appointment: true,
+      history: {
+        orderBy: { timestamp: 'desc' }
+      }
     },
     orderBy: { createdAt: 'desc' }
   });
@@ -65,8 +72,8 @@ export const getUserTasks = async (userId: string, filters?: any): Promise<TaskR
     type: task.type as any,
     isRecurring: task.isRecurring,
     isAppointment: task.isAppointment,
-    dueDate: task.dueDate?.toISOString(),
-    rescheduleDate: task.rescheduleDate?.toISOString(),
+    dueDate: task.dueDate?.toISOString().split('T')[0] || 'Sem vencimento',
+    rescheduleDate: task.rescheduleDate?.toISOString().split('T')[0],
     postponementCount: task.postponementCount,
     postponementReason: task.postponementReason,
     plannedForToday: task.plannedForToday,
@@ -89,6 +96,15 @@ export const getUserTasks = async (userId: string, filters?: any): Promise<TaskR
       type: attachment.type,
       size: attachment.size.toString(),
       uploadedAt: attachment.uploadedAt.toISOString()
+    })),
+    history: task.history.map(h => ({
+      id: h.id,
+      action: h.action,
+      field: h.action === 'created' ? 'created' : ((h.details as any)?.field || h.action),
+      oldValue: h.action === 'created' ? '' : ((h.details as any)?.oldValue || ''),
+      newValue: h.action === 'created' ? (h.details as any)?.newValue || '' : ((h.details as any)?.newValue || ''),
+      timestamp: h.timestamp.toISOString(),
+      details: h.details
     })),
     recurrence: task.recurrence ? {
       id: task.recurrence.id,
@@ -112,7 +128,8 @@ export const getTaskById = async (taskId: string, userId: string): Promise<TaskR
   const task = await prisma.task.findFirst({
     where: { 
       id: taskId, 
-      userId 
+      userId,
+      isDeleted: false // Filtrar tarefas excluídas
     },
     include: {
       project: {
@@ -128,7 +145,10 @@ export const getTaskById = async (taskId: string, userId: string): Promise<TaskR
       },
       attachments: true,
       recurrence: true,
-      appointment: true
+      appointment: true,
+      history: {
+        orderBy: { timestamp: 'desc' }
+      }
     }
   });
 
@@ -144,8 +164,8 @@ export const getTaskById = async (taskId: string, userId: string): Promise<TaskR
     type: task.type as any,
     isRecurring: task.isRecurring,
     isAppointment: task.isAppointment,
-    dueDate: task.dueDate?.toISOString(),
-    rescheduleDate: task.rescheduleDate?.toISOString(),
+    dueDate: task.dueDate?.toISOString().split('T')[0] || 'Sem vencimento',
+    rescheduleDate: task.rescheduleDate?.toISOString().split('T')[0],
     postponementCount: task.postponementCount,
     postponementReason: task.postponementReason,
     plannedForToday: task.plannedForToday,
@@ -168,6 +188,15 @@ export const getTaskById = async (taskId: string, userId: string): Promise<TaskR
       type: attachment.type,
       size: attachment.size.toString(),
       uploadedAt: attachment.uploadedAt.toISOString()
+    })),
+    history: task.history.map(h => ({
+      id: h.id,
+      action: h.action,
+      field: h.action === 'created' ? 'created' : ((h.details as any)?.field || h.action),
+      oldValue: h.action === 'created' ? '' : ((h.details as any)?.oldValue || ''),
+      newValue: h.action === 'created' ? (h.details as any)?.newValue || '' : ((h.details as any)?.newValue || ''),
+      timestamp: h.timestamp.toISOString(),
+      details: h.details
     })),
     recurrence: task.recurrence ? {
       id: task.recurrence.id,
@@ -210,9 +239,15 @@ export const createTask = async (userId: string, data: CreateTaskRequest): Promi
     taskData.projectId = data.projectId;
   }
 
-  if (data.dueDate) {
+  if (data.dueDate && data.dueDate !== 'Sem vencimento') {
     taskData.dueDate = new Date(data.dueDate);
   }
+
+  console.log('🔍 Criando tarefa com dados:', JSON.stringify({
+    taskData: taskData,
+    comments: data.comments,
+    attachments: data.attachments
+  }, null, 2));
 
   // Criar task com relacionamentos
   const task = await prisma.task.create({
@@ -221,9 +256,35 @@ export const createTask = async (userId: string, data: CreateTaskRequest): Promi
       history: {
         create: {
           action: 'created',
-          details: { createdBy: userId }
+          details: { 
+            createdBy: userId, 
+            newValue: `Tarefa criada em ${new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`,
+            timestamp: new Date().toISOString()
+          }
         }
       },
+      ...(data.comments && data.comments.length > 0 && {
+        comments: {
+          createMany: {
+            data: data.comments.map(comment => ({
+              author: comment.author,
+              content: comment.content
+            }))
+          }
+        }
+      }),
+      ...(data.attachments && data.attachments.length > 0 && {
+        attachments: {
+          createMany: {
+            data: data.attachments.map(attachment => ({
+              name: attachment.name,
+              url: attachment.url,
+              type: attachment.type,
+              size: BigInt(attachment.size)
+            }))
+          }
+        }
+      }),
       ...(data.recurrence && {
         recurrence: {
           create: {
@@ -256,7 +317,10 @@ export const createTask = async (userId: string, data: CreateTaskRequest): Promi
       comments: true,
       attachments: true,
       recurrence: true,
-      appointment: true
+      appointment: true,
+      history: {
+        orderBy: { timestamp: 'desc' }
+      }
     }
   });
 
@@ -266,7 +330,11 @@ export const createTask = async (userId: string, data: CreateTaskRequest): Promi
 export const updateTask = async (taskId: string, userId: string, data: UpdateTaskRequest): Promise<TaskResponse> => {
   // Verificar se a tarefa pertence ao usuário
   const existingTask = await prisma.task.findFirst({
-    where: { id: taskId, userId }
+    where: { 
+      id: taskId, 
+      userId,
+      isDeleted: false // Não permitir edição de tarefas excluídas
+    }
   });
 
   if (!existingTask) {
@@ -278,12 +346,41 @@ export const updateTask = async (taskId: string, userId: string, data: UpdateTas
   if (data.description !== undefined) updateData.description = data.description;
   if (data.energyPoints !== undefined) updateData.energyPoints = data.energyPoints;
   if (data.type !== undefined) updateData.type = data.type;
+  if (data.status !== undefined) updateData.status = data.status;
   if (data.isRecurring !== undefined) updateData.isRecurring = data.isRecurring;
   if (data.isAppointment !== undefined) updateData.isAppointment = data.isAppointment;
   if (data.externalLinks !== undefined) updateData.externalLinks = data.externalLinks;
   if (data.dueDate !== undefined) updateData.dueDate = data.dueDate ? new Date(data.dueDate) : null;
   if (data.rescheduleDate !== undefined) updateData.rescheduleDate = data.rescheduleDate ? new Date(data.rescheduleDate) : null;
-  if (data.plannedForToday !== undefined) updateData.plannedForToday = data.plannedForToday;
+  if (data.plannedForToday !== undefined) {
+    // Validar limite de energia ao marcar como "atuar hoje"
+    if (data.plannedForToday === true) {
+      const plannedTasks = await prisma.task.findMany({
+        where: {
+          userId,
+          plannedForToday: true,
+          id: { not: taskId }, // Excluir a tarefa atual
+          isDeleted: false
+        },
+        select: { energyPoints: true }
+      });
+      
+      const currentEnergyUsed = plannedTasks.reduce((sum, task) => sum + task.energyPoints, 0);
+      const taskEnergyPoints = data.energyPoints !== undefined ? data.energyPoints : existingTask.energyPoints;
+      
+      // Buscar orçamento do usuário (padrão 12)
+      const userSettings = await prisma.userSettings.findFirst({
+        where: { userId },
+        select: { dailyEnergyBudget: true }
+      });
+      const dailyBudget = userSettings?.dailyEnergyBudget || 12;
+      
+      if (currentEnergyUsed + taskEnergyPoints > dailyBudget) {
+        throw new Error(`Limite de energia excedido. Disponível: ${dailyBudget - currentEnergyUsed}, necessário: ${taskEnergyPoints}`);
+      }
+    }
+    updateData.plannedForToday = data.plannedForToday;
+  }
 
   if (data.projectId !== undefined) {
     if (data.projectId) {
@@ -298,16 +395,68 @@ export const updateTask = async (taskId: string, userId: string, data: UpdateTas
     updateData.projectId = data.projectId;
   }
 
+  // Criar registros de histórico para cada campo alterado
+  const historyRecords = [];
+  
+  if (data.description !== undefined && data.description !== existingTask.description) {
+    historyRecords.push({
+      action: 'description',
+      details: {
+        editedBy: userId,
+        oldValue: existingTask.description,
+        newValue: data.description
+      }
+    });
+  }
+  
+  if (data.energyPoints !== undefined && data.energyPoints !== existingTask.energyPoints) {
+    historyRecords.push({
+      action: 'energyPoints',
+      details: {
+        editedBy: userId,
+        oldValue: existingTask.energyPoints.toString(),
+        newValue: data.energyPoints.toString()
+      }
+    });
+  }
+  
+  if (data.status !== undefined && data.status !== existingTask.status) {
+    historyRecords.push({
+      action: 'status',
+      details: {
+        editedBy: userId,
+        oldValue: existingTask.status,
+        newValue: data.status
+      }
+    });
+  }
+  
+  if (data.dueDate !== undefined) {
+    const oldDate = existingTask.dueDate?.toISOString().split('T')[0] || null;
+    const newDate = data.dueDate || null;
+    if (oldDate !== newDate) {
+      historyRecords.push({
+        action: 'dueDate',
+        details: {
+          editedBy: userId,
+          oldValue: oldDate || '',
+          newValue: newDate || ''
+        }
+      });
+    }
+  }
+
   await prisma.task.update({
     where: { id: taskId },
     data: {
       ...updateData,
-      history: {
-        create: {
-          action: 'edited',
-          details: { editedBy: userId, changes: data }
+      ...(historyRecords.length > 0 && {
+        history: {
+          createMany: {
+            data: historyRecords
+          }
         }
-      }
+      })
     }
   });
 
@@ -316,7 +465,11 @@ export const updateTask = async (taskId: string, userId: string, data: UpdateTas
 
 export const completeTask = async (taskId: string, userId: string): Promise<TaskResponse> => {
   const task = await prisma.task.findFirst({
-    where: { id: taskId, userId }
+    where: { 
+      id: taskId, 
+      userId,
+      isDeleted: false // Não permitir completar tarefas excluídas
+    }
   });
 
   if (!task) {
@@ -337,7 +490,12 @@ export const completeTask = async (taskId: string, userId: string): Promise<Task
       history: {
         create: {
           action: 'completed',
-          details: { completedAt: completedAt.toISOString(), completedBy: userId }
+          details: { 
+            completedAt: completedAt.toISOString(), 
+            completedBy: userId,
+            oldValue: task.status,
+            newValue: 'completed'
+          }
         }
       }
     }
@@ -374,18 +532,28 @@ export const completeTask = async (taskId: string, userId: string): Promise<Task
 
 export const postponeTask = async (taskId: string, userId: string, data: PostponeTaskRequest): Promise<TaskResponse> => {
   const task = await prisma.task.findFirst({
-    where: { id: taskId, userId }
+    where: { 
+      id: taskId, 
+      userId,
+      isDeleted: false // Não permitir adiar tarefas excluídas
+    }
   });
 
   if (!task) {
     throw new Error('Tarefa não encontrada');
   }
 
+  // Verificar limite máximo de adiamentos
+  if (task.postponementCount >= 3) {
+    throw new Error('Limite máximo de adiamentos atingido. Esta tarefa deve ser realizada hoje.');
+  }
+
   const postponedAt = new Date();
   const updateData: any = {
     status: 'postponed',
     postponedAt,
-    postponementCount: task.postponementCount + 1
+    postponementCount: task.postponementCount + 1,
+    plannedForToday: false // Remove da lista "atuar hoje"
   };
 
   if (data.reason) {
@@ -407,7 +575,10 @@ export const postponeTask = async (taskId: string, userId: string, data: Postpon
             postponedAt: postponedAt.toISOString(), 
             reason: data.reason,
             newDate: data.newDate,
-            postponedBy: userId
+            postponedBy: userId,
+            oldValue: task.status,
+            newValue: 'postponed',
+            postponementCount: task.postponementCount + 1
           }
         }
       }
@@ -419,22 +590,46 @@ export const postponeTask = async (taskId: string, userId: string, data: Postpon
 
 export const deleteTask = async (taskId: string, userId: string): Promise<void> => {
   const task = await prisma.task.findFirst({
-    where: { id: taskId, userId }
+    where: { 
+      id: taskId, 
+      userId,
+      isDeleted: false // Só permitir exclusão de tarefas não excluídas
+    }
   });
 
   if (!task) {
     throw new Error('Tarefa não encontrada');
   }
 
-  await prisma.task.delete({
-    where: { id: taskId }
+  // Soft delete - marcar como excluída
+  await prisma.task.update({
+    where: { id: taskId },
+    data: {
+      isDeleted: true,
+      deletedAt: new Date(),
+      history: {
+        create: {
+          action: 'deleted',
+          details: {
+            deletedAt: new Date().toISOString(),
+            deletedBy: userId,
+            oldValue: task.status,
+            newValue: 'deleted'
+          }
+        }
+      }
+    }
   });
 };
 
 export const addTaskComment = async (taskId: string, userId: string, data: CreateTaskCommentRequest): Promise<TaskCommentResponse> => {
   // Verificar se a tarefa pertence ao usuário
   const task = await prisma.task.findFirst({
-    where: { id: taskId, userId }
+    where: { 
+      id: taskId, 
+      userId,
+      isDeleted: false // Não permitir comentários em tarefas excluídas
+    }
   });
 
   if (!task) {
@@ -454,5 +649,41 @@ export const addTaskComment = async (taskId: string, userId: string, data: Creat
     author: comment.author,
     content: comment.content,
     createdAt: comment.createdAt.toISOString()
+  };
+};
+
+export const getUserEnergyBudget = async (userId: string): Promise<EnergyBudgetResponse> => {
+  // Buscar configurações do usuário
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { settings: true }
+  });
+
+  const dailyBudget = user?.settings?.dailyEnergyBudget || 12;
+
+  // Buscar tarefas planejadas para hoje (independente do status)
+  const plannedTasks = await prisma.task.findMany({
+    where: {
+      userId,
+      plannedForToday: true,
+      isDeleted: false
+    },
+    select: {
+      id: true,
+      energyPoints: true,
+      description: true,
+      status: true
+    }
+  });
+
+  const usedEnergy = plannedTasks.reduce((sum, task) => sum + (task.energyPoints || 0), 0);
+  const remaining = Math.max(0, dailyBudget - usedEnergy);
+  const completedCount = plannedTasks.filter(task => task.status === 'completed').length;
+
+  return {
+    used: usedEnergy,
+    remaining,
+    total: dailyBudget,
+    completedTasks: completedCount
   };
 };

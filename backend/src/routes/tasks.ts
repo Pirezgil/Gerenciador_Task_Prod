@@ -30,4 +30,7 @@ router.post('/:id/postpone', validate(postponeTaskSchema), tasksController.postp
 // Comentários
 router.post('/:id/comments', validate(createTaskCommentSchema), tasksController.addComment);
 
+// Orçamento de energia
+router.get('/energy/budget', tasksController.getEnergyBudget);
+
 export { router as taskRoutes };

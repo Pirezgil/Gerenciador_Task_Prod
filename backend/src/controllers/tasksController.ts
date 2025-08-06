@@ -43,6 +43,13 @@ export const getTask = async (req: AuthenticatedRequest, res: Response, next: Ne
     const { id } = req.params;
     const task = await taskService.getTaskById(id, req.userId);
     
+    console.log('🎯 Tarefa retornada pelo backend:', JSON.stringify({
+      id: task.id,
+      description: task.description,
+      comments: task.comments,
+      attachments: task.attachments
+    }, null, 2));
+    
     res.json({
       success: true,
       data: task,
@@ -71,7 +78,13 @@ export const createTask = async (req: AuthenticatedRequest, res: Response, next:
       });
     }
 
-    console.log('Dados recebidos no backend:', JSON.stringify(req.body, null, 2));
+    console.log('🚀 === NOVA TAREFA SENDO CRIADA ===');
+    console.log('📥 Body completo:', JSON.stringify(req.body, null, 2));
+    console.log('📝 Campos específicos:');
+    console.log('  - comments:', req.body.comments, '(tipo:', typeof req.body.comments, ')');
+    console.log('  - attachments:', req.body.attachments, '(tipo:', typeof req.body.attachments, ')');
+    console.log('  - description:', req.body.description);
+    console.log('  - energyPoints:', req.body.energyPoints);
 
     // Filtrar apenas campos válidos para CreateTaskRequest
     const {
@@ -83,6 +96,8 @@ export const createTask = async (req: AuthenticatedRequest, res: Response, next:
       isRecurring,
       isAppointment,
       externalLinks,
+      comments,
+      attachments,
       recurrence,
       appointment
     } = req.body;
@@ -95,7 +110,9 @@ export const createTask = async (req: AuthenticatedRequest, res: Response, next:
       dueDate,
       isRecurring,
       isAppointment,
-      externalLinks,
+      externalLinks: externalLinks || [],
+      comments: comments || [],
+      attachments: attachments || [],
       recurrence,
       appointment
     };
@@ -103,6 +120,13 @@ export const createTask = async (req: AuthenticatedRequest, res: Response, next:
     console.log('Dados filtrados para criação:', JSON.stringify(taskData, null, 2));
 
     const task = await taskService.createTask(req.userId, taskData);
+    
+    console.log('✅ Tarefa criada no backend:', JSON.stringify({
+      id: task.id,
+      description: task.description,
+      comments: task.comments,
+      attachments: task.attachments
+    }, null, 2));
     
     res.status(201).json({
       success: true,
@@ -317,6 +341,28 @@ export const addComment = async (req: AuthenticatedRequest, res: Response, next:
         timestamp: new Date().toISOString()
       });
     }
+    next(error);
+  }
+};
+
+export const getEnergyBudget = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    if (!req.userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Não autenticado',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    const energyBudget = await taskService.getUserEnergyBudget(req.userId);
+    
+    res.json({
+      success: true,
+      data: energyBudget,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
     next(error);
   }
 };

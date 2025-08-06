@@ -40,7 +40,17 @@ export const createTaskSchema = z.object({
   dueDate: z.string().optional(),
   isRecurring: z.boolean().optional().default(false),
   isAppointment: z.boolean().optional().default(false),
-  externalLinks: z.array(z.string().url('URL inválida')).optional().default([]),
+  externalLinks: z.array(z.string()).optional().default([]),
+  comments: z.array(z.object({
+    author: z.string().min(1, 'Autor é obrigatório').max(100, 'Nome do autor muito longo'),
+    content: z.string().min(1, 'Conteúdo é obrigatório').max(1000, 'Comentário muito longo')
+  })).optional().default([]),
+  attachments: z.array(z.object({
+    name: z.string().min(1, 'Nome do arquivo é obrigatório').max(255, 'Nome muito longo'),
+    url: z.string().min(1, 'URL é obrigatória'),
+    type: z.string().min(1, 'Tipo é obrigatório'),
+    size: z.string().min(1, 'Tamanho é obrigatório')
+  })).optional().default([]),
   recurrence: z.object({
     frequency: z.enum(['daily', 'weekly', 'custom']),
     daysOfWeek: z.array(z.number().min(0).max(6)).optional()
@@ -60,6 +70,7 @@ export const updateTaskSchema = z.object({
     .max(1000, 'Descrição muito longa')
     .trim()
     .optional(),
+  status: z.enum(['pending', 'in_progress', 'completed']).optional(),
   energyPoints: z.number()
     .int('Pontos de energia devem ser um número inteiro')
     .refine(val => [1, 3, 5].includes(val), 'Pontos de energia devem ser 1, 3 ou 5')
@@ -70,6 +81,7 @@ export const updateTaskSchema = z.object({
   rescheduleDate: z.string().nullable().optional(),
   isRecurring: z.boolean().optional(),
   isAppointment: z.boolean().optional(),
+  plannedForToday: z.boolean().optional(),
   externalLinks: z.array(z.string().url('URL inválida')).optional()
 });
 
@@ -227,6 +239,17 @@ export const updateUserSchema = z.object({
     .trim()
     .optional(),
   avatarUrl: z.string().url('URL do avatar inválida').nullable().optional()
+});
+
+export const updateUserProfileSchema = z.object({
+  name: z.string()
+    .min(2, 'Nome deve ter pelo menos 2 caracteres')
+    .max(100, 'Nome muito longo')
+    .trim()
+    .optional(),
+  email: z.string().email('Email inválido').optional(),
+  timezone: z.string().max(100, 'Timezone inválido').optional(),
+  dailyEnergyBudget: z.number().int().min(1).optional()
 });
 
 export const updateUserSettingsSchema = z.object({

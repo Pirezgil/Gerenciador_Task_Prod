@@ -16,6 +16,7 @@ export interface UpdateHabitRequest {
   color?: string;
   targetCount?: number;
   isActive?: boolean;
+  frequency?: UpdateHabitFrequencyRequest;
 }
 
 export interface CreateHabitFrequencyRequest {
@@ -43,6 +44,7 @@ export interface HabitResponse {
   createdAt: string;
   updatedAt: string;
   frequency?: HabitFrequencyResponse;
+  completions?: HabitCompletionResponse[];
   todayCompletion?: HabitCompletionResponse;
   completionRate?: number;
 }

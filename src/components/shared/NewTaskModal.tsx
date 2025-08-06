@@ -8,13 +8,14 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Battery, Brain, Zap, CheckSquare, AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 
 // Stores e Tipos
 import { useCreateTask } from '@/hooks/api/useTasks';
 import { useProjects } from '@/hooks/api/useProjects';
 import { useModalsStore } from '@/stores/modalsStore';
 import { useAuthStore } from '@/stores/authStore';
-import type { Attachment } from '@/types/task';
+import type { CreateAttachment } from '@/types/task';
 
 // Componentes
 import { FileUpload } from '@/components/shared/FileUpload';
@@ -26,7 +27,7 @@ export function NewTaskModal() {
   // Estado dos Stores
   const { data: projects = [] } = useProjects();
   const createTask = useCreateTask();
-  const { showCaptureModal, setShowCaptureModal, showNewTaskModal, setShowNewTaskModal, preselectedProjectId, transformedNote, setTransformedNote } = useModalsStore();
+  const { showCaptureModal, setShowCaptureModal, showNewTaskModal, setShowNewTaskModal, preselectedProjectId, transformedNote, setTransformedNote, previousPath, setPreviousPath } = useModalsStore();
   const { user } = useAuthStore();
 
   // Estado local do formulário
@@ -35,7 +36,7 @@ export function NewTaskModal() {
   const [projectId, setProjectId] = useState<string | undefined>();
   const [dueDate, setDueDate] = useState('');
   const [comment, setComment] = useState('');
-  const [attachment, setAttachment] = useState<Attachment | null>(null);
+  const [attachment, setAttachment] = useState<CreateAttachment | null>(null);
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrenceFrequency, setRecurrenceFrequency] = useState<'daily' | 'weekly' | 'custom'>('daily');
   const [selectedDays, setSelectedDays] = useState<number[]>([]);
@@ -57,7 +58,11 @@ export function NewTaskModal() {
     if (preselectedProjectId && showNewTaskModal) {
       setProjectId(preselectedProjectId);
     }
-  }, [transformedNote, preselectedProjectId, showNewTaskModal]);
+    // Capturar página atual quando o modal abrir
+    if (showNewTaskModal && !previousPath) {
+      setPreviousPath(window.location.pathname);
+    }
+  }, [transformedNote, preselectedProjectId, showNewTaskModal, previousPath, setPreviousPath]);
 
   const validateForm = () => {
     const newErrors: {[key: string]: string} = {};
@@ -91,6 +96,7 @@ export function NewTaskModal() {
     setShowCaptureModal(false);
     setShowNewTaskModal(false);
     setTransformedNote(null);
+    setPreviousPath(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -99,11 +105,11 @@ export function NewTaskModal() {
     
     setIsCreating(true);
     try {
-      await createTask.mutateAsync({
+      const taskData = {
         description,
         energyPoints,
         projectId,
-        dueDate: dueDate || undefined,
+        dueDate: dueDate || 'Sem vencimento',
         isRecurring,
         recurrence: isRecurring ? {
           frequency: recurrenceFrequency,
@@ -118,23 +124,36 @@ export function NewTaskModal() {
             reminderTime: 15, // Default 15 minutes before
           } : undefined,
         comments: comment ? [{
-          id: Date.now().toString(),
           author: user?.name || 'Usuário',
           content: comment,
-          createdAt: new Date().toISOString(),
         }] : [],
         attachments: attachment ? [attachment] : [],
         externalLinks: [],
-        history: [],
+      };
+      
+      console.log('📤 Dados sendo enviados ao backend:', JSON.stringify(taskData, null, 2));
+      console.log('🔍 Dados detalhados:', {
+        comments: taskData.comments,
+        attachments: taskData.attachments,
+        commentCount: taskData.comments?.length,
+        attachmentCount: taskData.attachments?.length
       });
+      console.log('🧪 Verificação de estado:', {
+        comment: comment,
+        attachment: attachment,
+        commentValue: comment || 'vazio',
+        attachmentValue: attachment || 'vazio'
+      });
+      
+      await createTask.mutateAsync(taskData);
       
       // Mostrar animação de sucesso
       setShowSuccessAnimation(true);
       
-      // Aguardar animação e redirecionar
+      // Aguardar animação e redirecionar para página anterior
       setTimeout(() => {
         handleClose();
-        router.push('/tarefas');
+        router.push(previousPath || '/tarefas');
       }, 1500);
 
     } catch (error) {
@@ -168,13 +187,15 @@ export function NewTaskModal() {
                   <CheckSquare className="w-6 h-6" />
                   <h2 className="text-xl font-semibold">Nova Tarefa</h2>
                 </div>
-                <button
+                <Button
                   onClick={handleClose}
                   disabled={isCreating}
+                  variant="ghost"
+                  size="icon"
                   className="p-1 hover:bg-surface/20 rounded-lg transition-colors disabled:opacity-50"
                 >
                   <X className="w-5 h-5" />
-                </button>
+                </Button>
               </div>
               <p className="text-blue-100 text-sm mt-1">
                 Transforme sua ideia em uma ação concreta
@@ -227,12 +248,14 @@ export function NewTaskModal() {
                         { value: 5, label: 'Complexa', icon: Zap, color: 'purple', desc: '2+ horas' }
                       ].map((level) => {
                         const Icon = level.icon;
+                        
                         return (
-                          <button
+                          <Button
                             key={level.value}
                             type="button"
                             onClick={() => setEnergyPoints(level.value as 1 | 3 | 5)}
-                            className={`p-3 rounded-xl border-2 transition-all ${
+                            variant={energyPoints === level.value ? "default" : "outline"}
+                            className={`p-3 rounded-xl border-2 transition-all h-auto flex flex-col ${
                               energyPoints === level.value
                                 ? `border-${level.color}-500 bg-${level.color}-50`
                                 : 'border-gray-200 hover:border-gray-300'
@@ -243,7 +266,7 @@ export function NewTaskModal() {
                             }`} />
                             <div className="text-sm font-medium">{level.label}</div>
                             <div className="text-xs text-gray-500">{level.desc}</div>
-                          </button>
+                          </Button>
                         );
                       })}
                     </div>
@@ -300,7 +323,7 @@ export function NewTaskModal() {
                             <label className="block text-sm font-medium text-gray-700 mb-2">Dias da semana</label>
                             <div className="grid grid-cols-7 gap-1">
                               {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, index) => (
-                                <button
+                                <Button
                                   key={index}
                                   type="button"
                                   onClick={() => {
@@ -310,6 +333,8 @@ export function NewTaskModal() {
                                         : [...prev, index]
                                     );
                                   }}
+                                  variant={selectedDays.includes(index) ? "default" : "outline"}
+                                  size="sm"
                                   className={`p-2 text-xs rounded-md transition-all ${
                                     selectedDays.includes(index)
                                       ? 'bg-blue-100 text-blue-700 border-2 border-blue-500'
@@ -317,7 +342,7 @@ export function NewTaskModal() {
                                   }`}
                                 >
                                   {day}
-                                </button>
+                                </Button>
                               ))}
                             </div>
                           </div>
@@ -498,18 +523,38 @@ export function NewTaskModal() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">Anexos</label>
                     <div className="border-2 border-dashed border-gray-300 rounded-xl p-4">
                       <FileUpload
-                        attachments={attachment ? [attachment] : []}
+                        attachments={attachment ? [{
+                          id: 'temp-' + Date.now(),
+                          name: attachment.name,
+                          url: attachment.url,
+                          type: attachment.type,
+                          size: parseInt(attachment.size),
+                          uploadedAt: new Date().toISOString()
+                        }] : []}
                         onUpload={(files) => {
-                          const newAttachment = {
-                            id: Date.now().toString(),
-                            name: files[0].name,
-                            url: URL.createObjectURL(files[0]), // Simulação
-                            type: files[0].type,
-                            size: files[0].size,
-                            uploadedAt: new Date().toISOString(),
-                          };
-                          setAttachment(newAttachment);
-                          return Promise.resolve([newAttachment]);
+                          const file = files[0];
+                          const reader = new FileReader();
+                          
+                          return new Promise<any[]>((resolve) => {
+                            reader.onload = () => {
+                              const newAttachment = {
+                                name: file.name,
+                                url: reader.result as string, // Base64 data URL
+                                type: file.type,
+                                size: file.size.toString(),
+                              };
+                              setAttachment(newAttachment);
+                              resolve([{
+                                id: 'temp-' + Date.now(),
+                                name: file.name,
+                                url: reader.result as string,
+                                type: file.type,
+                                size: file.size,
+                                uploadedAt: new Date().toISOString()
+                              }]);
+                            };
+                            reader.readAsDataURL(file);
+                          });
                         }}
                         onRemove={() => setAttachment(null)}
                       />
@@ -524,15 +569,16 @@ export function NewTaskModal() {
                   * Campos obrigatórios
                 </div>
                 <div className="flex space-x-3">
-                  <button 
+                  <Button 
                     type="button" 
                     onClick={handleClose}
                     disabled={isCreating}
-                    className="px-6 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-colors disabled:opacity-50"
+                    variant="secondary"
+                    className="px-6 py-2.5 rounded-xl font-medium"
                   >
                     Cancelar
-                  </button>
-                  <button 
+                  </Button>
+                  <Button 
                     type="submit" 
                     disabled={isCreating || !description.trim()}
                     className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
@@ -548,7 +594,7 @@ export function NewTaskModal() {
                         <span>Criar Tarefa</span>
                       </>
                     )}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </form>

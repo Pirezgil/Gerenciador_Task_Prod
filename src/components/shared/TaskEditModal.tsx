@@ -7,6 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Battery, Brain, Zap } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 // Stores e Tipos
 import { useModalsStore } from '@/stores/modalsStore';
@@ -56,7 +57,7 @@ export function TaskEditModal() {
         >
           <div className="bg-gradient-to-r from-blue-500 to-purple-500 px-6 py-4 text-white flex items-center justify-between">
             <h2 className="text-xl font-semibold">Editar Tarefa</h2>
-            <button onClick={closeTaskEditModal} className="p-1 hover:bg-white/20 rounded-full"><X size={20}/></button>
+            <Button onClick={closeTaskEditModal} variant="ghost" size="icon" className="p-1 hover:bg-white/20 rounded-full"><X size={20}/></Button>
           </div>
 
           <div className="p-6 space-y-4 overflow-y-auto">
@@ -90,14 +91,15 @@ export function TaskEditModal() {
               <label className="block text-sm font-medium text-text-primary mb-1">Energia</label>
               <div className="flex space-x-2">
                 {[1, 3, 5].map(e => (
-                  <button
+                  <Button
                     key={e}
                     type="button"
                     onClick={() => setFormData((prev: typeof formData) => prev ? { ...prev, energyPoints: e as 1 | 3 | 5 } : null)}
-                    className={`flex-1 p-2 rounded-md border ${formData.energyPoints === e ? 'border-blue-500 bg-blue-100' : ''}`}
+                    variant={formData.energyPoints === e ? "default" : "outline"}
+                    className={`flex-1 p-2 rounded-md ${formData.energyPoints === e ? 'border-blue-500 bg-blue-100' : ''}`}
                   >
                     {e} {e === 1 ? <Battery size={16} className="inline-block ml-1 text-orange-500" /> : e === 3 ? <Brain size={16} className="inline-block ml-1 text-blue-500" /> : <Zap size={16} className="inline-block ml-1 text-purple-500" />}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -129,8 +131,8 @@ export function TaskEditModal() {
           </div>
 
           <div className="flex justify-end space-x-3 p-4 bg-surface-secondary/50 border-t">
-            <button onClick={closeTaskEditModal} className="px-4 py-2 rounded-md bg-gray-200">Cancelar</button>
-            <button onClick={handleSave} className="px-4 py-2 rounded-md bg-blue-500 text-white">Salvar Alterações</button>
+            <Button onClick={closeTaskEditModal} variant="secondary" className="px-4 py-2 rounded-md">Cancelar</Button>
+            <Button onClick={handleSave} className="px-4 py-2 rounded-md bg-blue-500 text-white">Salvar Alterações</Button>
           </div>
         </motion.div>
       </div>

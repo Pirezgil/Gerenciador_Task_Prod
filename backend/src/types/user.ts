@@ -3,6 +3,13 @@ export interface UpdateUserRequest {
   avatarUrl?: string;
 }
 
+export interface UpdateUserProfileRequest {
+  name?: string;
+  email?: string;
+  timezone?: string;
+  dailyEnergyBudget?: number;
+}
+
 export interface UserResponse {
   id: string;
   name: string;

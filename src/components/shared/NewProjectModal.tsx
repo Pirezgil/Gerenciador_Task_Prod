@@ -7,6 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, FolderPlus, Save, AlertCircle, Plus, Trash2, Battery, Brain, Zap } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useCreateProject } from '@/hooks/api/useProjects';
 import { useModalsStore } from '@/stores/modalsStore';
 
@@ -181,13 +182,15 @@ export function NewProjectModal() {
                 <FolderPlus className="w-6 h-6" />
                 <h2 className="text-xl font-semibold">Novo Projeto</h2>
               </div>
-              <button
+              <Button
                 onClick={handleClose}
                 disabled={isCreating}
+                variant="ghost"
+                size="icon"
                 className="p-1 hover:bg-surface/20 rounded-lg transition-colors disabled:opacity-50"
               >
                 <X className="w-5 h-5" />
-              </button>
+              </Button>
             </div>
             <p className="text-purple-100 text-sm mt-1">
               Organize suas grandes ideias em pequenos tijolos
@@ -234,18 +237,20 @@ export function NewProjectModal() {
                   </label>
                   <div className="grid grid-cols-6 gap-2 p-4 bg-gray-50 rounded-xl max-h-32 overflow-y-auto">
                     {PROJECT_ICONS.map((icon) => (
-                      <button
+                      <Button
                         key={icon}
                         type="button"
                         onClick={() => setFormData({ ...formData, icon })}
                         disabled={isCreating}
+                        variant={formData.icon === icon ? "default" : "outline"}
+                        size="icon"
                         className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all hover:scale-110 ${formData.icon === icon
                             ? 'bg-purple-100 border-2 border-purple-500 scale-110'
                             : 'bg-surface border border-gray-200 hover:border-purple-300'
                           }`}
                       >
                         <span className="text-lg">{icon}</span>
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 </div>
@@ -272,7 +277,7 @@ export function NewProjectModal() {
 
           <div className="p-6 pt-2 mt-auto shrink-0">
             <div className="flex flex-col space-y-3 pt-4 border-t border-gray-200">
-              <button
+              <Button
                 type="submit"
                 onClick={handleSubmit}
                 disabled={isCreating || !formData.name.trim()}
@@ -289,15 +294,16 @@ export function NewProjectModal() {
                     <span>Criar Projeto</span>
                   </>
                 )}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={handleClose}
                 disabled={isCreating}
-                className="w-full px-4 py-3 text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50"
+                variant="secondary"
+                className="w-full px-4 py-3 rounded-xl"
               >
                 Cancelar
-              </button>
+              </Button>
             </div>
           </div>
         </motion.div>

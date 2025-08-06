@@ -6,8 +6,10 @@
 
 import React from 'react';
 import { Download, Upload, Trash2, FileText, Archive, RefreshCw } from 'lucide-react';
+import { useStandardAlert } from '@/components/shared/StandardAlert';
 
 export function DataManagement() {
+  const { showAlert, AlertComponent } = useStandardAlert();
   const handleExportData = () => {
     // Simular export de dados
     const data = {
@@ -39,10 +41,18 @@ export function DataManagement() {
           try {
             const data = JSON.parse(e.target?.result as string);
             console.log('Dados importados:', data);
-            alert('Dados importados com sucesso! (Simulação)');
+            showAlert(
+              'Sucesso',
+              'Dados importados com sucesso! (Simulação)',
+              'success'
+            );
           } catch (err) {
             console.error("Erro ao importar dados:", err);
-            alert('Erro ao importar o arquivo. Verifique o formato.');
+            showAlert(
+              'Erro na Importação',
+              'Erro ao importar o arquivo. Verifique o formato.',
+              'error'
+            );
           }
         };
         reader.readAsText(file);
@@ -171,6 +181,7 @@ export function DataManagement() {
           </div>
         </div>
       </div>
+      <AlertComponent />
     </div>
   );
 }

@@ -60,10 +60,10 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                <Settings className="w-8 h-8 text-white" />
+                <span className="text-4xl">⚙️</span>
               </div>
               <div>
-                <h1 className="text-3xl font-bold">⚙️ Central de Configurações</h1>
+                <h1 className="text-3xl font-bold">Central de Configurações</h1>
                 <p className="text-gray-300 mt-1">Personalize sua experiência no Sistema Sentinela</p>
               </div>
             </div>

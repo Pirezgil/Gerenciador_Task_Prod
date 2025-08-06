@@ -116,6 +116,14 @@ export const updateProject = async (req: AuthenticatedRequest, res: Response, ne
         timestamp: new Date().toISOString()
       });
     }
+    if (error.message?.includes('Não é possível finalizar projeto com')) {
+      return res.status(400).json({
+        success: false,
+        error: 'Projeto contém tarefas pendentes',
+        message: error.message,
+        timestamp: new Date().toISOString()
+      });
+    }
     next(error);
   }
 };
@@ -181,6 +189,39 @@ export const getProjectStats = async (req: AuthenticatedRequest, res: Response, 
       return res.status(404).json({
         success: false,
         error: 'Projeto não encontrado',
+        timestamp: new Date().toISOString()
+      });
+    }
+    next(error);
+  }
+};
+
+export const updateProjectTask = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    if (!req.userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Não autenticado',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    const { id: projectId, taskId } = req.params;
+    const taskUpdates = req.body;
+    
+    const updatedTask = await projectService.updateProjectTask(projectId, taskId, req.userId, taskUpdates);
+    
+    res.json({
+      success: true,
+      message: 'Tarefa do projeto atualizada com sucesso',
+      data: updatedTask,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error: any) {
+    if (error.message === 'Projeto não encontrado' || error.message === 'Tarefa não encontrada') {
+      return res.status(404).json({
+        success: false,
+        error: error.message,
         timestamp: new Date().toISOString()
       });
     }

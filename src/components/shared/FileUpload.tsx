@@ -17,6 +17,7 @@ import {
   Paperclip
 } from 'lucide-react';
 import type { Attachment } from '@/types';
+import { useStandardAlert } from '@/components/shared/StandardAlert';
 
 interface FileUploadProps {
   attachments: Attachment[];
@@ -40,19 +41,28 @@ export function FileUpload({
   const [isUploading, setIsUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { showAlert, AlertComponent } = useStandardAlert();
 
   const handleFiles = async (files: FileList) => {
     const filesArray = Array.from(files);
     
     // Validações
     if (attachments.length + filesArray.length > maxFiles) {
-      alert(`Máximo de ${maxFiles} arquivos permitidos`);
+      showAlert(
+        'Limite de Arquivos',
+        `Máximo de ${maxFiles} arquivos permitidos`,
+        'warning'
+      );
       return;
     }
 
     const invalidFiles = filesArray.filter(file => file.size > maxSize * 1024 * 1024);
     if (invalidFiles.length > 0) {
-      alert(`Alguns arquivos excedem o tamanho máximo de ${maxSize}MB`);
+      showAlert(
+        'Arquivo Muito Grande',
+        `Alguns arquivos excedem o tamanho máximo de ${maxSize}MB`,
+        'warning'
+      );
       return;
     }
 
@@ -61,7 +71,11 @@ export function FileUpload({
     try {
       await onUpload(filesArray);
     } catch {
-      alert('Erro ao fazer upload dos arquivos');
+      showAlert(
+        'Erro no Upload',
+        'Erro ao fazer upload dos arquivos',
+        'error'
+      );
     } finally {
       setIsUploading(false);
     }
@@ -149,6 +163,7 @@ export function FileUpload({
                 <p className="text-text-primary font-medium">
                   Arraste arquivos aqui ou{' '}
                   <button
+                    type="button"
                     onClick={() => fileInputRef.current?.click()}
                     className="text-blue-600 hover:text-blue-700 underline"
                   >
@@ -198,6 +213,7 @@ export function FileUpload({
                   
                   <div className="flex items-center space-x-2">
                     <motion.button
+                      type="button"
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                       onClick={() => openFile(attachment)}
@@ -208,6 +224,7 @@ export function FileUpload({
                     </motion.button>
                     
                     <motion.button
+                      type="button"
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                       onClick={() => {
@@ -223,6 +240,7 @@ export function FileUpload({
                     </motion.button>
                     
                     <motion.button
+                      type="button"
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                       onClick={() => onRemove(attachment.id)}
@@ -238,6 +256,7 @@ export function FileUpload({
           </div>
         </div>
       )}
+      <AlertComponent />
     </div>
   );
 }

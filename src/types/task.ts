@@ -21,6 +21,9 @@ export interface Comment {
 export interface HistoryEntry {
   id: string;
   action: 'created' | 'completed' | 'postponed' | 'rescheduled' | 'edited';
+  field?: string;
+  oldValue?: unknown;
+  newValue?: unknown;
   timestamp: string;
   details?: {
     reason?: string;
@@ -38,6 +41,12 @@ export interface Task {
   status: 'pending' | 'completed' | 'postponed';
   energyPoints: 1 | 3 | 5;
   projectId?: string;
+  project?: {
+    id: string;
+    name: string;
+    icon: string;
+    color: string;
+  };
   type?: 'task' | 'brick';
   isRecurring?: boolean;
   recurrence?: RecurrenceConfig;
@@ -81,4 +90,17 @@ export interface Project {
   deadline?: string;
   sandboxNotes?: string;
   backlog: Task[];
+}
+
+// Tipos auxiliares para criação
+export interface CreateAttachment {
+  name: string;
+  url: string;
+  type: string;
+  size: string;
+}
+
+export interface CreateComment {
+  author: string;
+  content: string;
 }

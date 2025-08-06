@@ -25,6 +25,7 @@ export const registerUser = async (data: RegisterRequest): Promise<AuthResponse>
     data: {
       name,
       email,
+      password: hashedPassword,
       settings: {
         create: {
           dailyEnergyBudget: 12,
@@ -98,6 +99,8 @@ export const loginUser = async (data: LoginRequest): Promise<AuthResponse> => {
       id: true,
       name: true,
       email: true,
+      password: true,
+      googleId: true,
       avatarUrl: true,
       createdAt: true,
       updatedAt: true,
@@ -118,15 +121,16 @@ export const loginUser = async (data: LoginRequest): Promise<AuthResponse> => {
     throw new Error('Credenciais inválidas');
   }
 
-  // Para o sistema atual que não tem senhas armazenadas,
-  // vamos simular a validação (em produção, isso seria validado contra o hash)
-  // Por ora, aceitar qualquer senha para compatibilidade com o sistema atual
-  
-  // Em um sistema real com senhas:
-  // const isValidPassword = await bcrypt.compare(password, user.password);
-  // if (!isValidPassword) {
-  //   throw new Error('Credenciais inválidas');
-  // }
+  // Verificar se o usuário tem senha
+  if (!user.password) {
+    throw new Error('Esta conta foi criada com login social. Use a opção de login com Google.');
+  }
+
+  // Verificar senha
+  const isValidPassword = await bcrypt.compare(password, user.password);
+  if (!isValidPassword) {
+    throw new Error('Credenciais inválidas');
+  }
 
   // Gerar token
   const token = generateToken({

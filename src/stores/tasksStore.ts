@@ -108,7 +108,28 @@ export const useTasksStore = create<TasksState>()(
                   ...p,
                   backlog: p.backlog.map((t) =>
                     t.id === taskId
-                      ? { ...t, description, energyPoints }
+                      ? { 
+                          ...t, 
+                          description, 
+                          energyPoints,
+                          history: [
+                            ...(t.history || []),
+                            {
+                              id: Date.now().toString(),
+                              field: 'description',
+                              oldValue: t.description,
+                              newValue: description,
+                              timestamp: new Date().toISOString()
+                            },
+                            ...(t.energyPoints !== energyPoints ? [{
+                              id: (Date.now() + 1).toString(),
+                              field: 'energyPoints',
+                              oldValue: t.energyPoints.toString(),
+                              newValue: energyPoints.toString(),
+                              timestamp: new Date().toISOString()
+                            }] : [])
+                          ]
+                        }
                       : t
                   ),
                 }
@@ -187,15 +208,81 @@ export const useTasksStore = create<TasksState>()(
 
       updateTask: (taskId, updates) => {
         set((state) => {
-          const taskToUpdate = state.todayTasks.find((t) => t.id === taskId) || state.postponedTasks.find((t) => t.id === taskId);
-          if (!taskToUpdate) return state;
+          // Primeiro, procura nas tarefas do dia e adiadas
+          const taskInTodayTasks = state.todayTasks.find((t) => t.id === taskId);
+          const taskInPostponed = state.postponedTasks.find((t) => t.id === taskId);
+          
+          if (taskInTodayTasks || taskInPostponed) {
+            const taskToUpdate = taskInTodayTasks || taskInPostponed;
+            const updatedTask = { ...taskToUpdate, ...updates };
 
-          const updatedTask = { ...taskToUpdate, ...updates };
+            return {
+              todayTasks: state.todayTasks.map((t) => (t.id === taskId ? updatedTask : t)),
+              postponedTasks: state.postponedTasks.map((t) => (t.id === taskId ? updatedTask : t)),
+            };
+          }
 
-          return {
-            todayTasks: state.todayTasks.map((t) => (t.id === taskId ? updatedTask : t)),
-            postponedTasks: state.postponedTasks.map((t) => (t.id === taskId ? updatedTask : t)),
-          };
+          // Se não encontrou, procura nos projetos
+          let foundInProject = false;
+          const updatedProjects = state.projects.map((project) => {
+            const taskIndex = project.backlog.findIndex((t) => t.id === taskId);
+            if (taskIndex !== -1) {
+              foundInProject = true;
+              const oldTask = project.backlog[taskIndex];
+              const updatedTask = { ...oldTask, ...updates };
+              
+              // Adiciona histórico se necessário
+              if (updates.description && updates.description !== oldTask.description) {
+                updatedTask.history = [
+                  ...(oldTask.history || []),
+                  {
+                    id: Date.now().toString(),
+                    field: 'description',
+                    oldValue: oldTask.description,
+                    newValue: updates.description,
+                    timestamp: new Date().toISOString()
+                  }
+                ];
+              }
+              
+              if (updates.energyPoints && updates.energyPoints !== oldTask.energyPoints) {
+                updatedTask.history = [
+                  ...(updatedTask.history || oldTask.history || []),
+                  {
+                    id: (Date.now() + 1).toString(),
+                    field: 'energyPoints',
+                    oldValue: oldTask.energyPoints.toString(),
+                    newValue: updates.energyPoints.toString(),
+                    timestamp: new Date().toISOString()
+                  }
+                ];
+              }
+
+              if (updates.dueDate && updates.dueDate !== oldTask.dueDate) {
+                updatedTask.history = [
+                  ...(updatedTask.history || oldTask.history || []),
+                  {
+                    id: (Date.now() + 2).toString(),
+                    field: 'dueDate',
+                    oldValue: oldTask.dueDate || '',
+                    newValue: updates.dueDate,
+                    timestamp: new Date().toISOString()
+                  }
+                ];
+              }
+
+              const newBacklog = [...project.backlog];
+              newBacklog[taskIndex] = updatedTask;
+              return { ...project, backlog: newBacklog };
+            }
+            return project;
+          });
+
+          if (foundInProject) {
+            return { ...state, projects: updatedProjects };
+          }
+
+          return state;
         });
       },
 

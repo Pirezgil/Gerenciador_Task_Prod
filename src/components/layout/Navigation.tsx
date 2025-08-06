@@ -15,7 +15,6 @@ export function Navigation() {
   const pages = [
     { key: 'bombeiro', label: '🏎️ Bombeiro', color: 'blue', path: '/bombeiro' },
     { key: 'arquiteto', label: '🏗️ Arquiteto', color: 'purple', path: '/arquiteto' },
-    { key: 'planejamento', label: '📅 Planejamento', color: 'indigo', path: '/planejamento' },
     { key: 'tarefas', label: '📋 Tarefas', color: 'green', path: '/tarefas' },
     { key: 'caixa-de-areia', label: '🏖️ Caixa de Areia', color: 'amber', path: '/caixa-de-areia' }
   ] as const;

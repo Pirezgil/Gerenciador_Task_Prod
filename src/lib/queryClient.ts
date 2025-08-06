@@ -18,8 +18,8 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       // Fazer refetch quando reconectar à internet
       refetchOnReconnect: true,
-      // Não fazer refetch ao montar o componente se os dados são recentes
-      refetchOnMount: 'always',
+      // Sempre fazer refetch ao montar o componente
+      refetchOnMount: true,
     },
     mutations: {
       // Retry mutations apenas uma vez

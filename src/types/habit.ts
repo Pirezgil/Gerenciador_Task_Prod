@@ -14,6 +14,7 @@ export interface Habit {
   streak: number; // Dias seguidos
   bestStreak: number; // Melhor sequência já alcançada
   completions: HabitCompletion[];
+  comments?: HabitComment[];
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -23,9 +24,18 @@ export interface HabitCompletion {
   id: string;
   habitId: string;
   date: string; // YYYY-MM-DD
-  completedAt: string;
+  completedAt?: string;
   count: number; // Quantas vezes foi feito no dia (para hábitos com targetCount)
   notes?: string;
+  createdAt: string;
+}
+
+export interface HabitComment {
+  id: string;
+  habitId: string;
+  content: string;
+  author: string;
+  createdAt: string;
 }
 
 export interface HabitFrequency {

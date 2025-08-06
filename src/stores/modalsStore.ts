@@ -13,11 +13,12 @@ interface ModalsState {
   showDecompositionModal: Task | null;
   showTransformModal: Note | null;
   showEmergencyModal: boolean;
-  showNewProjectModal: boolean;
+  showNewProjectModal: boolean;  
   showNewTaskModal: boolean;
   preselectedProjectId: string | undefined; // Para pré-selecionar projeto
   transformedNote: Note | null; // Para passar a nota entre modais
   taskEditModal: TaskEditModalState;
+  previousPath: string | null; // Para rastrear página anterior
   
   // Actions - Modais básicos
   setShowCaptureModal: (show: boolean) => void;
@@ -29,6 +30,7 @@ interface ModalsState {
   setShowNewTaskModal: (show: boolean) => void;
   openNewTaskModal: (show: boolean, projectId?: string) => void;
   setTransformedNote: (note: Note | null) => void; // Para armazenar a nota sendo transformada
+  setPreviousPath: (path: string | null) => void; // Para definir página anterior
   
   // Actions - Modal de edição
   openTaskEditModal: (task: Task) => void;
@@ -63,6 +65,7 @@ export const useModalsStore = create<ModalsState>()((set) => ({
   preselectedProjectId: undefined, // Estado inicial
   transformedNote: null, // Estado inicial para nota transformada
   taskEditModal: initialTaskEditModal,
+  previousPath: null, // Estado inicial para página anterior
   
   // Actions - Modais básicos
   setShowCaptureModal: (show) => set({ showCaptureModal: show }),
@@ -74,6 +77,7 @@ export const useModalsStore = create<ModalsState>()((set) => ({
   setShowNewTaskModal: (show) => set({ showNewTaskModal: show }),
   openNewTaskModal: (show, projectId) => set({ showNewTaskModal: show, preselectedProjectId: projectId }),
   setTransformedNote: (note) => set({ transformedNote: note }), // Implementação para armazenar nota transformada
+  setPreviousPath: (path) => set({ previousPath: path }), // Implementação para definir página anterior
   
   // Actions - Modal de edição
   openTaskEditModal: (task) => set({
@@ -113,6 +117,7 @@ export const useModalsStore = create<ModalsState>()((set) => ({
       preselectedProjectId: undefined,
       transformedNote: null,
       taskEditModal: initialTaskEditModal,
+      previousPath: null,
     });
   },
 }));

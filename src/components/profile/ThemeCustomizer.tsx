@@ -8,6 +8,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Palette, Sun, Moon, Monitor, Eye, Download, Upload, RotateCcw, Save, Circle, Maximize, Type } from 'lucide-react';
 import { useThemeStore } from '../../stores/themeStore';
+import { useStandardAlert } from '@/components/shared/StandardAlert';
 
 import { ThemePreset } from '@/types';
 
@@ -35,6 +36,7 @@ export function ThemeCustomizer() {
 
   const [activeSection, setActiveSection] = useState('presets');
   const [showPreview, setShowPreview] = useState(false);
+  const { showAlert, AlertComponent } = useStandardAlert();
   
   // Aplicar tema automaticamente quando houver mudanças
   useEffect(() => {
@@ -69,9 +71,17 @@ export function ThemeCustomizer() {
           const content = e.target?.result as string;
           const success = importTheme(content);
           if (success) {
-            alert('Tema importado com sucesso!');
+            showAlert(
+              'Sucesso',
+              'Tema importado com sucesso!',
+              'success'
+            );
           } else {
-            alert('Erro ao importar tema. Verifique o arquivo.');
+            showAlert(
+              'Erro na Importação',
+              'Erro ao importar tema. Verifique o arquivo.',
+              'error'
+            );
           }
         };
         reader.readAsText(file);
@@ -96,7 +106,11 @@ export function ThemeCustomizer() {
     const description = prompt('Descrição do preset:');
     if (name && description) {
       saveAsPreset(name, description);
-      alert('Preset salvo com sucesso!');
+      showAlert(
+        'Sucesso',
+        'Preset salvo com sucesso!',
+        'success'
+      );
     }
   };
 
@@ -575,6 +589,7 @@ export function ThemeCustomizer() {
           </div>
         </motion.div>
       )}
+      <AlertComponent />
     </div>
   );
 }

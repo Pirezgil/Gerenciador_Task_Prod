@@ -6,37 +6,44 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Target, TrendingUp, Calendar, Settings } from 'lucide-react';
-import { useHabitsStore } from '@/stores/habitsStore';
+import { Plus, Target, TrendingUp, Calendar } from 'lucide-react';
+import { useHabits, useTodayHabits, useActiveHabits } from '@/hooks/api/useHabits';
 import { HabitList } from '@/components/habits/HabitList';
 import { HabitStats } from '@/components/habits/HabitStats';
 import { NewHabitModal } from '@/components/habits/NewHabitModal';
-import { HabitTemplates } from '@/components/habits/HabitTemplates';
 
-type ViewMode = 'today' | 'all' | 'stats' | 'templates';
+type ViewMode = 'today' | 'all' | 'stats';
 
 export default function HabitosPage() {
-  const { habits, getTodayHabits, initializeTemplates } = useHabitsStore();
+  const { data: allHabits = [], isLoading } = useHabits();
+  const todayHabits = useTodayHabits();
+  const activeHabits = useActiveHabits();
   const [currentView, setCurrentView] = useState<ViewMode>('today');
   const [showNewHabitModal, setShowNewHabitModal] = useState(false);
 
-  useEffect(() => {
-    initializeTemplates();
-  }, [initializeTemplates]);
-
-  const todayHabits = getTodayHabits();
-  const activeHabits = habits.filter(h => h.isActive);
   const completedToday = todayHabits.filter(habit => {
     const today = new Date().toISOString().split('T')[0];
-    return habit.completions.some(c => c.date === today);
+    return habit.completions?.some(c => c.date === today);
   }).length;
 
   const views = [
     { id: 'today' as ViewMode, label: 'Hoje', icon: Target, count: todayHabits.length },
     { id: 'all' as ViewMode, label: 'Todos', icon: Calendar, count: activeHabits.length },
     { id: 'stats' as ViewMode, label: 'Estatísticas', icon: TrendingUp },
-    { id: 'templates' as ViewMode, label: 'Modelos', icon: Settings },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto p-4 sm:p-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
+            <p className="text-gray-600 mt-4">Carregando hábitos...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6">
@@ -46,10 +53,10 @@ export default function HabitosPage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
             <div className="flex items-center space-x-4 mb-4 sm:mb-0">
               <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                <Target className="w-8 h-8 text-white" />
+                <span className="text-4xl">🎯</span>
               </div>
               <div>
-                <h1 className="text-3xl font-bold">🎯 Central de Hábitos</h1>
+                <h1 className="text-3xl font-bold">Central de Hábitos</h1>
                 <p className="text-green-100 mt-1">Construa uma vida melhor, um dia de cada vez</p>
               </div>
             </div>
@@ -148,12 +155,6 @@ export default function HabitosPage() {
           </div>
         )}
 
-        {currentView === 'templates' && (
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Modelos de Hábitos</h2>
-            <HabitTemplates onSelectTemplate={() => setShowNewHabitModal(true)} />
-          </div>
-        )}
       </motion.div>
 
       {/* Modal */}

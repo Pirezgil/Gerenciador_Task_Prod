@@ -25,32 +25,6 @@ export function Header() {
 
   return (
     <>
-      {/* Header Principal - Simplificado */}
-      <header className="bg-white/90 backdrop-blur-xl shadow-sm border-b border-white/20 lg:ml-0">
-        <div className="px-6 py-4 ml-0 lg:ml-4">
-          <div className="flex items-center justify-between">
-            {/* Logo/Título - Oculto no mobile (sidebar tem) */}
-            <div className="hidden lg:block">
-              <div className="flex items-center space-x-3">
-                <div>
-                  <h1 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-                    Sistema Sentinela
-                  </h1>
-                  <p className="text-sm text-text-secondary">Organização inteligente para sua mente</p>
-                </div>
-              </div>
-            </div>
-            
-            {/* User Info - Sempre visível */}
-            <div className="flex items-center space-x-4 ml-auto">
-              
-              
-              {/* Theme Toggle */}
-              <ThemeToggleModule.ThemeToggle variant="icon" className="ml-4" />
-            </div>
-          </div>
-        </div>
-      </header>
       
       {/* Contexto da Página - Aprimorado */}
       {pageContext && (

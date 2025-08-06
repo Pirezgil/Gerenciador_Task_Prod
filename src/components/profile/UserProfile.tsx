@@ -4,16 +4,22 @@
 // USER PROFILE - Configurações de perfil do usuário
 // ============================================================================
 
-import React, { useState } from 'react';
-import Image from 'next/image';
-import { Save, Edit3, X, User, Mail, MapPin, Clock, Calendar, Brain, Zap, Battery, Award, Target, TrendingUp } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import NextImage from 'next/image';
+import { Save, Edit3, X, User, Mail, MapPin, Brain, Zap, Battery, Camera, Upload, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useAuthStore } from '../../stores/authStore';
-import { useTasksStore } from '../../stores/tasksStore';
+import { ImageCropper } from '../shared/ImageCropper';
+import { useStandardAlert } from '../shared/StandardAlert';
 
 export function UserProfile() {
-  const { user, setUser } = useAuthStore();
-  const { todayTasks, projects } = useTasksStore();
+  const { user, setUser, clearAuth } = useAuthStore();
+  const { showAlert, AlertComponent } = useStandardAlert();
   const [isEditing, setIsEditing] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [showCropper, setShowCropper] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -21,25 +27,62 @@ export function UserProfile() {
     dailyEnergyBudget: user?.settings.dailyEnergyBudget || 12,
   });
 
-  // Calcular estatísticas
-  const completedTasks = todayTasks.filter(task => task.status === 'completed').length;
-  const totalProjects = projects.length;
-  const totalTasks = todayTasks.length;
-  const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-
-  const handleSave = () => {
+  const handleSave = async () => {
     if (user) {
-      setUser({
-        ...user,
-        name: formData.name,
-        email: formData.email,
-        settings: {
-          ...user.settings,
+      try {
+        const updatedProfile = {
+          name: formData.name,
+          email: formData.email,
           timezone: formData.timezone,
           dailyEnergyBudget: formData.dailyEnergyBudget,
-        },
-        updatedAt: new Date().toISOString(),
-      });
+        };
+
+        // Chamar API para salvar no backend
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+        const token = localStorage.getItem('auth-token');
+        
+        const response = await fetch(`${apiUrl}/users/profile`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          credentials: 'include',
+          body: JSON.stringify(updatedProfile),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Atualizar store local com dados do servidor
+          setUser(data.data);
+          
+          // Forçar atualização da energia na sidebar
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('energy-budget-updated'));
+          }
+          
+          showAlert('Sucesso', 'Configurações salvas com sucesso!', 'success');
+        } else {
+          throw new Error('Erro ao salvar configurações');
+        }
+      } catch (error) {
+        console.error('Erro ao salvar:', error);
+        showAlert('Erro', 'Erro ao salvar configurações. Salvando localmente.', 'error');
+        
+        // Fallback: salvar localmente
+        setUser({
+          ...user,
+          name: formData.name,
+          email: formData.email,
+          settings: {
+            ...user.settings,
+            timezone: formData.timezone,
+            dailyEnergyBudget: formData.dailyEnergyBudget,
+          },
+          updatedAt: new Date().toISOString(),
+        });
+      }
     }
     setIsEditing(false);
   };
@@ -54,6 +97,103 @@ export function UserProfile() {
     setIsEditing(false);
   };
 
+  // Função para comprimir imagem
+  const compressImage = (file: File, maxWidth: number = 400, quality: number = 0.8): Promise<string> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new window.Image();
+      
+      img.onload = () => {
+        const ratio = Math.min(maxWidth / img.width, maxWidth / img.height);
+        canvas.width = img.width * ratio;
+        canvas.height = img.height * ratio;
+        
+        ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  // Função para seleção inicial da foto
+  const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Verificar se é uma imagem
+    if (!file.type.startsWith('image/')) {
+      showAlert('Erro', 'Por favor, selecione apenas arquivos de imagem.', 'error');
+      return;
+    }
+
+    // Verificar tamanho do arquivo (máximo 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showAlert('Erro', 'O arquivo deve ter no máximo 5MB.', 'error');
+      return;
+    }
+
+    setSelectedFile(file);
+    setShowCropper(true);
+  };
+
+  // Função para processar imagem cortada
+  const handleImageCropped = async (croppedImage: string) => {
+    setIsUploadingPhoto(true);
+    setShowCropper(false);
+
+    try {      
+      // Salvar no localStorage/authStore
+      if (user) {
+        setUser({
+          ...user,
+          avatar_url: croppedImage,
+          updatedAt: new Date().toISOString(),
+        });
+      }
+      
+    } catch (error) {
+      console.error('Erro ao fazer upload da foto:', error);
+      showAlert('Erro', 'Erro ao fazer upload da foto. Tente novamente.', 'error');
+    } finally {
+      setIsUploadingPhoto(false);
+      setSelectedFile(null);
+    }
+  };
+
+  // Função para cancelar crop
+  const handleCropCancel = () => {
+    setShowCropper(false);
+    setSelectedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleLogout = () => {
+    showAlert(
+      'Sair do Sistema',
+      'Tem certeza que deseja sair do sistema?',
+      'warning',
+      {
+        showCancel: true,
+        confirmText: 'Sair',
+        onConfirm: () => {
+          clearAuth();
+          if (typeof window !== 'undefined') {
+            window.location.href = '/auth';
+          }
+        }
+      }
+    );
+  };
+
+  const handlePhotoClick = () => {
+    fileInputRef.current?.click();
+  };
+
   const timezones = [
     { value: 'America/Sao_Paulo', label: 'Brasília (GMT-3)' },
     { value: 'America/New_York', label: 'Nova York (GMT-5)' },
@@ -65,73 +205,55 @@ export function UserProfile() {
   return (
     <div className="space-y-6">
 
-      {/* Estatísticas em destaque */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Tarefas Hoje</p>
-              <p className="text-2xl font-bold text-blue-600">{completedTasks}/{totalTasks}</p>
-            </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-              <Target className="w-6 h-6 text-blue-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Taxa de Conclusão</p>
-              <p className="text-2xl font-bold text-green-600">{completionRate}%</p>
-            </div>
-            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-green-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Projetos Ativos</p>
-              <p className="text-2xl font-bold text-purple-600">{totalProjects}</p>
-            </div>
-            <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-              <Award className="w-6 h-6 text-purple-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Energia Diária</p>
-              <p className="text-2xl font-bold text-orange-600">{user?.settings.dailyEnergyBudget}</p>
-            </div>
-            <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-              <Zap className="w-6 h-6 text-orange-600" />
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Header com informações principais */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
         <div className="flex flex-col sm:flex-row items-center justify-between">
           <div className="flex items-center space-x-6 mb-4 sm:mb-0">
-            <div className="w-16 h-16 rounded-xl bg-purple-100 flex items-center justify-center overflow-hidden">
-              {user?.avatar_url ? (
-                <Image
-                  src={user.avatar_url}
-                  alt="Avatar"
-                  width={64}
-                  height={64}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <User className="w-8 h-8 text-purple-600" />
-              )}
+            <div className="relative">
+              <div 
+                className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center overflow-hidden cursor-pointer group transition-all duration-200 hover:ring-2 hover:ring-purple-400"
+                onClick={handlePhotoClick}
+              >
+                {user?.avatar_url ? (
+                  <NextImage
+                    src={user.avatar_url}
+                    alt="Avatar"
+                    width={64}
+                    height={64}
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                ) : (
+                  <User className="w-8 h-8 text-purple-600" />
+                )}
+                
+                {/* Overlay com ícone de câmera */}
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center rounded-full">
+                  {isUploadingPhoto ? (
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Camera className="w-5 h-5 text-white" />
+                  )}
+                </div>
+              </div>
+              
+              {/* Input de arquivo oculto */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoUpload}
+                className="hidden"
+              />
+              
+              {/* Botão de upload visível */}
+              <Button
+                onClick={handlePhotoClick}
+                size="icon"
+                className="absolute -bottom-1 -right-1 w-5 h-5 bg-purple-600 text-white rounded-full flex items-center justify-center hover:bg-purple-700 transition-colors shadow-lg"
+                title="Alterar foto"
+              >
+                <Upload className="w-3 h-3" />
+              </Button>
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{user?.name || 'Usuário'}</h1>
@@ -139,33 +261,44 @@ export function UserProfile() {
               <p className="text-gray-500 text-xs mt-1">
                 Membro desde {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('pt-BR') : 'Data indisponível'}
               </p>
+              <Button
+                onClick={handlePhotoClick}
+                variant="link"
+                size="sm"
+                className="text-xs text-purple-600 hover:text-purple-700 mt-1 flex items-center gap-1 p-0 h-auto"
+              >
+                <Camera className="w-3 h-3" />
+                Alterar foto
+              </Button>
             </div>
           </div>
           
           {!isEditing ? (
-            <button
+            <Button
               onClick={() => setIsEditing(true)}
               className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors"
             >
               <Edit3 className="w-4 h-4" />
               <span>Editar Perfil</span>
-            </button>
+            </Button>
           ) : (
             <div className="flex space-x-3">
-              <button
+              <Button
                 onClick={handleSave}
-                className="flex items-center space-x-2 px-4 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors"
+                variant="success"
+                className="flex items-center space-x-2 px-4 py-2 rounded-xl"
               >
                 <Save className="w-4 h-4" />
                 <span>Salvar</span>
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleCancel}
-                className="flex items-center space-x-2 px-4 py-2 bg-gray-500 text-white rounded-xl hover:bg-gray-600 transition-colors"
+                variant="secondary"
+                className="flex items-center space-x-2 px-4 py-2 rounded-xl"
               >
                 <X className="w-4 h-4" />
                 <span>Cancelar</span>
-              </button>
+              </Button>
             </div>
           )}
         </div>
@@ -255,22 +388,23 @@ export function UserProfile() {
             {isEditing ? (
               <div className="space-y-2">
                 <div className="flex items-center space-x-4">
-                  <input
-                    type="range"
-                    min="6"
-                    max="20"
-                    value={formData.dailyEnergyBudget}
-                    onChange={(e) => setFormData({ ...formData, dailyEnergyBudget: parseInt(e.target.value) })}
-                    className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                  />
-                  <span className="text-lg font-bold text-purple-600 w-12 text-center bg-purple-100 rounded-lg py-2">
-                    {formData.dailyEnergyBudget}
-                  </span>
+                  <div className="flex-1">
+                    <input
+                      type="number"
+                      min="1"
+                      value={formData.dailyEnergyBudget}
+                      onChange={(e) => setFormData({ ...formData, dailyEnergyBudget: parseInt(e.target.value) || 1 })}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-center text-lg font-medium"
+                      placeholder="Digite o orçamento"
+                    />
+                  </div>
+                  <div className="text-sm text-gray-500 whitespace-nowrap">
+                    pontos de energia
+                  </div>
                 </div>
-                <div className="flex justify-between text-xs text-gray-500">
-                  <span>6 pontos</span>
-                  <span>20 pontos</span>
-                </div>
+                <p className="text-xs text-gray-500 text-center">
+                  Defina quantos pontos de energia você tem disponível por dia
+                </p>
               </div>
             ) : (
               <div className="bg-gray-50 px-4 py-3 rounded-xl text-gray-900 flex items-center justify-between">
@@ -285,6 +419,44 @@ export function UserProfile() {
           </div>
         </div>
       </div>
+
+      {/* Seção de Logout */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+          <LogOut className="w-5 h-5 mr-2 text-red-600" />
+          Sessão
+        </h2>
+        
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-medium text-gray-900">Sair do Sistema</h3>
+            <p className="text-gray-500 text-sm mt-1">
+              Encerra sua sessão atual e retorna à tela de login
+            </p>
+          </div>
+          
+          <Button
+            onClick={handleLogout}
+            className="flex items-center space-x-2 px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+          >
+            <LogOut className="w-5 h-5" />
+            <span className="font-semibold">Logout</span>
+          </Button>
+        </div>
+      </div>
+
+      {/* Modal de crop da imagem */}
+      {showCropper && selectedFile && (
+        <ImageCropper
+          image={selectedFile}
+          onCrop={handleImageCropped}
+          onCancel={handleCropCancel}
+          aspectRatio={1}
+          outputSize={400}
+        />
+      )}
+      
+      <AlertComponent />
     </div>
   );
 }

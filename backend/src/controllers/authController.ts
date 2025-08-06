@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import * as authService from '../services/authService';
+import * as googleAuthService from '../services/googleAuthService';
 import { AuthenticatedRequest } from '../types/api';
 import { LoginRequest, RegisterRequest } from '../types/auth';
 
@@ -49,6 +50,16 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
         timestamp: new Date().toISOString()
       });
     }
+    
+    if (error.message.includes('login social')) {
+      return res.status(409).json({
+        success: false,
+        error: 'Conta social',
+        message: error.message,
+        timestamp: new Date().toISOString()
+      });
+    }
+    
     return next(error);
   }
 };
@@ -127,4 +138,39 @@ export const refreshToken = async (req: Request, res: Response, next: NextFuncti
     message: 'Refresh token não implementado nesta versão',
     timestamp: new Date().toISOString()
   });
+};
+
+// Google OAuth
+export const googleAuth = async (req: Request, res: Response) => {
+  try {
+    const authUrl = googleAuthService.getGoogleAuthUrl();
+    res.redirect(authUrl);
+  } catch (error) {
+    console.error('Erro ao iniciar autenticação Google:', error);
+    res.redirect(`${process.env.FRONTEND_URL}/auth?error=google_auth_failed`);
+  }
+};
+
+export const googleCallback = async (req: Request, res: Response) => {
+  try {
+    const { code } = req.query;
+    
+    if (!code || typeof code !== 'string') {
+      return res.redirect(`${process.env.FRONTEND_URL}/auth?error=missing_code`);
+    }
+
+    // Verificar token do Google e obter dados do usuário
+    const googleData = await googleAuthService.verifyGoogleToken(code);
+    
+    // Criar ou buscar usuário e gerar token JWT
+    const { user, token } = await googleAuthService.findOrCreateGoogleUser(googleData);
+
+    // Redirecionar para o frontend com o token
+    const redirectUrl = `${process.env.FRONTEND_URL}/auth/callback?token=${token}&user=${encodeURIComponent(JSON.stringify(user))}`;
+    res.redirect(redirectUrl);
+    
+  } catch (error) {
+    console.error('Erro no callback Google:', error);
+    res.redirect(`${process.env.FRONTEND_URL}/auth?error=google_callback_failed`);
+  }
 };

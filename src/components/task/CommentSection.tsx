@@ -62,7 +62,7 @@ export function CommentSection({ task }: CommentSectionProps) {
         value={newComment}
         onChange={(e) => setNewComment(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Adicionar um comentário... (Enter para enviar, Ctrl+Enter para nova linha)"
+        placeholder="Escreva um comentário"
         className="flex-grow p-2 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 resize-none overflow-hidden"
         rows={1}
       />

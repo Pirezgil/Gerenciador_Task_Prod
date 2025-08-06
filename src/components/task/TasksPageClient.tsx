@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   CheckCircle2, 
@@ -15,31 +15,42 @@ import {
   Target,
   ChevronDown,
   ExternalLink,
-  MessageSquare
+  MessageSquare,
+  Trash2,
+  Flame
 } from 'lucide-react';
-import { useTasks, useTasksStats, useCompleteTask } from '@/hooks/api/useTasks';
+import { useTasks, useTasksStats, useCompleteTask, useDeleteTask, useUpdateTask } from '@/hooks/api/useTasks';
 import { useProjects } from '@/hooks/api/useProjects';
 import { useModalsStore } from '@/stores/modalsStore';
 import { Button } from '@/components/ui/button';
 import { NewTaskModal } from '@/components/shared/NewTaskModal';
 import Link from 'next/link';
+import { scrollToElementWithDelay } from '@/utils/scrollUtils';
+import { formatHistoryMessage } from '@/utils/historyFormatter';
+import { useStandardAlert } from '@/components/shared/StandardAlert';
 
 type FilterType = 'all' | 'today' | 'week' | 'completed' | 'pending';
 type SortType = 'date' | 'energy' | 'project' | 'status';
-type ViewMode = 'today' | 'all' | 'completed' | 'pending';
+type ViewMode = 'today' | 'all' | 'completed' | 'pending' | 'planned_today';
+
 
 export function TasksPageClient() {
   // Primeiro todos os hooks, sempre na mesma ordem
   const { data: allTasks = [], isLoading } = useTasks();
   const { data: projects = [] } = useProjects();
+  
   const completeTask = useCompleteTask();
+  const deleteTask = useDeleteTask();
+  const updateTask = useUpdateTask();
   const { setShowNewTaskModal, showNewTaskModal } = useModalsStore();
   
   // Estados sempre na mesma ordem
-  const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
+  const [expandedTask, setExpandedTask] = useState<string | null>(null);
+  const taskRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [currentView, setCurrentView] = useState<ViewMode>('today');
   const [sortBy, setSortBy] = useState<SortType>('date');
   const [searchTerm, setSearchTerm] = useState('');
+  const { showAlert, AlertComponent } = useStandardAlert();
   
   // Memos calculados sempre na mesma ordem
   const todayTasks = useMemo(() => {
@@ -68,24 +79,32 @@ export function TasksPageClient() {
           ...postponedTasks
         ];
       case 'all':
-        return allTasks;
+        return allTasks.filter(t => t && t.status !== 'completed');
       case 'completed':
         return allTasks.filter(t => t && t.status === 'completed');
       case 'pending':
         return allTasks.filter(t => t && t.status === 'pending');
+      case 'planned_today':
+        return allTasks.filter(t => t && t.plannedForToday === true);
       default:
         return allTasks;
     }
   }, [allTasks, todayTasks, postponedTasks, currentView]);
 
   const toggleTaskExpansion = (taskId: string) => {
-    const newExpanded = new Set(expandedTasks);
-    if (newExpanded.has(taskId)) {
-      newExpanded.delete(taskId);
-    } else {
-      newExpanded.add(taskId);
+    const isExpanding = expandedTask !== taskId;
+    setExpandedTask(expandedTask === taskId ? null : taskId);
+    
+    if (isExpanding) {
+      const taskElement = taskRefs.current.get(taskId);
+      if (taskElement) {
+        scrollToElementWithDelay(taskElement, 350, {
+          behavior: 'smooth',
+          block: 'center',
+          offset: -50
+        });
+      }
     }
-    setExpandedTasks(newExpanded);
   };
 
   // Aplicar busca e ordenação nas tarefas
@@ -132,7 +151,7 @@ export function TasksPageClient() {
   // Estatísticas calculadas
   const calculatedStats = useMemo(() => {
     if (!Array.isArray(allTasks)) {
-      return { today: 0, all: 0, completed: 0, pending: 0 };
+      return { today: 0, all: 0, completed: 0, pending: 0, planned_today: 0 };
     }
 
     const today = new Date().toISOString().split('T')[0];
@@ -142,7 +161,8 @@ export function TasksPageClient() {
       today: todayTasksList.filter(t => t && t.status === 'pending').length + postponedTasks.length,
       all: allTasks.length,
       completed: allTasks.filter(t => t && t.status === 'completed').length,
-      pending: allTasks.filter(t => t && t.status === 'pending').length
+      pending: allTasks.filter(t => t && t.status === 'pending').length,
+      planned_today: allTasks.filter(t => t && t.plannedForToday === true).length
     };
   }, [allTasks, todayTasks, postponedTasks]);
 
@@ -177,11 +197,51 @@ export function TasksPageClient() {
     }
   };
 
+  const handleReactivateTask = async (taskId: string) => {
+    if (!taskId) {
+      console.error('ID da tarefa é obrigatório');
+      return;
+    }
+
+    try {
+      await updateTask.mutateAsync({ 
+        taskId: taskId, 
+        updates: { status: 'pending' }
+      });
+    } catch (error) {
+      console.error('Erro ao reativar tarefa:', error);
+    }
+  };
+
+  const handleDeleteTask = async (taskId: string, taskDescription: string) => {
+    showAlert(
+      'Excluir Tarefa',
+      `Tem certeza que deseja excluir a tarefa "${taskDescription}"?`,
+      'danger',
+      {
+        showCancel: true,
+        confirmText: 'Excluir',
+        onConfirm: async () => {
+          try {
+            await deleteTask.mutateAsync(taskId);
+          } catch (error) {
+            console.error('Erro ao excluir tarefa:', error);
+            showAlert(
+              'Erro',
+              'Erro ao excluir tarefa. Tente novamente.',
+              'error'
+            );
+          }
+        }
+      }
+    );
+  };
+
   const views = [
+    { id: 'planned_today' as ViewMode, label: 'Atuar hoje', icon: Flame, count: calculatedStats.planned_today },
     { id: 'today' as ViewMode, label: 'Hoje', icon: Target, count: calculatedStats.today },
-    { id: 'all' as ViewMode, label: 'Todas', icon: Calendar, count: calculatedStats.all },
-    { id: 'completed' as ViewMode, label: 'Concluídas', icon: CheckCircle2, count: calculatedStats.completed },
     { id: 'pending' as ViewMode, label: 'Pendentes', icon: Clock, count: calculatedStats.pending },
+    { id: 'completed' as ViewMode, label: 'Concluídas', icon: CheckCircle2, count: calculatedStats.completed },
   ];
 
   if (isLoading) {
@@ -195,94 +255,103 @@ export function TasksPageClient() {
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6">
       {/* Header */}
-      <div className="mb-8">
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
-            <div className="flex items-center space-x-4 mb-4 sm:mb-0">
-              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                <Target className="w-8 h-8 text-white" />
+      <div className="mb-4">
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 text-white">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                <span className="text-4xl">📋</span>
               </div>
               <div>
-                <h1 className="text-3xl font-bold">📋 Central de Tarefas</h1>
+                <h1 className="text-2xl font-bold">Central de Tarefas</h1>
                 <p className="text-blue-100 mt-1">Organize e execute suas missões com eficiência</p>
               </div>
             </div>
             
-            <button
-              onClick={() => setShowNewTaskModal(true)}
-              className="flex items-center space-x-2 px-6 py-3 bg-white/20 backdrop-blur-sm text-white rounded-xl hover:bg-white/30 transition-colors border border-white/30 w-full sm:w-auto justify-center"
-            >
-              <Plus className="w-5 h-5" />
-              <span>Nova Tarefa</span>
-            </button>
+            <div className="flex items-center space-x-3">
+              {/* Botão Calendário */}
+              <Link
+                href="/calendar"
+                className="flex items-center space-x-3 px-6 py-3 bg-white/15 backdrop-blur-sm text-white rounded-2xl hover:bg-white/25 transition-all duration-300 border border-white/20 shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                <Calendar className="w-5 h-5" />
+                <span className="font-semibold">Calendário</span>
+              </Link>
+              
+              {/* Botão Nova Tarefa */}
+              <Button
+                onClick={() => setShowNewTaskModal(true)}
+                className="flex items-center space-x-3 px-6 py-3 bg-white/15 backdrop-blur-sm text-white rounded-2xl hover:bg-white/25 transition-all duration-300 border border-white/20 shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                <Plus className="w-5 h-5" />
+                <span className="font-semibold">Nova Tarefa</span>
+              </Button>
+            </div>
           </div>
 
           {/* Quick Stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
+          <div className="grid grid-cols-3 gap-4 mt-4">
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
-              <div className="text-2xl font-bold">{calculatedStats.today}</div>
-              <div className="text-sm text-blue-100">Para Hoje</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
-              <div className="text-2xl font-bold">{calculatedStats.all}</div>
-              <div className="text-sm text-blue-100">Total</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
-              <div className="text-2xl font-bold">{calculatedStats.completed}</div>
-              <div className="text-sm text-blue-100">Concluídas</div>
+              <div className="text-2xl font-bold">{calculatedStats.planned_today}</div>
+              <div className="text-xs text-blue-100">Atuar hoje</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
               <div className="text-2xl font-bold">{calculatedStats.pending}</div>
-              <div className="text-sm text-blue-100">Pendentes</div>
+              <div className="text-xs text-blue-100">Pendentes</div>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
+              <div className="text-2xl font-bold">{calculatedStats.completed}</div>
+              <div className="text-xs text-blue-100">Concluídas</div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Navigation */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
-        <div className="flex flex-wrap gap-2">
+      <div className="bg-gradient-to-br from-white via-slate-50 to-gray-100 rounded-3xl shadow-xl border border-gray-200/60 backdrop-blur-sm p-6 mb-3">
+        <div className="flex gap-2 justify-between w-full min-w-0">
           {views.map((view) => {
             const Icon = view.icon;
             return (
-              <button
+              <Button
                 key={view.id}
                 onClick={() => setCurrentView(view.id)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all ${
+                variant={currentView === view.id ? "default" : "ghost"}
+                className={`flex-1 flex items-center justify-center space-x-1 px-2 py-1.5 rounded-2xl transition-all duration-300 transform hover:scale-105 hover:shadow-lg whitespace-nowrap min-w-0 ${
                   currentView === view.id
-                    ? 'bg-blue-100 text-blue-700 border-2 border-blue-200'
-                    : 'text-gray-600 hover:bg-gray-50'
+                    ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg border-0'
+                    : 'text-gray-700 hover:bg-white/80 hover:shadow-md border border-gray-200/50 bg-white/60 backdrop-blur-sm'
                 }`}
               >
-                <Icon className="w-4 h-4" />
-                <span className="font-medium">{view.label}</span>
+                <Icon className="w-3 h-3" />
+                <span className="font-semibold tracking-wide text-2xs truncate">{view.label}</span>
                 {view.count !== undefined && (
-                  <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                  <span className={`px-1.5 py-0.5 rounded-full text-2xs font-bold transition-all ${
                     currentView === view.id
-                      ? 'bg-blue-200 text-blue-800'
-                      : 'bg-gray-200 text-gray-600'
+                      ? 'bg-white/20 text-white backdrop-blur-sm'
+                      : 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700'
                   }`}>
                     {view.count}
                   </span>
                 )}
-              </button>
+              </Button>
             );
           })}
         </div>
       </div>
 
       {/* Filtros e busca */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+      <div className="bg-gradient-to-r from-white via-blue-50/30 to-indigo-50/30 rounded-3xl shadow-2xl border border-blue-200/30 backdrop-blur-sm p-5 mb-2.5">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <div className="relative group">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-4 h-4 transition-all group-focus-within:text-blue-600" />
               <input
                 type="text"
                 placeholder="Buscar tarefas..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-2.5 bg-white/80 backdrop-blur-sm border border-blue-200/50 rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-400 focus:bg-white transition-all duration-300 text-gray-700 placeholder-gray-400 shadow-inner hover:shadow-md"
               />
             </div>
           </div>
@@ -290,12 +359,12 @@ export function TasksPageClient() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortType)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-4 py-2.5 bg-white/80 backdrop-blur-sm border border-indigo-200/50 rounded-2xl focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all duration-300 text-gray-700 font-medium shadow-inner hover:shadow-md cursor-pointer"
             >
-              <option value="date">Por Data</option>
-              <option value="energy">Por Energia</option>
-              <option value="project">Por Projeto</option>
-              <option value="status">Por Status</option>
+              <option value="date">📅 Por Data</option>
+              <option value="energy">⚡ Por Energia</option>
+              <option value="project">📁 Por Projeto</option>
+              <option value="status">🔄 Por Status</option>
             </select>
           </div>
         </div>
@@ -316,7 +385,6 @@ export function TasksPageClient() {
           
           {/* Lista de tarefas */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-
             {filteredAndSortedTasks.length === 0 ? (
               <div className="text-center py-12">
                 <Target className="w-12 h-12 text-gray-300 mx-auto mb-3" />
@@ -332,176 +400,328 @@ export function TasksPageClient() {
             ) : (
               <div className="space-y-3">
                 {filteredAndSortedTasks.map((task) => {
-                  const isExpanded = expandedTasks.has(task.id);
+                  const isExpanded = expandedTask === task.id;
                   const project = projects.find(p => p.id === task.projectId);
 
                   return (
                     <motion.div
                       key={task.id}
-                      className="bg-gradient-to-r from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 transition-all hover:shadow-lg hover:scale-[1.02]"
+                      ref={(el) => {
+                        if (el) {
+                          taskRefs.current.set(task.id, el);
+                        } else {
+                          taskRefs.current.delete(task.id);
+                        }
+                      }}
+                      className="bg-gradient-to-r from-white to-gray-50 rounded-xl shadow-md border border-gray-200 transition-all hover:shadow-lg hover:scale-[1.02]"
                       whileHover={{ scale: 1.02 }}
                     >
-                      <div className="p-5">
-                        <div className="flex items-start gap-4">
-                          {/* Checkbox */}
-                          <button
-                            onClick={() => handleCompleteTask(task.id)}
-                            className={`flex-shrink-0 w-6 h-6 rounded-full border-2 transition-all flex items-center justify-center ${
-                              task.status === 'completed'
-                                ? 'bg-green-500 border-green-500 text-white shadow-sm'
-                                : 'border-gray-300 hover:border-green-500 hover:bg-green-50'
-                            }`}
-                          >
-                            {task.status === 'completed' && (
-                              <CheckCircle2 className="w-4 h-4" />
-                            )}
-                          </button>
-
-                          {/* Content */}
-                          <div className="flex-1 min-w-0">
+                      <div className="p-3">
+                        <div className="flex flex-col gap-2">
+                          {/* First Line - Task Description */}
+                          <div className="flex items-center justify-between w-full">
                             <Link 
                               href={`/task/${task.id}`}
-                              className="group block"
+                              className="flex-1"
                             >
-                              <div className="flex items-start justify-between">
-                                <div className="flex-1 min-w-0">
-                                  <h3 className={`text-lg font-semibold transition-colors group-hover:text-blue-600 ${
-                                    task.status === 'completed' 
-                                      ? 'text-gray-500 line-through' 
-                                      : 'text-gray-900 dark:text-white'
-                                  }`}>
-                                    {task.description}
-                                  </h3>
-                                  
-                                  <div className="flex flex-wrap items-center gap-3 mt-3">
-                                    {/* Status */}
-                                    <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                      task.status === 'completed' 
-                                        ? 'bg-green-100 text-green-700 border border-green-200' 
-                                        : task.status === 'in-progress'
-                                        ? 'bg-blue-100 text-blue-700 border border-blue-200'
-                                        : 'bg-gray-100 text-gray-700 border border-gray-200'
-                                    }`}>
-                                      {task.status === 'completed' ? '✅ Concluída' : 
-                                       task.status === 'in-progress' ? '🔄 Em andamento' : '⏳ Pendente'}
-                                    </div>
-
-                                    {/* Energia */}
-                                    <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
-                                      task.energyPoints === 1 ? 'bg-green-100 text-green-700 border border-green-200' :
-                                      task.energyPoints === 3 ? 'bg-blue-100 text-blue-700 border border-blue-200' :
-                                      'bg-purple-100 text-purple-700 border border-purple-200'
-                                    }`}>
-                                      {getEnergyIcon(task.energyPoints)}
-                                      <span>{getEnergyLabel(task.energyPoints)}</span>
-                                    </div>
-
-                                    {/* Projeto */}
-                                    {project && (
-                                      <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-100 text-amber-700 border border-amber-200 rounded-full text-xs font-medium">
-                                        <span className="text-amber-600">📁</span>
-                                        <span>{project.name}</span>
-                                      </div>
-                                    )}
-
-                                    {/* Data */}
-                                    {task.dueDate && (
-                                      <div className="flex items-center gap-1.5 px-3 py-1 bg-red-100 text-red-700 border border-red-200 rounded-full text-xs font-medium">
-                                        <Clock className="w-3 h-3" />
-                                        <span>{new Date(task.dueDate).toLocaleDateString()}</span>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-
-                                {/* Arrow */}
-                                <div className="ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <ExternalLink className="w-5 h-5 text-blue-500" />
-                                </div>
-                              </div>
+                              <h3 className={`text-lg font-semibold hover:text-blue-600 transition-colors cursor-pointer ${
+                                task.status === 'completed' 
+                                  ? 'text-gray-500 line-through' 
+                                  : 'text-gray-900'
+                              }`}>
+                                {task.description}
+                              </h3>
                             </Link>
+                          </div>
+                          
+                          {/* Second Line - Badges and Actions */}
+                          <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center gap-3">
+                              {/* Energia */}
+                              <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
+                                task.energyPoints === 1 ? 'bg-green-100 text-green-700 border border-green-200' :
+                                task.energyPoints === 3 ? 'bg-blue-100 text-blue-700 border border-blue-200' :
+                                'bg-purple-100 text-purple-700 border border-purple-200'
+                              }`}>
+                                {getEnergyIcon(task.energyPoints)}
+                                <span>{getEnergyLabel(task.energyPoints)}</span>
+                              </div>
+
+                              {/* Data */}
+                              {(task.dueDate && task.dueDate !== 'Sem vencimento') || task.isRecurring ? (
+                                (() => {
+                                  // Se for recorrente e não tiver data específica, mostrar como recorrente
+                                  if (task.isRecurring && (!task.dueDate || task.dueDate === 'Sem vencimento')) {
+                                    return (
+                                      <div className="flex items-center gap-1.5 px-3 py-1 bg-blue-100 text-blue-700 border-blue-200 border rounded-full text-xs font-medium">
+                                        <Clock className="w-3 h-3" />
+                                        <span>Recorrente</span>
+                                      </div>
+                                    );
+                                  }
+                                  
+                                  // Se tiver data de vencimento, mostrar com cores baseadas na data
+                                  if (task.dueDate && task.dueDate !== 'Sem vencimento') {
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0);
+                                    
+                                    // Parse da data evitando problemas de timezone
+                                    const dateStr = task.dueDate.includes('T') ? task.dueDate.split('T')[0] : task.dueDate;
+                                    const [year, month, day] = dateStr.split('-').map(Number);
+                                    const dueDate = new Date(year, month - 1, day);
+                                    
+                                    const isOverdue = dueDate < today;
+                                    const isDueToday = dueDate.getTime() === today.getTime();
+                                    const isFuture = dueDate > today;
+                                    
+                                    const colorClasses = isOverdue || isDueToday
+                                      ? 'bg-red-100 text-red-700 border-red-200'
+                                      : 'bg-green-100 text-green-700 border-green-200';
+                                    
+                                    return (
+                                      <div className={`flex items-center gap-1.5 px-3 py-1 ${colorClasses} border rounded-full text-xs font-medium`}>
+                                        <Clock className="w-3 h-3" />
+                                        <span>{dueDate.toLocaleDateString('pt-BR')}</span>
+                                      </div>
+                                    );
+                                  }
+                                  
+                                  return null;
+                                })()
+                              ) : null}
+
+                              {/* Projeto badge */}
+                              {task.project && (
+                                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700 border border-purple-200">
+                                  <span>{task.project.icon}</span>
+                                  <span>{task.project.name}</span>
+                                </div>
+                              )}
+
+                              {/* Projeto */}
+                              {project && (
+                                <div className="flex items-center gap-1.5 px-3 py-1 bg-amber-100 text-amber-700 border border-amber-200 rounded-full text-xs font-medium">
+                                  <span className="text-amber-600">📁</span>
+                                  <span>{project.name}</span>
+                                </div>
+                              )}
+                            </div>
 
                             {/* Actions */}
-                            <div className="flex items-center justify-between mt-4">
-                              <div className="flex items-center gap-2 text-xs text-gray-500">
-                                <span>Criada em {new Date(task.createdAt).toLocaleDateString()}</span>
-                                {task.comments && task.comments.length > 0 && (
-                                  <>
-                                    <span>•</span>
-                                    <div className="flex items-center gap-1">
-                                      <MessageSquare className="w-3 h-3" />
-                                      <span>{task.comments.length} comentário{task.comments.length !== 1 ? 's' : ''}</span>
-                                    </div>
-                                  </>
-                                )}
-                              </div>
+                            <div className="flex items-center gap-3">
+                              {/* Actions inline */}
+                              {task.status === 'completed' && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleReactivateTask(task.id);
+                                  }}
+                                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
+                                >
+                                  Reativar
+                                </Button>
+                              )}
 
-                              <button
+                              {/* Botão de exclusão */}
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteTask(task.id, task.description);
+                                }}
+                                className="border bg-background border-transparent w-9 h-9 p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                title="Excluir"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                              
+                              <Button
                                 onClick={() => toggleTaskExpansion(task.id)}
-                                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                variant="ghost"
+                                size="icon"
+                                className="border bg-background border-transparent w-9 h-9 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                               >
                                 <ChevronDown className={`w-4 h-4 transition-transform ${
                                   isExpanded ? 'rotate-180' : ''
                                 }`} />
-                              </button>
+                              </Button>
                             </div>
-
-                            {/* Expanded content */}
-                            <AnimatePresence>
-                              {isExpanded && (
-                                <motion.div
-                                  initial={{ opacity: 0, height: 0 }}
-                                  animate={{ opacity: 1, height: 'auto' }}
-                                  exit={{ opacity: 0, height: 0 }}
-                                  className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700"
-                                >
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                                      <h4 className="font-medium text-gray-900 dark:text-white mb-2">Informações</h4>
-                                      <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                                        <div className="flex justify-between">
-                                          <span>Status:</span>
-                                          <span className="font-medium">{task.status}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                          <span>Energia:</span>
-                                          <span className="font-medium">{getEnergyLabel(task.energyPoints)}</span>
-                                        </div>
-                                        {task.dueDate && (
-                                          <div className="flex justify-between">
-                                            <span>Prazo:</span>
-                                            <span className="font-medium">{new Date(task.dueDate).toLocaleDateString()}</span>
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                    
-                                    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                                      <h4 className="font-medium text-gray-900 dark:text-white mb-2">Ações Rápidas</h4>
-                                      <div className="flex flex-wrap gap-2">
-                                        <Link
-                                          href={`/task/${task.id}`}
-                                          className="flex items-center gap-1 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-md text-xs font-medium hover:bg-blue-200 transition-colors"
-                                        >
-                                          <ExternalLink className="w-3 h-3" />
-                                          Ver detalhes
-                                        </Link>
-                                        {task.status !== 'completed' && (
-                                          <button
-                                            onClick={() => handleCompleteTask(task.id)}
-                                            className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-md text-xs font-medium hover:bg-green-200 transition-colors"
-                                          >
-                                            <CheckCircle2 className="w-3 h-3" />
-                                            Concluir
-                                          </button>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
                           </div>
+
+                          {/* Expanded content */}
+                          <AnimatePresence>
+                            {isExpanded && (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="mt-4 pt-4 border-t border-gray-200"
+                              >
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  {/* Comentários */}
+                                  <div className="bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl p-5 border border-gray-200 shadow-sm">
+                                    <div className="flex items-center gap-2 mb-4">
+                                      <div className="w-8 h-8 bg-gray-500 rounded-lg flex items-center justify-center">
+                                        <span className="text-white text-sm font-semibold">💬</span>
+                                      </div>
+                                      <h4 className="font-semibold text-gray-800">Comentários ({task.comments?.length || 0})</h4>
+                                      {task.comments?.length > 0 && console.log('🎯 Comentários encontrados:', task.comments)}
+                                    </div>
+                                    {task.comments?.length ? (
+                                      <div className="space-y-3 max-h-40 overflow-y-auto">
+                                        {task.comments.map((comment) => (
+                                          <div key={comment.id} className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-gray-200/50 shadow-sm">
+                                            <div className="flex items-center gap-2 mb-2">
+                                              <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
+                                                <span className="text-xs font-semibold text-gray-700">{comment.author.charAt(0).toUpperCase()}</span>
+                                              </div>
+                                              <span className="font-medium text-sm text-gray-700">{comment.author}</span>
+                                              <span className="text-xs text-gray-500 ml-auto">{new Date(comment.createdAt).toLocaleDateString()} {new Date(comment.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                            </div>
+                                            <p className="text-sm text-gray-600 leading-relaxed">{comment.content}</p>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <div className="text-center py-6">
+                                        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                          <span className="text-gray-500 text-xl">💬</span>
+                                        </div>
+                                        <p className="text-sm text-gray-500">Nenhum comentário ainda</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                  
+                                  {/* Histórico */}
+                                  <div className="bg-gradient-to-br from-slate-50 to-gray-100 rounded-xl p-5 border border-slate-200 shadow-sm">
+                                    <div className="flex items-center gap-2 mb-4">
+                                      <div className="w-8 h-8 bg-slate-500 rounded-lg flex items-center justify-center">
+                                        <span className="text-white text-sm font-semibold">📋</span>
+                                      </div>
+                                      <h4 className="font-semibold text-gray-800">Histórico ({task.history?.length || 0})</h4>
+                                    </div>
+                                    {task.history?.length ? (
+                                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                                        {task.history.map((entry) => (
+                                          <div key={entry.id} className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-slate-200/50 shadow-sm">
+                                            <div className="flex items-center justify-between mb-1">
+                                              <div className="flex items-center gap-2">
+                                                <div className={`w-2 h-2 rounded-full ${
+                                                  entry.action === 'created' ? 'bg-green-400' :
+                                                  entry.action === 'completed' ? 'bg-blue-400' :
+                                                  entry.action === 'postponed' ? 'bg-yellow-400' :
+                                                  entry.action === 'edited' ? 'bg-purple-400' : 'bg-gray-400'
+                                                }`}></div>
+                                                <span className="font-medium text-sm text-gray-900">
+                                                  {formatHistoryMessage(entry, projects)}
+                                                </span>
+                                              </div>
+                                              <span className="text-xs text-gray-500">{new Date(entry.timestamp).toLocaleDateString('pt-BR')} {new Date(entry.timestamp).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</span>
+                                            </div>
+                                            {entry.details?.reason && (
+                                              <p className="text-xs text-gray-600 ml-4 mt-1 italic">&quot;{entry.details.reason}&quot;</p>
+                                            )}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <div className="text-center py-6">
+                                        <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                          <span className="text-slate-500 text-xl">📋</span>
+                                        </div>
+                                        <p className="text-sm text-gray-500">Nenhuma edição registrada</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                  
+                                  {/* Links Externos */}
+                                  <div className="bg-gradient-to-br from-indigo-50 to-blue-100 rounded-xl p-5 border border-indigo-200 shadow-sm">
+                                    <div className="flex items-center gap-2 mb-4">
+                                      <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">
+                                        <span className="text-white text-sm font-semibold">🔗</span>
+                                      </div>
+                                      <h4 className="font-semibold text-gray-800">Links Úteis ({task.externalLinks?.length || 0})</h4>
+                                    </div>
+                                    {task.externalLinks?.length ? (
+                                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                                        {task.externalLinks.map((link, index) => (
+                                          <div key={index} className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-indigo-200/50 shadow-sm hover:shadow-md transition-shadow">
+                                            <a 
+                                              href={link} 
+                                              target="_blank" 
+                                              rel="noopener noreferrer"
+                                              className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 text-sm transition-colors"
+                                            >
+                                              <ExternalLink className="w-4 h-4 flex-shrink-0" />
+                                              <span className="truncate">{link.length > 40 ? link.substring(0, 40) + '...' : link}</span>
+                                            </a>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <div className="text-center py-6">
+                                        <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                          <span className="text-indigo-500 text-xl">🔗</span>
+                                        </div>
+                                        <p className="text-sm text-gray-500">Nenhum link cadastrado</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                  
+                                  {/* Anexos */}
+                                  <div className="bg-gradient-to-br from-orange-50 to-amber-100 rounded-xl p-5 border border-orange-200 shadow-sm">
+                                    <div className="flex items-center gap-2 mb-4">
+                                      <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+                                        <span className="text-white text-sm font-semibold">📁</span>
+                                      </div>
+                                      <h4 className="font-semibold text-gray-800">Anexos ({task.attachments?.length || 0})</h4>
+                                    </div>
+                                    {task.attachments?.length ? (
+                                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                                        {task.attachments.map((attachment) => (
+                                          <div key={attachment.id} className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-orange-200/50 shadow-sm hover:shadow-md transition-shadow">
+                                            <div className="flex items-center justify-between">
+                                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                  <span className="text-orange-600 text-xs font-semibold">
+                                                    {attachment.type.includes('image') ? '🖼️' :
+                                                     attachment.type.includes('pdf') ? '📄' :
+                                                     attachment.type.includes('doc') ? '📝' : '📁'}
+                                                  </span>
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                  <p className="font-medium text-sm text-gray-700 truncate">{attachment.name}</p>
+                                                  <p className="text-xs text-gray-500">{(attachment.size / 1024).toFixed(1)} KB</p>
+                                                </div>
+                                              </div>
+                                              <a 
+                                                href={attachment.url} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer"
+                                                className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded-lg text-xs font-medium transition-colors flex-shrink-0"
+                                              >
+                                                Baixar
+                                              </a>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <div className="text-center py-6">
+                                        <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                          <span className="text-orange-500 text-xl">📁</span>
+                                        </div>
+                                        <p className="text-sm text-gray-500">Nenhum anexo disponível</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
                       </div>
                     </motion.div>
@@ -515,6 +735,8 @@ export function TasksPageClient() {
 
       {/* Modal de nova tarefa */}
       {showNewTaskModal && <NewTaskModal />}
+      
+      <AlertComponent />
     </div>
   );
 }

@@ -6,9 +6,11 @@
 // Design Philosophy: "Assistente Gentil, Não um Chefe"
 // ============================================================================
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter, usePathname } from 'next/navigation';
+import { useEnergyBudget, useTasks } from '@/hooks/api/useTasks';
+import { useAuthStore } from '@/stores/authStore';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -26,6 +28,7 @@ import {
   Brain,
   Zap
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface SidebarProps {
   className?: string;
@@ -37,13 +40,38 @@ export function Sidebar({ className = '' }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   
-  // Energy budget temporariamente desabilitado para evitar conflitos de hooks
-  const energyBudget = useMemo(() => ({
-    used: 0,
-    remaining: 12,
-    total: 12,
-    tasks: []
-  }), []);
+  // Hooks para dados - CORRIGIDO: usar dados consistentes
+  const { data: energyBudget = { used: 0, remaining: 15, total: 15, completedTasks: 0 }, refetch: refetchEnergy } = useEnergyBudget();
+  const { data: allTasks = [] } = useTasks();
+  
+  // Listener para atualizar energia quando settings mudarem
+  useEffect(() => {
+    const handleEnergyUpdate = () => {
+      refetchEnergy();
+    };
+    
+    if (typeof window !== 'undefined') {
+      window.addEventListener('energy-budget-updated', handleEnergyUpdate);
+      return () => window.removeEventListener('energy-budget-updated', handleEnergyUpdate);
+    }
+  }, [refetchEnergy]);
+  
+  // Debug: Verificar dados recebidos
+  console.log('🔧 Sidebar Debug:', {
+    totalTasks: allTasks.length,
+    energyBudgetFromAPI: energyBudget,
+    plannedTasks: allTasks.filter(t => t.plannedForToday === true).length
+  });
+  const { user } = useAuthStore();
+
+  // Usar dados do backend diretamente
+  const sidebarEnergyData = useMemo(() => {
+    return {
+      used: energyBudget.used,
+      remaining: energyBudget.remaining,
+      total: energyBudget.total
+    };
+  }, [energyBudget]);
 
   // Navegação principal seguindo filosofia "Sentinela"
   const navigationItems = [
@@ -132,9 +160,9 @@ export function Sidebar({ className = '' }: SidebarProps) {
     }
   ];
   
-  // Função para obter ícone de energia baseado no orçamento
+  // Função para obter ícone de energia baseado no orçamento híbrido
   const getEnergyIcon = () => {
-    const percentage = (energyBudget.used / energyBudget.total) * 100;
+    const percentage = (sidebarEnergyData.used / sidebarEnergyData.total) * 100;
     if (percentage < 30) return { icon: Battery, color: 'text-green-500', label: 'Energia Alta' };
     if (percentage < 70) return { icon: Brain, color: 'text-blue-500', label: 'Energia Normal' };
     return { icon: Zap, color: 'text-orange-500', label: 'Energia Baixa' };
@@ -177,14 +205,20 @@ export function Sidebar({ className = '' }: SidebarProps) {
   const MobileSidebar = () => (
     <>
       {/* Mobile Toggle Button - Design gentil e acessível */}
-      <motion.button
-        onClick={() => setIsMobileOpen(true)}
+      <motion.div
         whileHover={{ scale: 1.05, y: -1 }}
         whileTap={{ scale: 0.95 }}
-        className="lg:hidden fixed top-6 left-6 z-50 p-3 bg-white/90 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200"
+        className="lg:hidden fixed top-6 left-6 z-50"
       >
-        <Menu className="w-5 h-5 text-gray-600" />
-      </motion.button>
+        <Button
+          onClick={() => setIsMobileOpen(true)}
+          variant="ghost"
+          size="icon"
+          className="p-3 bg-white/90 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200"
+        >
+          <Menu className="w-5 h-5 text-gray-600" />
+        </Button>
+      </motion.div>
 
       {/* Mobile Overlay */}
       <AnimatePresence>
@@ -214,24 +248,40 @@ export function Sidebar({ className = '' }: SidebarProps) {
                 >
                   <div className="flex items-center space-x-4">
                     <div className="relative">
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-400/80 to-purple-500/80 rounded-2xl flex items-center justify-center shadow-lg">
-                        <Home className="w-6 h-6 text-white" />
+                      <div 
+                        className="w-12 h-12 bg-gradient-to-br from-blue-400/80 to-purple-500/80 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-400 transition-all duration-200"
+                        onClick={() => handleNavigation('/profile')}
+                      >
+                        {user?.avatar_url ? (
+                          <img 
+                            src={user.avatar_url} 
+                            alt="Foto do usuário"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User className="w-6 h-6 text-white" />
+                        )}
                       </div>
                       <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white animate-pulse"></div>
                     </div>
                     <div>
-                      <h2 className="font-bold text-gray-800 text-lg">Sentinela</h2>
-                      <p className="text-sm text-gray-500">Assistente Gentil</p>
+                      <h2 className="font-bold text-gray-800 text-lg">{user?.name || 'Usuário'}</h2>
+                      <p className="text-sm text-gray-500">Configurações pessoais</p>
                     </div>
                   </div>
-                  <motion.button
-                    onClick={() => setIsMobileOpen(false)}
+                  <motion.div
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
-                    className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
                   >
-                    <X className="w-5 h-5 text-gray-500" />
-                  </motion.button>
+                    <Button
+                      onClick={() => setIsMobileOpen(false)}
+                      variant="ghost"
+                      size="icon"
+                      className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+                    >
+                      <X className="w-5 h-5 text-gray-500" />
+                    </Button>
+                  </motion.div>
                 </motion.div>
                 
                 {/* Status de Energia - Visual gentil */}
@@ -245,15 +295,15 @@ export function Sidebar({ className = '' }: SidebarProps) {
                     <energyStatus.icon className={`w-5 h-5 ${energyStatus.color}`} />
                     <div className="flex-1">
                       <p className="text-sm font-medium text-gray-700">{energyStatus.label}</p>
-                      <p className="text-xs text-gray-500">{energyBudget.remaining} de {energyBudget.total} disponível</p>
+                      <p className="text-xs text-gray-500">{sidebarEnergyData.remaining} de {sidebarEnergyData.total} disponível</p>
                     </div>
                   </div>
                   <div className="mt-3 w-full bg-gray-200 rounded-full h-2 overflow-hidden">
                     <motion.div 
                       initial={{ width: 0 }}
-                      animate={{ width: `${(energyBudget.remaining / energyBudget.total) * 100}%` }}
+                      animate={{ width: `${(sidebarEnergyData.remaining / sidebarEnergyData.total) * 100}%` }}
                       transition={{ duration: 1, delay: 0.5 }}
-                      className={`h-2 rounded-full ${energyBudget.remaining > energyBudget.total * 0.5 ? 'bg-green-400' : energyBudget.remaining > energyBudget.total * 0.2 ? 'bg-blue-400' : 'bg-orange-400'}`}
+                      className={`h-2 rounded-full ${sidebarEnergyData.remaining > sidebarEnergyData.total * 0.5 ? 'bg-green-400' : sidebarEnergyData.remaining > sidebarEnergyData.total * 0.2 ? 'bg-blue-400' : 'bg-orange-400'}`}
                     />
                   </div>
                 </motion.div>
@@ -265,9 +315,8 @@ export function Sidebar({ className = '' }: SidebarProps) {
                     const active = isActive(item.path);
                     
                     return (
-                      <motion.button
+                      <motion.div
                         key={item.key}
-                        onClick={() => handleNavigation(item.path)}
                         custom={index}
                         variants={itemVariants}
                         initial="hidden"
@@ -278,12 +327,16 @@ export function Sidebar({ className = '' }: SidebarProps) {
                           transition: { duration: 0.2 }
                         }}
                         whileTap={{ scale: 0.98 }}
-                        className={`relative w-full p-3 rounded-2xl transition-all duration-300 text-left overflow-hidden group ${
-                          active 
-                            ? `bg-gradient-to-r ${item.gradient} text-white shadow-xl ${item.hoverShadow}` 
-                            : `${item.bgColor} shadow-sm hover:shadow-md border transition-all duration-200`
-                        }`}
                       >
+                        <Button
+                          onClick={() => handleNavigation(item.path)}
+                          variant={active ? "default" : "ghost"}
+                          className={`relative w-full p-3 rounded-2xl transition-all duration-300 text-left overflow-hidden group h-auto ${
+                            active 
+                              ? `bg-gradient-to-r ${item.gradient} text-white shadow-xl ${item.hoverShadow}` 
+                              : `${item.bgColor} shadow-sm hover:shadow-md border transition-all duration-200`
+                          }`}
+                        >
                         {/* Background pattern sutil para item ativo */}
                         {active && (
                           <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50" />
@@ -318,7 +371,8 @@ export function Sidebar({ className = '' }: SidebarProps) {
                             </div>
                           </div>
                         </div>
-                      </motion.button>
+                        </Button>
+                      </motion.div>
                     );
                   })}
                 </div>
@@ -329,19 +383,23 @@ export function Sidebar({ className = '' }: SidebarProps) {
                     {utilityItems.map((item, index) => {
                       const Icon = item.icon;
                       return (
-                        <motion.button
+                        <motion.div
                           key={item.key}
-                          onClick={() => handleNavigation(item.path)}
                           whileHover={{ x: 4, transition: { duration: 0.2 } }}
                           whileTap={{ scale: 0.98 }}
-                          className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${item.color} ${item.bgColor} group`}
                         >
+                          <Button
+                            onClick={() => handleNavigation(item.path)}
+                            variant="ghost"
+                            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${item.color} ${item.bgColor} group h-auto justify-start`}
+                          >
                           <Icon className="w-5 h-5 transition-transform group-hover:scale-110" />
                           <div className="flex-1 text-left">
                             <div className="font-medium text-sm">{item.label}</div>
                             <div className="text-xs text-gray-500">{item.description}</div>
                           </div>
-                        </motion.button>
+                          </Button>
+                        </motion.div>
                       );
                     })}
                   </div>
@@ -374,35 +432,45 @@ export function Sidebar({ className = '' }: SidebarProps) {
                 className="flex items-center space-x-3"
               >
                 <div 
-                  className="w-10 h-10 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-400 transition-all duration-200"
+                  className="w-10 h-10 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-400 transition-all duration-200 flex items-center justify-center"
                   onClick={() => handleNavigation('/profile')}
                 >
-                  <img 
-                    src="/api/placeholder/40/40" 
-                    alt="Perfil do usuário"
-                    className="w-full h-full object-cover"
-                  />
+                  {user?.avatar_url ? (
+                    <img 
+                      src={user.avatar_url} 
+                      alt="Perfil do usuário"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User className="w-5 h-5 text-white" />
+                  )}
                 </div>
                 <div className="flex-1 text-left">
-                  <div className="font-medium text-sm">Usuário</div>
+                  <div className="font-medium text-sm">{user?.name || 'Usuário'}</div>
                   <div className="text-xs text-gray-500">Configurações pessoais</div>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
           
-          <motion.button
-            onClick={() => setIsCollapsed(!isCollapsed)}
+          <motion.div
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            className="p-2 hover:bg-gray-100 rounded-xl transition-colors ml-auto"
+            className="ml-auto"
           >
-            {isCollapsed ? (
-              <ChevronRight className="w-4 h-4 text-gray-500" />
-            ) : (
-              <ChevronLeft className="w-4 h-4 text-gray-500" />
-            )}
-          </motion.button>
+            <Button
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              variant="ghost"
+              size="icon"
+              className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+            >
+              {isCollapsed ? (
+                <ChevronRight className="w-4 h-4 text-gray-500" />
+              ) : (
+                <ChevronLeft className="w-4 h-4 text-gray-500" />
+              )}
+            </Button>
+          </motion.div>
         </div>
         
         {/* Status de Energia Desktop - Apenas quando expandido */}
@@ -419,15 +487,15 @@ export function Sidebar({ className = '' }: SidebarProps) {
                 <energyStatus.icon className={`w-5 h-5 ${energyStatus.color}`} />
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-700">{energyStatus.label}</p>
-                  <p className="text-xs text-gray-500">{energyBudget.remaining} de {energyBudget.total} disponível</p>
+                  <p className="text-xs text-gray-500">{sidebarEnergyData.remaining} de {sidebarEnergyData.total} disponível</p>
                 </div>
               </div>
               <div className="mt-3 w-full bg-gray-200 rounded-full h-2 overflow-hidden">
                 <motion.div 
                   initial={{ width: 0 }}
-                  animate={{ width: `${(energyBudget.remaining / energyBudget.total) * 100}%` }}
+                  animate={{ width: `${(sidebarEnergyData.remaining / sidebarEnergyData.total) * 100}%` }}
                   transition={{ duration: 1, delay: 0.5 }}
-                  className={`h-2 rounded-full ${energyBudget.remaining > energyBudget.total * 0.5 ? 'bg-green-400' : energyBudget.remaining > energyBudget.total * 0.2 ? 'bg-blue-400' : 'bg-orange-400'}`}
+                  className={`h-2 rounded-full ${sidebarEnergyData.remaining > sidebarEnergyData.total * 0.5 ? 'bg-green-400' : sidebarEnergyData.remaining > sidebarEnergyData.total * 0.2 ? 'bg-blue-400' : 'bg-orange-400'}`}
                 />
               </div>
             </motion.div>
@@ -442,9 +510,8 @@ export function Sidebar({ className = '' }: SidebarProps) {
           const active = isActive(item.path);
           
           return (
-            <motion.button
+            <motion.div
               key={item.key}
-              onClick={() => handleNavigation(item.path)}
               custom={index}
               variants={itemVariants}
               initial="hidden"
@@ -455,13 +522,17 @@ export function Sidebar({ className = '' }: SidebarProps) {
                 transition: { duration: 0.2 }
               }}
               whileTap={{ scale: 0.98 }}
-              title={isCollapsed ? item.label : undefined}
-              className={`relative w-full p-3 rounded-2xl transition-all duration-300 text-left overflow-hidden group ${
-                active 
-                  ? `bg-gradient-to-r ${item.gradient} text-white shadow-xl transform scale-105 ${item.hoverShadow}` 
-                  : `${item.bgColor} shadow-sm hover:shadow-lg border transition-all duration-200`
-              }`}
             >
+              <Button
+                onClick={() => handleNavigation(item.path)}
+                variant={active ? "default" : "ghost"}
+                title={isCollapsed ? item.label : undefined}
+                className={`relative w-full p-3 rounded-2xl transition-all duration-300 text-left overflow-hidden group h-auto ${
+                  active 
+                    ? `bg-gradient-to-r ${item.gradient} text-white shadow-xl transform scale-105 ${item.hoverShadow}` 
+                    : `${item.bgColor} shadow-sm hover:shadow-lg border transition-all duration-200`
+                }`}
+              >
               {/* Background pattern sutil para item ativo */}
               {active && (
                 <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50" />
@@ -507,7 +578,8 @@ export function Sidebar({ className = '' }: SidebarProps) {
                   )}
                 </AnimatePresence>
               </div>
-            </motion.button>
+              </Button>
+            </motion.div>
           );
         })}
       </div>
@@ -518,18 +590,21 @@ export function Sidebar({ className = '' }: SidebarProps) {
           {utilityItems.map((item) => {
             const Icon = item.icon;
             return (
-              <motion.button
+              <motion.div
                 key={item.key}
-                onClick={() => handleNavigation(item.path)}
                 whileHover={{ 
                   x: isCollapsed ? 0 : 4, 
                   scale: isCollapsed ? 1.05 : 1,
                   transition: { duration: 0.2 } 
                 }}
                 whileTap={{ scale: 0.98 }}
-                className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} px-4 py-3 rounded-xl transition-all duration-200 ${item.color} ${item.bgColor} group`}
-                title={isCollapsed ? item.label : undefined}
               >
+                <Button
+                  onClick={() => handleNavigation(item.path)}
+                  variant="ghost"
+                  className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'} px-4 py-3 rounded-xl transition-all duration-200 ${item.color} ${item.bgColor} group h-auto`}
+                  title={isCollapsed ? item.label : undefined}
+                >
                 <Icon className="w-5 h-5 transition-transform group-hover:scale-110" />
                 <AnimatePresence>
                   {!isCollapsed && (
@@ -545,7 +620,8 @@ export function Sidebar({ className = '' }: SidebarProps) {
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </motion.button>
+                </Button>
+              </motion.div>
             );
           })}
         </div>

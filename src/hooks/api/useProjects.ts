@@ -5,6 +5,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { projectsApi } from '@/lib/api';
 import { queryKeys, invalidateQueries } from '@/lib/queryClient';
+import { useAuthStore } from '@/stores/authStore';
 import type { Project, Task } from '@/types/task';
 
 // ============================================================================
@@ -13,19 +14,24 @@ import type { Project, Task } from '@/types/task';
 
 // Hook para buscar todos os projetos do usuário
 export function useProjects() {
+  const { isAuthenticated } = useAuthStore();
+  
   return useQuery({
     queryKey: queryKeys.projects.all,
     queryFn: projectsApi.getProjects,
     staleTime: 5 * 60 * 1000, // 5 minutos
+    enabled: isAuthenticated, // Só fazer requisição se autenticado
   });
 }
 
 // Hook para buscar um projeto específico
 export function useProject(projectId: string) {
+  const { isAuthenticated } = useAuthStore();
+  
   return useQuery({
     queryKey: queryKeys.projects.detail(projectId),
     queryFn: () => projectsApi.getProjects().then(projects => projects.find(p => p.id === projectId)),
-    enabled: !!projectId,
+    enabled: !!projectId && isAuthenticated, // Só fazer requisição se autenticado e projectId válido
   });
 }
 
@@ -200,6 +206,52 @@ export function useAddTaskToProject() {
   });
 }
 
+// Hook para atualizar tarefa de projeto
+export function useUpdateProjectTask() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ projectId, taskId, updates }: { 
+      projectId: string; 
+      taskId: string; 
+      updates: Partial<Task> 
+    }) => projectsApi.updateProjectTask(projectId, taskId, updates),
+    onMutate: async ({ projectId, taskId, updates }) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.projects.all });
+
+      const previousProjects = queryClient.getQueryData<Project[]>(queryKeys.projects.all);
+
+      // Otimistic update - atualizar tarefa no backlog do projeto
+      if (previousProjects) {
+        const updatedProjects = previousProjects.map(project =>
+          project.id === projectId
+            ? {
+                ...project,
+                backlog: (project.backlog || []).map(task =>
+                  task.id === taskId
+                    ? { ...task, ...updates, updatedAt: new Date().toISOString() }
+                    : task
+                )
+              }
+            : project
+        );
+        queryClient.setQueryData(queryKeys.projects.all, updatedProjects);
+      }
+
+      return { previousProjects };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousProjects) {
+        queryClient.setQueryData(queryKeys.projects.all, context.previousProjects);
+      }
+    },
+    onSettled: (data, error, { projectId }) => {
+      invalidateQueries.project(projectId);
+      invalidateQueries.tasks();
+    },
+  });
+}
+
 // ============================================================================
 // COMPUTED HOOKS (Dados derivados)
 // ============================================================================
@@ -226,6 +278,13 @@ export function useActiveProjects() {
   const { data: projects = [] } = useProjects();
   
   return projects.filter(project => project.status === 'active');
+}
+
+// Hook para projetos finalizados
+export function useCompletedProjects() {
+  const { data: projects = [] } = useProjects();
+  
+  return projects.filter(project => project.status === 'completed');
 }
 
 // Hook para projetos com deadline próximo

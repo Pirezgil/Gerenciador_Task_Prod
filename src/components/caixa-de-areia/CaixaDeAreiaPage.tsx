@@ -105,7 +105,7 @@ export function CaixaDeAreiaPage() {
               <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-4">
                 <Lock className="w-8 h-8 text-white" />
               </div>
-              <h1 className="text-3xl font-bold mb-2">🏖️ Caixa de Areia Privada</h1>
+              <h1 className="text-3xl font-bold mb-2">Caixa de Areia Privada</h1>
               <p className="text-amber-100">Seu espaço seguro para pensamentos livres</p>
             </div>
           </div>
@@ -166,10 +166,10 @@ export function CaixaDeAreiaPage() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
               <div className="flex items-center space-x-4 mb-4 sm:mb-0">
                 <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                  <Sparkles className="w-8 h-8 text-white" />
+                  <span className="text-4xl">🏖️</span>
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold">🏖️ Caixa de Areia Privada</h1>
+                  <h1 className="text-3xl font-bold">Caixa de Areia Privada</h1>
                   <p className="text-amber-100 mt-1">{activeNotes.length} nota(s) • Organizada por {sortBy === 'created' ? 'criação' : 'edição'}</p>
                 </div>
               </div>

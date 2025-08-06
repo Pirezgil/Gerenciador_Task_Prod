@@ -28,6 +28,19 @@ export const updateSettings = async (req: AuthenticatedRequest, res: Response, n
   }
 };
 
+export const updateProfile = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    if (!req.userId) {
+      return res.status(401).json({ success: false, error: 'Não autenticado' });
+    }
+
+    const user = await userService.updateUserProfile(req.userId, req.body);
+    res.json({ success: true, data: user });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getStats = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     if (!req.userId) {

@@ -10,20 +10,31 @@ export const getUserProjects = async (userId: string, includeStats = false): Pro
   const projects = await prisma.project.findMany({
     where: { userId },
     include: {
-      ...(includeStats && {
-        tasks: {
-          select: {
-            id: true,
-            status: true,
-            energyPoints: true
-          }
+      tasks: {
+        select: {
+          id: true,
+          description: true,
+          status: true,
+          energyPoints: true,
+          type: true,
+          dueDate: true,
+          createdAt: true,
+          updatedAt: true,
+          completedAt: true,
+          postponedAt: true,
+          comments: true,
+          attachments: true,
+          externalLinks: true,
+          history: true
         }
-      })
+      }
     },
     orderBy: { createdAt: 'desc' }
   });
 
   return projects.map(project => {
+    const tasks = (project as any).tasks || [];
+    
     const result: ProjectResponse = {
       id: project.id,
       name: project.name,
@@ -33,11 +44,27 @@ export const getUserProjects = async (userId: string, includeStats = false): Pro
       deadline: project.deadline?.toISOString(),
       sandboxNotes: project.sandboxNotes,
       createdAt: project.createdAt.toISOString(),
-      updatedAt: project.updatedAt.toISOString()
+      updatedAt: project.updatedAt.toISOString(),
+      backlog: tasks.map((task: any) => ({
+        id: task.id,
+        description: task.description,
+        status: task.status,
+        energyPoints: task.energyPoints,
+        type: task.type,
+        deadline: task.dueDate?.toISOString(),
+        projectId: project.id,
+        createdAt: task.createdAt.toISOString(),
+        updatedAt: task.updatedAt.toISOString(),
+        completedAt: task.completedAt?.toISOString(),
+        postponedAt: task.postponedAt?.toISOString(),
+        comments: task.comments || [],
+        attachments: task.attachments || [],
+        externalLinks: task.externalLinks || [],
+        history: task.history || []
+      }))
     };
 
-    if (includeStats && 'tasks' in project) {
-      const tasks = project.tasks || [];
+    if (includeStats) {
       result.tasksCount = tasks.length;
       result.completedTasksCount = tasks.filter(t => t.status === 'completed').length;
       result.totalEnergyPoints = tasks.reduce((sum, t) => sum + t.energyPoints, 0);
@@ -148,6 +175,20 @@ export const updateProject = async (projectId: string, userId: string, data: Upd
     throw new Error('Projeto não encontrado');
   }
 
+  // Se tentando finalizar projeto, verificar se há tarefas pendentes
+  if (data.status === 'completed') {
+    const pendingTasks = await prisma.task.count({
+      where: { 
+        projectId,
+        status: 'pending'
+      }
+    });
+
+    if (pendingTasks > 0) {
+      throw new Error(`Não é possível finalizar projeto com ${pendingTasks} tarefa(s) pendente(s)`);
+    }
+  }
+
   const updateData: any = {};
 
   if (data.name !== undefined) updateData.name = data.name;
@@ -246,5 +287,56 @@ export const getProjectStats = async (projectId: string, userId: string) => {
       brick: tasks.filter(t => t.type === 'brick').length
     },
     averageTaskEnergy: tasks.length > 0 ? Math.round((totalEnergy / tasks.length) * 100) / 100 : 0
+  };
+};
+
+export const updateProjectTask = async (projectId: string, taskId: string, userId: string, updates: any) => {
+  // Verificar se o projeto pertence ao usuário
+  const project = await prisma.project.findFirst({
+    where: { id: projectId, userId }
+  });
+
+  if (!project) {
+    throw new Error('Projeto não encontrado');
+  }
+
+  // Verificar se a tarefa existe e pertence ao projeto
+  const task = await prisma.task.findFirst({
+    where: { 
+      id: taskId, 
+      projectId: projectId
+    }
+  });
+
+  if (!task) {
+    throw new Error('Tarefa não encontrada');
+  }
+
+  // Preparar dados para atualização
+  const updateData: any = {};
+  
+  if (updates.description !== undefined) updateData.description = updates.description;
+  if (updates.energyPoints !== undefined) updateData.energyPoints = updates.energyPoints;
+  if (updates.dueDate !== undefined) updateData.dueDate = updates.dueDate ? new Date(updates.dueDate) : null;
+  if (updates.status !== undefined) updateData.status = updates.status;
+
+  // Atualizar a tarefa
+  const updatedTask = await prisma.task.update({
+    where: { id: taskId },
+    data: updateData
+  });
+
+  return {
+    id: updatedTask.id,
+    description: updatedTask.description,
+    energyPoints: updatedTask.energyPoints,
+    status: updatedTask.status,
+    type: updatedTask.type,
+    projectId: updatedTask.projectId,
+    dueDate: updatedTask.dueDate?.toISOString(),
+    createdAt: updatedTask.createdAt.toISOString(),
+    updatedAt: updatedTask.updatedAt.toISOString(),
+    completedAt: updatedTask.completedAt?.toISOString(),
+    postponedAt: updatedTask.postponedAt?.toISOString()
   };
 };

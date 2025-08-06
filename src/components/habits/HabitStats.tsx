@@ -3,30 +3,40 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, Target, Flame, Calendar, Award, BarChart3 } from 'lucide-react';
-import { useHabitsStore } from '@/stores/habitsStore';
+import { useHabits, useActiveHabits } from '@/hooks/api/useHabits';
 
 export function HabitStats() {
-  const { habits, getHabitStats } = useHabitsStore();
+  const { data: habits = [], isLoading } = useHabits();
+  const activeHabits = useActiveHabits();
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
+          <p className="text-gray-600 mt-4">Carregando estatísticas...</p>
+        </div>
+      </div>
+    );
+  }
   
-  const activeHabits = habits.filter(h => h.isActive);
-  
-  // Estatísticas gerais
+  // Estatísticas gerais usando dados da API
   const totalHabits = activeHabits.length;
-  const totalCompletions = habits.reduce((sum, habit) => sum + habit.completions.length, 0);
+  const totalCompletions = habits.reduce((sum, habit) => sum + (habit.completions?.length || 0), 0);
   const avgStreak = totalHabits > 0 
-    ? Math.round(habits.reduce((sum, habit) => sum + habit.streak, 0) / totalHabits)
+    ? Math.round(habits.reduce((sum, habit) => sum + (habit.streak || 0), 0) / totalHabits)
     : 0;
-  const bestOverallStreak = Math.max(...habits.map(h => h.bestStreak), 0);
+  const bestOverallStreak = Math.max(...habits.map(h => h.bestStreak || 0), 0);
 
   // Hábito com melhor streak atual
   const habitWithBestStreak = habits.reduce((best, current) => 
-    current.streak > (best?.streak || 0) ? current : best, null as any
+    (current.streak || 0) > (best?.streak || 0) ? current : best, null as any
   );
 
   // Estatísticas de hoje
   const today = new Date().toISOString().split('T')[0];
   const todayCompletions = habits.filter(habit => 
-    habit.completions.some(c => c.date === today)
+    habit.completions?.some(c => c.date === today)
   ).length;
 
   const stats = [
@@ -98,7 +108,7 @@ export function HabitStats() {
       </div>
 
       {/* Destaque do Melhor Hábito */}
-      {habitWithBestStreak && habitWithBestStreak.streak > 0 && (
+      {habitWithBestStreak && (habitWithBestStreak.streak || 0) > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -115,7 +125,7 @@ export function HabitStats() {
                 <h3 className="text-xl font-bold">Sequência em Chamas!</h3>
               </div>
               <p className="text-lg">
-                <strong>{habitWithBestStreak.name}</strong> - {habitWithBestStreak.streak} dias seguidos
+                <strong>{habitWithBestStreak.name}</strong> - {habitWithBestStreak.streak || 0} dias seguidos
               </p>
               <p className="text-orange-100 text-sm mt-1">
                 Continue assim! Você está construindo um hábito sólido.
@@ -140,7 +150,10 @@ export function HabitStats() {
         ) : (
           <div className="space-y-4">
             {activeHabits.map((habit, index) => {
-              const stats = getHabitStats(habit.id);
+              // Calcular estatísticas localmente usando dados da API
+              const totalCompletions = habit.completions?.length || 0;
+              const currentStreak = habit.streak || 0;
+              const bestStreak = habit.bestStreak || 0;
               
               return (
                 <motion.div
@@ -161,36 +174,23 @@ export function HabitStats() {
                       <div>
                         <h4 className="font-semibold text-gray-900">{habit.name}</h4>
                         <p className="text-sm text-gray-600">
-                          {stats.totalCompletions} completamentos totais
+                          {totalCompletions} completamentos totais
                         </p>
                       </div>
                     </div>
 
                     <div className="flex items-center space-x-4 text-sm">
                       <div className="text-center">
-                        <div className="font-bold text-lg text-blue-600">{stats.currentStreak}</div>
+                        <div className="font-bold text-lg text-blue-600">{currentStreak}</div>
                         <div className="text-gray-500">Sequência</div>
                       </div>
                       <div className="text-center">
-                        <div className="font-bold text-lg text-green-600">{Math.round(stats.completionRate)}%</div>
-                        <div className="text-gray-500">Taxa (30d)</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="font-bold text-lg text-purple-600">{stats.weeklyCompletions}</div>
-                        <div className="text-gray-500">Esta semana</div>
+                        <div className="font-bold text-lg text-green-600">{bestStreak}</div>
+                        <div className="text-gray-500">Maior</div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Barra de progresso */}
-                  <div className="mt-3">
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-gradient-to-r from-green-400 to-blue-500 h-2 rounded-full transition-all duration-500"
-                        style={{ width: `${Math.min(stats.completionRate, 100)}%` }}
-                      ></div>
-                    </div>
-                  </div>
                 </motion.div>
               );
             })}

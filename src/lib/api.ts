@@ -117,6 +117,11 @@ export const tasksApi = {
     return response.data.data;
   },
 
+  async getTask(taskId: string): Promise<Task> {
+    const response = await api.get<ApiResponse<Task>>(`/tasks/${taskId}`);
+    return response.data.data;
+  },
+
   async createTask(taskData: Omit<Task, 'id' | 'status' | 'createdAt'>): Promise<Task> {
     const response = await api.post<ApiResponse<Task>>('/tasks', taskData);
     return response.data.data;
@@ -143,6 +148,11 @@ export const tasksApi = {
 
   async addComment(taskId: string, comment: Omit<Comment, 'id' | 'createdAt'>): Promise<Comment> {
     const response = await api.post<ApiResponse<Comment>>(`/tasks/${taskId}/comments`, comment);
+    return response.data.data;
+  },
+
+  async getEnergyBudget(): Promise<{ used: number; remaining: number; total: number; completedTasks: number }> {
+    const response = await api.get<ApiResponse<{ used: number; remaining: number; total: number; completedTasks: number }>>('/tasks/energy/budget');
     return response.data.data;
   },
 };
@@ -173,6 +183,11 @@ export const projectsApi = {
 
   async addTaskToProject(projectId: string, taskData: Omit<Task, 'id' | 'status' | 'createdAt' | 'projectId'>): Promise<Task> {
     const response = await api.post<ApiResponse<Task>>(`/projects/${projectId}/tasks`, taskData);
+    return response.data.data;
+  },
+
+  async updateProjectTask(projectId: string, taskId: string, updates: Partial<Task>): Promise<Task> {
+    const response = await api.put<ApiResponse<Task>>(`/projects/${projectId}/tasks/${taskId}`, updates);
     return response.data.data;
   },
 };
@@ -212,6 +227,11 @@ export const habitsApi = {
     return response.data.data;
   },
 
+  async getHabit(habitId: string): Promise<Habit> {
+    const response = await api.get<ApiResponse<Habit>>(`/habits/${habitId}`);
+    return response.data.data;
+  },
+
   async createHabit(habitData: Omit<Habit, 'id' | 'createdAt'>): Promise<Habit> {
     const response = await api.post<ApiResponse<Habit>>('/habits', habitData);
     return response.data.data;
@@ -224,6 +244,16 @@ export const habitsApi = {
 
   async deleteHabit(habitId: string): Promise<void> {
     await api.delete(`/habits/${habitId}`);
+  },
+
+  async getHabitComments(habitId: string): Promise<Comment[]> {
+    const response = await api.get<ApiResponse<Comment[]>>(`/habits/${habitId}/comments`);
+    return response.data.data;
+  },
+
+  async addHabitComment(habitId: string, content: string, author?: string): Promise<Comment> {
+    const response = await api.post<ApiResponse<Comment>>(`/habits/${habitId}/comments`, { content, author });
+    return response.data.data;
   },
 
   async completeHabit(habitId: string, date: string, notes?: string): Promise<void> {

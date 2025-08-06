@@ -28,6 +28,23 @@ export interface ProjectResponse {
   sandboxNotes?: string;
   createdAt: string;
   updatedAt: string;
+  backlog?: Array<{
+    id: string;
+    description: string;
+    status: string;
+    energyPoints: number;
+    type: string;
+    deadline?: string;
+    projectId: string;
+    createdAt: string;
+    updatedAt: string;
+    completedAt?: string;
+    postponedAt?: string;
+    comments: any[];
+    attachments: any[];
+    externalLinks: any[];
+    history: any[];
+  }>;
   tasksCount?: number;
   completedTasksCount?: number;
   totalEnergyPoints?: number;

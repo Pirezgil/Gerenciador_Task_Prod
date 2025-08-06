@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useRegister } from '@/hooks/api/useAuth';
 import { Button } from '@/components/ui/button';
+import { SocialLogin } from '@/components/auth/SocialLogin';
 import Link from 'next/link';
 
 export default function RegisterPage() {
@@ -166,6 +167,9 @@ export default function RegisterPage() {
             )}
           </Button>
         </form>
+
+        {/* Social Login */}
+        <SocialLogin onSuccess={() => router.push('/tarefas')} />
 
         {/* Login Link */}
         <div className="mt-6 text-center">

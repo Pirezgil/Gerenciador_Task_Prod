@@ -1,10 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, Plus, Minus, Calendar, Flame, Target } from 'lucide-react';
+import { Check, Plus, Minus, Calendar, Flame, Target, Edit3, Eye } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useCompleteHabit } from '@/hooks/api/useHabits';
 import { HabitCompletionAnimation } from './HabitCompletionAnimation';
+import { HabitEditModal } from '@/components/shared/HabitEditModal';
 import type { Habit } from '@/types/habit';
 
 interface HabitListProps {
@@ -13,7 +15,14 @@ interface HabitListProps {
 }
 
 export function HabitList({ habits, showDate = false }: HabitListProps) {
+  const router = useRouter();
   const completeHabitMutation = useCompleteHabit();
+  const [showCompletionAnimation, setCompletionAnimation] = useState(false);
+  const [completionAnimationData, setCompletionAnimationData] = useState<{
+    habitName: string;
+    streak: number;
+  } | null>(null);
+  const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
   
   const today = new Date().toISOString().split('T')[0];
 
@@ -34,6 +43,13 @@ export function HabitList({ habits, showDate = false }: HabitListProps) {
           date: today,
           notes: `Completado em ${new Date().toLocaleString('pt-BR')}`
         });
+        
+        // Trigger completion animation
+        setCompletionAnimationData({
+          habitName: habit.name,
+          streak: habit.streak + 1
+        });
+        setCompletionAnimation(true);
       }
     } catch (error) {
       console.error('Erro ao completar hábito:', error);
@@ -47,6 +63,16 @@ export function HabitList({ habits, showDate = false }: HabitListProps) {
         date: today,
         notes: `Incrementado em ${new Date().toLocaleString('pt-BR')}`
       });
+      
+      // Check if target is reached and trigger animation
+      const currentCount = getTodayCompletionCount(habit);
+      if (currentCount + 1 >= (habit.targetCount || 1)) {
+        setCompletionAnimationData({
+          habitName: habit.name,
+          streak: habit.streak + 1
+        });
+        setCompletionAnimation(true);
+      }
     } catch (error) {
       console.error('Erro ao incrementar hábito:', error);
     }
@@ -94,138 +120,129 @@ export function HabitList({ habits, showDate = false }: HabitListProps) {
               completed ? 'ring-2 ring-green-200 bg-green-50' : 'hover:shadow-md'
             }`}
           >
-            <div className="flex items-center justify-between">
-              {/* Habit Info */}
-              <div className="flex items-center space-x-4 flex-1">
+            {/* Header com ícone, título e ações secundárias */}
+            <div className="flex items-center justify-between mb-4">
+              <div 
+                className="flex items-center space-x-3 cursor-pointer flex-1"
+                onClick={() => router.push(`/habit/${habit.id}`)}
+              >
                 <div 
-                  className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg"
+                  className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-sm"
                   style={{ backgroundColor: habit.color }}
                 >
                   {habit.icon}
                 </div>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-3 mb-1">
-                    <h3 className={`font-semibold ${completed ? 'text-green-800' : 'text-gray-900'}`}>
-                      {habit.name}
-                    </h3>
-                    
-                    {habit.streak > 0 && (
-                      <motion.div 
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className={`flex items-center space-x-1 px-3 py-2 rounded-2xl text-sm font-bold border-2 ${getStreakColor(habit.streak)} shadow-lg`}
-                      >
-                        <motion.div
-                          animate={{
-                            rotate: [0, 15, -15, 0],
-                            scale: [1, 1.3, 1]
-                          }}
-                          transition={{
-                            duration: 1.5,
-                            repeat: Infinity,
-                            repeatDelay: 2
-                          }}
-                        >
-                          <Flame className="w-4 h-4 drop-shadow-sm" />
-                        </motion.div>
-                        <motion.span
-                          key={habit.streak}
-                          initial={{ scale: 2, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          transition={{ duration: 0.6, type: "spring", bounce: 0.5 }}
-                          className="font-extrabold text-base"
-                        >
-                          {habit.streak} dias
-                        </motion.span>
-                      </motion.div>
-                    )}
-                  </div>
-                  
-                  {habit.description && (
-                    <p className={`text-sm ${completed ? 'text-green-600' : 'text-gray-600'} truncate`}>
-                      {habit.description}
-                    </p>
-                  )}
+                <h3 className={`font-bold text-lg ${completed ? 'text-green-800' : 'text-gray-900'}`}>
+                  {habit.name}
+                </h3>
+              </div>
 
-                  {showDate && (
-                    <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
-                      <div className="flex items-center space-x-1">
-                        <Calendar className="w-3 h-3" />
-                        <span>
-                          {habit.frequency.type === 'daily' && 'Diário'}
-                          {habit.frequency.type === 'weekly' && 'Semanal'}
-                          {habit.frequency.type === 'custom' && 'Personalizado'}
-                        </span>
-                      </div>
-                      {habit.targetCount && (
-                        <div className="flex items-center space-x-1">
-                          <Target className="w-3 h-3" />
-                          <span>{habit.targetCount}x por dia</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
+              {/* Ações secundárias */}
+              <div className="flex items-center space-x-1 opacity-70 hover:opacity-100 transition-opacity">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.push(`/habit/${habit.id}`);
+                  }}
+                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  title="Visualizar hábito"
+                >
+                  <Eye className="w-4 h-4 text-gray-500" />
+                </button>
+                
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingHabit(habit);
+                  }}
+                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  title="Editar hábito"
+                >
+                  <Edit3 className="w-4 h-4 text-gray-500" />
+                </button>
+              </div>
+            </div>
+
+            {/* Estatísticas e ação principal */}
+            <div className="flex items-center justify-between">
+              {/* Cards de estatísticas */}
+              <div className="flex items-center space-x-4">
+                <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 text-center">
+                  <div className="font-bold text-xl text-blue-600">{habit.streak}</div>
+                  <div className="text-blue-500 text-sm font-medium">Sequência</div>
+                </div>
+                <div className="bg-green-50 border border-green-100 rounded-xl px-4 py-3 text-center">
+                  <div className="font-bold text-xl text-green-600">{habit.bestStreak || 0}</div>
+                  <div className="text-green-500 text-sm font-medium">Recorde</div>
                 </div>
               </div>
 
-              {/* Actions */}
-              <div className="flex items-center space-x-3">
+              {/* Ação principal */}
+              <div className="flex items-center">
                 {hasTarget ? (
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-3 bg-gray-50 rounded-2xl p-2">
                     <button
-                      onClick={() => handleDecrement(habit)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDecrement(habit);
+                      }}
                       disabled={count === 0}
-                      className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-10 h-10 rounded-xl bg-white hover:bg-gray-100 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                     >
                       <Minus className="w-4 h-4 text-gray-600" />
                     </button>
                     
-                    <div className="w-12 text-center">
-                      <div className="text-lg font-bold text-gray-900">{count}</div>
-                      <div className="text-xs text-gray-500">/ {habit.targetCount}</div>
+                    <div className="bg-white rounded-xl px-4 py-2 shadow-sm">
+                      <div className="text-xl font-bold text-gray-900">{count}</div>
+                      <div className="text-xs text-gray-500 text-center">de {habit.targetCount}</div>
                     </div>
                     
                     <motion.button
-                      onClick={() => handleIncrement(habit)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleIncrement(habit);
+                      }}
                       disabled={count >= (habit.targetCount || 1)}
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
                       animate={count === habit.targetCount ? {
                         backgroundColor: ['#dcfce7', '#bbf7d0', '#dcfce7'],
                         transition: { duration: 1, repeat: Infinity }
                       } : {}}
-                      className="w-8 h-8 rounded-lg bg-green-100 hover:bg-green-200 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-10 h-10 rounded-xl bg-green-500 hover:bg-green-600 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-white shadow-lg"
                     >
-                      <Plus className="w-4 h-4 text-green-600" />
+                      <Plus className="w-4 h-4" />
                     </motion.button>
                   </div>
                 ) : (
                   <motion.button
-                    onClick={() => handleComplete(habit)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleComplete(habit);
+                    }}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     animate={completed ? { 
-                      scale: [1, 1.3, 1.1, 1],
-                      backgroundColor: ['#10b981', '#059669', '#34d399', '#10b981'],
-                      boxShadow: ['0 0 0 0 rgba(16, 185, 129, 0)', '0 0 0 10px rgba(16, 185, 129, 0.3)', '0 0 0 20px rgba(16, 185, 129, 0)', '0 0 0 0 rgba(16, 185, 129, 0)'],
-                      transition: { duration: 1.2, ease: "easeInOut" }
+                      scale: [1, 1.1, 1],
+                      transition: { duration: 0.6, ease: "easeInOut" }
                     } : {}}
-                    className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
+                    className={`px-6 py-3 rounded-2xl flex items-center space-x-2 font-semibold transition-all shadow-lg ${
                       completed
-                        ? 'bg-green-500 text-white hover:bg-green-600 shadow-xl shadow-green-500/40'
-                        : 'bg-gray-100 text-gray-400 hover:bg-green-100 hover:text-green-600'
+                        ? 'bg-green-500 text-white hover:bg-green-600 shadow-green-500/30'
+                        : 'bg-blue-500 text-white hover:bg-blue-600 shadow-blue-500/30'
                     }`}
                   >
                     <motion.div
                       animate={completed ? {
-                        rotate: [0, 360, 720],
-                        scale: [1, 1.2, 1],
-                        transition: { duration: 0.8, delay: 0.1 }
+                        rotate: [0, 360],
+                        transition: { duration: 0.6 }
                       } : {}}
                     >
-                      <Check className="w-6 h-6" />
+                      <Check className="w-5 h-5" />
                     </motion.div>
+                    <span className="text-sm">
+                      {completed ? 'Concluído' : 'Completar'}
+                    </span>
                   </motion.button>
                 )}
               </div>
@@ -241,6 +258,15 @@ export function HabitList({ habits, showDate = false }: HabitListProps) {
         streak={completionAnimationData?.streak || 0}
         onComplete={() => setCompletionAnimation(false)}
       />
+      
+      {/* Modal de edição */}
+      {editingHabit && (
+        <HabitEditModal
+          habit={editingHabit}
+          isOpen={true}
+          onClose={() => setEditingHabit(null)}
+        />
+      )}
     </div>
   );
 }

@@ -7,16 +7,20 @@
 import React, { useState, useEffect } from 'react';
 import { Task } from '@/types/task';
 import { useTasksStore } from '@/stores/tasksStore';
+import { useUpdateTask } from '@/hooks/api/useTasks';
+import { useUpdateProject, useUpdateProjectTask } from '@/hooks/api/useProjects';
 import { Button } from '@/components/ui/button';
 import { Edit, Paperclip, MessageSquare, Clock, ArrowLeft, Link as LinkIcon, ChevronLeft, ChevronRight, Grid3X3 } from 'lucide-react';
 import { CommentSection } from '@/components/task/CommentSection';
+import { AttachmentManager } from '@/components/shared/AttachmentManager';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { formatHistoryMessage } from '@/utils/historyFormatter';
 
 const EditView = ({ task, onSave, onCancel }: { task: Task, onSave: (updates: Partial<Task>) => void, onCancel: () => void }) => {
     const [description, setDescription] = useState(task.description);
     const [energyPoints, setEnergyPoints] = useState(task.energyPoints);
-    const [dueDate, setDueDate] = useState(task.dueDate || '');
+    const [dueDate, setDueDate] = useState(task.dueDate ? task.dueDate.split('T')[0] : '');
     const { projects } = useTasksStore();
 
     const handleSave = () => {
@@ -46,18 +50,19 @@ const EditView = ({ task, onSave, onCancel }: { task: Task, onSave: (updates: Pa
                     <label className="block text-sm font-medium text-gray-700 mb-2">Nível de Energia</label>
                     <div className="flex space-x-3">
                         {[1, 3, 5].map((energy) => (
-                            <button
+                            <Button
                                 key={energy}
                                 type="button"
                                 onClick={() => setEnergyPoints(energy as 1 | 3 | 5)}
-                                className={`px-4 py-2 rounded-lg border transition-all ${
+                                variant={energyPoints === energy ? "default" : "outline"}
+                                className={`px-4 py-2 rounded-lg transition-all ${
                                     energyPoints === energy
                                         ? 'bg-blue-100 border-blue-500 text-blue-700'
                                         : 'border-gray-300 hover:border-blue-300'
                                 }`}
                             >
                                 {energy === 1 && '🔋'} {energy === 3 && '🧠'} {energy === 5 && '⚡'} {energy}
-                            </button>
+                            </Button>
                         ))}
                     </div>
                 </div>
@@ -85,18 +90,14 @@ const EditView = ({ task, onSave, onCancel }: { task: Task, onSave: (updates: Pa
     );
 };
 
-const fieldLabels: { [key: string]: string } = {
-    description: 'Descrição',
-    energyPoints: 'Energia',
-    dueDate: 'Data de Vencimento',
-    projectId: 'Projeto',
-    status: 'Status',
-};
 
-export function TaskDetailClient({ task: initialTask }: { task: Task }) {
+export function TaskDetailClient({ task: initialTask, onTaskUpdate }: { task: Task, onTaskUpdate?: () => void }) {
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState(initialTask);
+    const [attachments, setAttachments] = useState<any[]>(initialTask.attachments || []);
     const { projects, updateTask, editProjectTask } = useTasksStore();
+    const updateTaskMutation = useUpdateTask();
+    const updateProjectTaskMutation = useUpdateProjectTask();
     const router = useRouter();
 
     // Encontra o projeto e tijolos relacionados
@@ -108,16 +109,55 @@ export function TaskDetailClient({ task: initialTask }: { task: Task }) {
 
     useEffect(() => {
         setFormData(initialTask);
+        // Garantir que os anexos sejam carregados corretamente do backend
+        setAttachments(initialTask.attachments || []);
     }, [initialTask]);
 
-    const handleSave = (updates: Partial<Task>) => {
-        if (initialTask.type === 'brick' && initialTask.projectId) {
-            editProjectTask(initialTask.projectId, initialTask.id, updates.description || initialTask.description, updates.energyPoints || initialTask.energyPoints);
-        } else {
-            updateTask(initialTask.id, updates);
+    const handleSave = async (updates: Partial<Task>) => {
+        try {
+            console.log('🔄 Salvando atualizações:', updates);
+            let updatedTask;
+            
+            // Atualizar via API
+            if (initialTask.type === 'brick' && initialTask.projectId) {
+                editProjectTask(initialTask.projectId, initialTask.id, updates.description || initialTask.description, updates.energyPoints || initialTask.energyPoints);
+                
+                // Sincronizar com API - usar endpoint específico para tarefas de projeto
+                updatedTask = await updateProjectTaskMutation.mutateAsync({
+                    projectId: initialTask.projectId,
+                    taskId: initialTask.id,
+                    updates
+                });
+            } else {
+                // Sincronizar com API
+                updatedTask = await updateTaskMutation.mutateAsync({
+                    taskId: initialTask.id,
+                    updates
+                });
+                
+                updateTask(initialTask.id, updatedTask);
+            }
+            
+            console.log('✅ Tarefa atualizada:', updatedTask);
+            
+            // Atualizar estado local com dados do servidor (incluindo histórico)
+            if (updatedTask) {
+                setFormData(updatedTask);
+                console.log('📝 Estado local atualizado com dados do servidor');
+            } else {
+                setFormData(prev => ({ ...prev, ...updates }));
+                console.log('📝 Estado local atualizado com updates manuais');
+            }
+            
+            setIsEditing(false);
+            
+            // Refetch dados para garantir sincronia
+            if (onTaskUpdate) {
+                onTaskUpdate();
+            }
+        } catch (error) {
+            console.error('❌ Erro ao salvar tarefa:', error);
         }
-        setFormData(prev => ({ ...prev, ...updates }));
-        setIsEditing(false);
     };
 
     const handleCancel = () => {
@@ -130,19 +170,9 @@ export function TaskDetailClient({ task: initialTask }: { task: Task }) {
     };
 
     // Função de formatação de histórico corrigida
-    const formatHistoryValue = (field: string, value: string | number | null | undefined) => {
-        if (value === null || value === undefined || value === '') return <span className="italic text-gray-500">vazio</span>;
-        if (field === 'dueDate' && typeof value === 'string') {
-            const [year, month, day] = value.split('-');
-            return `${day}/${month}/${year}`;
-        }
-        if (field === 'projectId') return projects.find(p => p.id === value)?.name || 'Nenhum';
-        return <span className="font-semibold text-gray-800 dark:text-gray-200">{value.toString()}</span>;
-    };
 
     const ReadOnlyView = () => (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-8">
-            <main className="lg:col-span-3 space-y-8">
+        <div className="space-y-8">
                 {/* Container de Navegação de Tijolos */}
                 {currentProject && projectBricks.length > 1 && (
                     <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl shadow-lg border border-orange-200 p-6">
@@ -189,9 +219,9 @@ export function TaskDetailClient({ task: initialTask }: { task: Task }) {
                 )}
 
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Comentários */}
-                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-lg border border-blue-200 dark:border-gray-700 p-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Comentários - 2/3 da largura */}
+                    <div className="lg:col-span-2 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-lg border border-blue-200 dark:border-gray-700 p-6 flex flex-col">
                         <div className="flex items-center mb-6">
                             <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg mr-3">
                                 <MessageSquare className="w-5 h-5 text-blue-600 dark:text-blue-400"/>
@@ -218,12 +248,12 @@ export function TaskDetailClient({ task: initialTask }: { task: Task }) {
                             )}
                         </div>
                         
-                        <div className="mt-4 pt-4 border-t border-blue-200 dark:border-gray-700">
+                        <div className="mt-auto pt-4 border-t border-blue-200 dark:border-gray-700">
                             <CommentSection task={formData} />
                         </div>
                     </div>
 
-                    {/* Histórico */}
+                    {/* Histórico - 1/3 da largura */}
                     <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-lg border border-amber-200 dark:border-gray-700 p-6">
                         <div className="flex items-center mb-6">
                             <div className="p-2 bg-amber-100 dark:bg-amber-900 rounded-lg mr-3">
@@ -234,15 +264,18 @@ export function TaskDetailClient({ task: initialTask }: { task: Task }) {
                         </div>
                         
                         <div className="space-y-3 max-h-96 overflow-y-auto">
-                            {[...(formData.history || [])].reverse().map(h => (
+                            {[...(formData.history || [])].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).map(h => (
                                 <div key={h.id} className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-amber-100 dark:border-gray-600">
                                     <div className="flex items-start">
                                         <div className="w-2 h-2 bg-amber-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
                                         <div className="flex-1 text-sm">
                                             <p className="text-gray-800 dark:text-gray-200 leading-relaxed">
-                                                <span className="font-medium">{fieldLabels[h.field] || h.field}</span> alterado de {formatHistoryValue(h.field, String(h.oldValue))} para {formatHistoryValue(h.field, String(h.newValue))}
+                                                {formatHistoryMessage(h, projects)}
                                             </p>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{new Date(h.timestamp).toLocaleString()}</p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{new Date(h.timestamp).toLocaleDateString('pt-BR')} {new Date(h.timestamp).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</p>
+                                            {h.details?.reason && (
+                                                <p className="text-xs text-gray-600 mt-1 italic">&quot;{h.details.reason}&quot;</p>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -256,96 +289,6 @@ export function TaskDetailClient({ task: initialTask }: { task: Task }) {
                         </div>
                     </div>
                 </div>
-            </main>
-
-            <aside className="space-y-6">
-                {/* Detalhes */}
-                <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-lg border border-green-200 dark:border-gray-700 p-6">
-                    <div className="flex items-center mb-6">
-                        <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg mr-3">
-                            <div className="w-5 h-5 bg-green-600 dark:bg-green-400 rounded-full"></div>
-                        </div>
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Detalhes</h3>
-                    </div>
-                    
-                    <div className="space-y-4">
-                        <div className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm border border-green-100 dark:border-gray-600">
-                            <div className="flex justify-between items-center">
-                                <span className="text-sm text-gray-600 dark:text-gray-400">Status</span>
-                                <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                                    formData.status === 'completed' ? 'bg-green-100 text-green-800' :
-                                    formData.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
-                                    'bg-gray-100 text-gray-800'
-                                }`}>{formData.status}</span>
-                            </div>
-                        </div>
-                        
-                        <div className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm border border-green-100 dark:border-gray-600">
-                            <div className="flex justify-between items-center">
-                                <span className="text-sm text-gray-600 dark:text-gray-400">Energia</span>
-                                <div className="flex items-center">
-                                    <span className="font-bold text-lg text-green-600 dark:text-green-400">{formData.energyPoints}</span>
-                                    <span className="ml-1 text-green-500">
-                                        {formData.energyPoints === 1 ? '🔋' : formData.energyPoints === 3 ? '🧠' : '⚡'}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm border border-green-100 dark:border-gray-600">
-                            <div className="flex justify-between items-center">
-                                <span className="text-sm text-gray-600 dark:text-gray-400">Projeto</span>
-                                <span className="font-semibold text-gray-900 dark:text-white text-sm">{getProjectName(formData.projectId)}</span>
-                            </div>
-                        </div>
-                        
-                        <div className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm border border-green-100 dark:border-gray-600">
-                            <div className="flex justify-between items-center">
-                                <span className="text-sm text-gray-600 dark:text-gray-400">Criada em</span>
-                                <span className="font-semibold text-gray-900 dark:text-white text-sm">{new Date(formData.createdAt).toLocaleDateString()}</span>
-                            </div>
-                        </div>
-                        
-                        {formData.dueDate && (
-                            <div className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm border border-red-200 dark:border-gray-600">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-sm text-gray-600 dark:text-gray-400">Vence em</span>
-                                    <span className="font-semibold text-red-500 text-sm">{new Date(formData.dueDate + 'T00:00:00').toLocaleDateString()}</span>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-                
-                {/* Anexos e Links */}
-                <div className="grid grid-cols-1 gap-4">
-                    <div className="bg-gradient-to-br from-purple-50 to-violet-50 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-lg border border-purple-200 dark:border-gray-700 p-4">
-                        <div className="flex items-center mb-3">
-                            <div className="p-1.5 bg-purple-100 dark:bg-purple-900 rounded-lg mr-2">
-                                <Paperclip className="w-4 h-4 text-purple-600 dark:text-purple-400"/>
-                            </div>
-                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Anexos</h3>
-                        </div>
-                        <div className="text-center py-4">
-                            <Paperclip className="w-8 h-8 text-gray-300 mx-auto mb-2"/>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Em breve</p>
-                        </div>
-                    </div>
-                    
-                    <div className="bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-lg border border-cyan-200 dark:border-gray-700 p-4">
-                        <div className="flex items-center mb-3">
-                            <div className="p-1.5 bg-cyan-100 dark:bg-cyan-900 rounded-lg mr-2">
-                                <LinkIcon className="w-4 h-4 text-cyan-600 dark:text-cyan-400"/>
-                            </div>
-                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Links</h3>
-                        </div>
-                        <div className="text-center py-4">
-                            <LinkIcon className="w-8 h-8 text-gray-300 mx-auto mb-2"/>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">Em breve</p>
-                        </div>
-                    </div>
-                </div>
-            </aside>
         </div>
     );
 
@@ -356,54 +299,83 @@ export function TaskDetailClient({ task: initialTask }: { task: Task }) {
                 <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
                         <div className="flex items-center space-x-4 mb-4 sm:mb-0">
-                            <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                            <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-4xl">
                                 {formData.type === 'brick' ? '🧱' : '📋'}
                             </div>
                             <div>
                                 <h1 className="text-3xl font-bold">{formData.description}</h1>
-                                <p className="text-blue-100 mt-1">{formData.type === 'brick' ? 'Tijolo de Projeto' : 'Tarefa Individual'}</p>
                             </div>
                         </div>
                         
                         <div className="flex items-center space-x-2">
-                            <button
+                            <Button
                                 onClick={() => router.back()}
+                                variant="ghost"
                                 className="flex items-center space-x-2 px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-xl hover:bg-white/30 transition-colors border border-white/30"
                             >
                                 <ArrowLeft className="w-4 h-4" />
                                 <span>Voltar</span>
-                            </button>
+                            </Button>
                             
                             {!isEditing && (
-                                <button
+                                <Button
                                     onClick={() => setIsEditing(true)}
+                                    variant="ghost"
                                     className="flex items-center space-x-2 px-6 py-3 bg-white/20 backdrop-blur-sm text-white rounded-xl hover:bg-white/30 transition-colors border border-white/30"
                                 >
                                     <Edit className="w-5 h-5" />
                                     <span>Editar</span>
-                                </button>
+                                </Button>
                             )}
                         </div>
                     </div>
 
-                    {/* Quick Stats */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
-                        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
+                    {/* All Stats in One Row */}
+                    <div className="flex flex-wrap gap-4 mt-6">
+                        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center flex-1 min-w-0">
                             <div className="text-2xl font-bold">{formData.energyPoints}</div>
                             <div className="text-sm text-blue-100">Energia</div>
                         </div>
-                        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
+                        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center flex-1 min-w-0">
                             <div className="text-2xl font-bold">{formData.status === 'completed' ? '✅' : '⏳'}</div>
                             <div className="text-sm text-blue-100">{formData.status === 'completed' ? 'Concluída' : 'Pendente'}</div>
                         </div>
-                        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
+                        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center flex-1 min-w-0">
                             <div className="text-2xl font-bold">{formData.comments?.length || 0}</div>
                             <div className="text-sm text-blue-100">Comentários</div>
                         </div>
-                        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
+                        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center flex-1 min-w-0">
                             <div className="text-2xl font-bold">{getProjectName(formData.projectId) !== 'Nenhum' ? '📁' : '📋'}</div>
                             <div className="text-sm text-blue-100">{getProjectName(formData.projectId) !== 'Nenhum' ? 'Projeto' : 'Individual'}</div>
                         </div>
+                        {formData.dueDate && (
+                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center flex-1 min-w-0">
+                                <div className="text-lg font-semibold">{
+                                    (() => {
+                                        try {
+                                            let dateStr = formData.dueDate;
+                                            
+                                            if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                                                const [year, month, day] = dateStr.split('-');
+                                                return `${day}/${month}/${year}`;
+                                            }
+                                            
+                                            if (dateStr.includes('T')) {
+                                                const datePart = dateStr.split('T')[0];
+                                                const [year, month, day] = datePart.split('-');
+                                                return `${day}/${month}/${year}`;
+                                            }
+                                            
+                                            return 'Data inválida';
+                                        } catch (error) {
+                                            console.error('Erro ao formatar data:', error);
+                                            return 'Data inválida';
+                                        }
+                                    })()
+                                }</div>
+                                <div className="text-sm text-blue-100">Vencimento</div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -413,7 +385,43 @@ export function TaskDetailClient({ task: initialTask }: { task: Task }) {
                     <EditView task={formData} onSave={handleSave} onCancel={handleCancel} />
                 </div>
             ) : (
-                <ReadOnlyView />
+                <>
+                    <ReadOnlyView />
+                    
+                    {/* Seção de Anexos e Links */}
+                    <div className="mt-8">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            {/* Anexos - 1/3 da largura */}
+                            <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-lg border border-green-200 dark:border-gray-700 p-6">
+                                <AttachmentManager
+                                    taskId={formData.id}
+                                    attachments={attachments}
+                                    onAttachmentsChange={(newAttachments) => {
+                                        setAttachments(newAttachments);
+                                        // Atualizar dados locais
+                                        setFormData(prev => ({ ...prev, attachments: newAttachments }));
+                                        // Salvar no store local (não precisa chamar API aqui pois o AttachmentManager já faz isso)
+                                        updateTask(formData.id, { ...formData, attachments: newAttachments });
+                                    }}
+                                />
+                            </div>
+                            
+                            {/* Links - 2/3 da largura */}
+                            <div className="lg:col-span-2 bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-lg border border-cyan-200 dark:border-gray-700 p-6">
+                                <div className="flex items-center mb-6">
+                                    <div className="p-2 bg-cyan-100 dark:bg-cyan-900 rounded-lg mr-3">
+                                        <LinkIcon className="w-5 h-5 text-cyan-600 dark:text-cyan-400"/>
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Links</h3>
+                                </div>
+                                <div className="text-center py-8">
+                                    <LinkIcon className="w-12 h-12 text-gray-300 mx-auto mb-3"/>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Em breve</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </>
             )}
         </div>
     );

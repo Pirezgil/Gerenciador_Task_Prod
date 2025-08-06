@@ -4,17 +4,23 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTasksStore } from '@/stores/tasksStore';
 import { useModalsStore } from '@/stores/modalsStore';
+import { useStandardAlert } from '@/components/shared/StandardAlert';
 
 export function DecompositionModal() {
   const { showDecompositionModal, setShowDecompositionModal } = useModalsStore();
   const { addTaskToToday } = useTasksStore();
   const [firstBrick, setFirstBrick] = useState('');
+  const { showAlert, AlertComponent } = useStandardAlert();
 
   if (!showDecompositionModal) return null;
 
   const onSubmit = () => {
     if (!firstBrick.trim()) {
-      alert('❗ Por favor, descreva o primeiro tijolo antes de continuar.');
+      showAlert(
+        'Campo Obrigatório',
+        '❗ Por favor, descreva o primeiro tijolo antes de continuar.',
+        'warning'
+      );
       return;
     }
     
@@ -101,6 +107,7 @@ export function DecompositionModal() {
           </div>
         </div>
       </motion.div>
+      <AlertComponent />
     </motion.div>
   );
 }

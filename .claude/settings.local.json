@@ -15,7 +15,27 @@
       "Bash(powershell:*)",
       "Bash(mv:*)",
       "Bash(npx prisma migrate dev:*)",
-      "Bash(npx prisma studio --port 5555)"
+      "Bash(npx prisma studio --port 5555)",
+      "Bash(npx prisma:*)",
+      "Bash(node:*)",
+      "Bash(del debug-user.js fix-user.js)",
+      "Bash(rm:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(copy:*)",
+      "Bash(cp:*)",
+      "Bash(timeout 60 tail -f backend.log)",
+      "Bash(claude config set language pt-BR)",
+      "Bash(claude config set --global language pt-BR)",
+      "Bash(grep:*)",
+      "Bash(npx next lint:*)",
+      "Bash(del check-user.js create-demo-user.js)",
+      "WebFetch(domain:localhost)",
+      "Bash(npm test)",
+      "Bash(ESLINT_NO_DEV_ERRORS=true npm run dev)",
+      "Bash(del check-habit.js)",
+      "Bash(touch:*)",
+      "Bash(del test-habits.js test-habits-api.js get-user-id.js)"
     ],
     "deny": []
   }

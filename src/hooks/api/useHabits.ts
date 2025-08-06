@@ -24,8 +24,30 @@ export function useHabits() {
 export function useHabit(habitId: string) {
   return useQuery({
     queryKey: queryKeys.habits.detail(habitId),
-    queryFn: () => habitsApi.getHabits().then(habits => habits.find(h => h.id === habitId)),
+    queryFn: () => habitsApi.getHabit(habitId),
     enabled: !!habitId,
+  });
+}
+
+// Hook para buscar comentários de um hábito
+export function useHabitComments(habitId: string) {
+  return useQuery({
+    queryKey: ['habitComments', habitId],
+    queryFn: () => habitsApi.getHabitComments(habitId),
+    enabled: !!habitId,
+  });
+}
+
+// Hook para adicionar comentário
+export function useAddHabitComment() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ habitId, content, author }: { habitId: string; content: string; author?: string }) =>
+      habitsApi.addHabitComment(habitId, content, author),
+    onSuccess: (_, { habitId }) => {
+      queryClient.invalidateQueries({ queryKey: ['habitComments', habitId] });
+    },
   });
 }
 
@@ -65,6 +87,11 @@ export function useCreateHabit() {
       if (context?.previousHabits) {
         queryClient.setQueryData(queryKeys.habits.all, context.previousHabits);
       }
+    },
+    onSuccess: () => {
+      // Invalidar e refazer as queries de hábitos imediatamente
+      queryClient.invalidateQueries({ queryKey: queryKeys.habits.all });
+      queryClient.refetchQueries({ queryKey: queryKeys.habits.all });
     },
     onSettled: () => {
       invalidateQueries.habits();
@@ -144,9 +171,59 @@ export function useCompleteHabit() {
   return useMutation({
     mutationFn: ({ habitId, date, notes }: { habitId: string; date: string; notes?: string }) =>
       habitsApi.completeHabit(habitId, date, notes),
+    onMutate: async ({ habitId, date }) => {
+      // Cancelar queries pendentes
+      await queryClient.cancelQueries({ queryKey: queryKeys.habits.all });
+      
+      // Snapshot dos dados anteriores
+      const previousHabits = queryClient.getQueryData<Habit[]>(queryKeys.habits.all);
+      
+      // Update otimista
+      if (previousHabits) {
+        const updatedHabits = previousHabits.map(habit => {
+          if (habit.id === habitId) {
+            const completions = [...habit.completions];
+            const existingCompletion = completions.find(c => c.date === date);
+            
+            if (existingCompletion) {
+              existingCompletion.count += 1;
+            } else {
+              completions.push({
+                id: `temp-${Date.now()}`,
+                habitId,
+                date,
+                count: 1,
+                notes: '',
+                createdAt: new Date().toISOString()
+              });
+            }
+            
+            return { ...habit, completions, updatedAt: new Date().toISOString() };
+          }
+          return habit;
+        });
+        
+        queryClient.setQueryData<Habit[]>(queryKeys.habits.all, updatedHabits);
+      }
+      
+      return { previousHabits };
+    },
+    onError: (err, variables, context) => {
+      // Reverter otimistic update em caso de erro
+      if (context?.previousHabits) {
+        queryClient.setQueryData(queryKeys.habits.all, context.previousHabits);
+      }
+    },
     onSuccess: () => {
-      // Invalidar queries relacionadas aos hábitos
+      console.log('✅ Hábito completado com sucesso!');
+    },
+    onSettled: async () => {
+      // Sempre invalidar e refetch para garantir dados atualizados
+      await queryClient.invalidateQueries({ queryKey: queryKeys.habits.all });
+      await queryClient.refetchQueries({ queryKey: queryKeys.habits.all, type: 'active' });
       invalidateQueries.habits();
+      
+      console.log('🔄 Cache de hábitos invalidado e refeito');
     },
   });
 }

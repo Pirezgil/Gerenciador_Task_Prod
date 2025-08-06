@@ -20,4 +20,7 @@ router.delete('/:id', projectsController.deleteProject);
 // Estatísticas
 router.get('/:id/stats', projectsController.getProjectStats);
 
+// Gerenciamento de tarefas do projeto
+router.put('/:id/tasks/:taskId', projectsController.updateProjectTask);
+
 export { router as projectRoutes };
