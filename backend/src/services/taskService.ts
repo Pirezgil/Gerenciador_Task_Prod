@@ -8,6 +8,8 @@ import {
   TaskCommentResponse,
   EnergyBudgetResponse
 } from '../types/task';
+import AchievementService from './achievementService';
+import RecurringTaskService from './recurringTaskService';
 
 export const getUserTasks = async (userId: string, filters?: any): Promise<TaskResponse[]> => {
   const whereClause: any = { 
@@ -77,6 +79,8 @@ export const getUserTasks = async (userId: string, filters?: any): Promise<TaskR
     postponementCount: task.postponementCount,
     postponementReason: task.postponementReason,
     plannedForToday: task.plannedForToday,
+    plannedDate: task.plannedDate?.toISOString().split('T')[0],
+    missedDaysCount: task.missedDaysCount || 0,
     externalLinks: task.externalLinks,
     createdAt: task.createdAt.toISOString(),
     completedAt: task.completedAt?.toISOString(),
@@ -169,6 +173,8 @@ export const getTaskById = async (taskId: string, userId: string): Promise<TaskR
     postponementCount: task.postponementCount,
     postponementReason: task.postponementReason,
     plannedForToday: task.plannedForToday,
+    plannedDate: task.plannedDate?.toISOString().split('T')[0],
+    missedDaysCount: task.missedDaysCount || 0,
     externalLinks: task.externalLinks,
     createdAt: task.createdAt.toISOString(),
     completedAt: task.completedAt?.toISOString(),
@@ -378,8 +384,21 @@ export const updateTask = async (taskId: string, userId: string, data: UpdateTas
       if (currentEnergyUsed + taskEnergyPoints > dailyBudget) {
         throw new Error(`Limite de energia excedido. Disponível: ${dailyBudget - currentEnergyUsed}, necessário: ${taskEnergyPoints}`);
       }
+
+      // Definir a data que foi planejada (hoje)
+      updateData.plannedDate = new Date();
+    } else {
+      // Se removendo do planejamento, limpar a data planejada
+      updateData.plannedDate = null;
     }
     updateData.plannedForToday = data.plannedForToday;
+  }
+
+  if (data.plannedDate !== undefined) {
+    updateData.plannedDate = data.plannedDate ? new Date(data.plannedDate) : null;
+  }
+  if (data.missedDaysCount !== undefined) {
+    updateData.missedDaysCount = data.missedDaysCount;
   }
 
   if (data.projectId !== undefined) {
@@ -469,6 +488,9 @@ export const completeTask = async (taskId: string, userId: string): Promise<Task
       id: taskId, 
       userId,
       isDeleted: false // Não permitir completar tarefas excluídas
+    },
+    include: {
+      recurrence: true // Incluir dados de recorrência
     }
   });
 
@@ -482,24 +504,36 @@ export const completeTask = async (taskId: string, userId: string): Promise<Task
 
   const completedAt = new Date();
 
-  await prisma.task.update({
-    where: { id: taskId },
-    data: {
-      status: 'completed',
-      completedAt,
-      history: {
-        create: {
-          action: 'completed',
-          details: { 
-            completedAt: completedAt.toISOString(), 
-            completedBy: userId,
-            oldValue: task.status,
-            newValue: 'completed'
-          }
+  // Para tarefas recorrentes, não remover do plannedForToday - será processado pelo job diário
+  const updateData: any = {
+    status: 'completed',
+    completedAt,
+    history: {
+      create: {
+        action: 'completed',
+        details: { 
+          completedAt: completedAt.toISOString(), 
+          completedBy: userId,
+          oldValue: task.status,
+          newValue: 'completed',
+          isRecurring: task.isRecurring
         }
       }
     }
+  };
+
+  // Manter plannedForToday = true para preservar controle de energia diária
+  // (Tarefas completed devem continuar ocupando energia do orçamento)
+
+  await prisma.task.update({
+    where: { id: taskId },
+    data: updateData
   });
+
+  // Processar conclusão de tarefa recorrente
+  if (task.isRecurring) {
+    await RecurringTaskService.handleRecurringTaskCompletion(task);
+  }
 
   // Atualizar log de energia diário
   const today = new Date();
@@ -527,7 +561,103 @@ export const completeTask = async (taskId: string, userId: string): Promise<Task
     }
   });
 
-  return getTaskById(taskId, userId);
+  // ===== SISTEMA DE CONQUISTAS =====
+  const newAchievements = [];
+  try {
+    // Criar conquista de conclusão de tarefa
+    const taskAchievement = await AchievementService.processTaskCompletion(userId, task);
+    if (taskAchievement) newAchievements.push(taskAchievement);
+    
+    // Atualizar progresso diário
+    const todayStr = today.toISOString().split('T')[0];
+    
+    // Contar tarefas planejadas para hoje
+    const plannedTasksCount = await prisma.task.count({
+      where: {
+        userId,
+        plannedForToday: true,
+        isDeleted: false,
+        OR: [
+          { dueDate: today },
+          { dueDate: null, plannedForToday: true }
+        ]
+      }
+    });
+
+    // Contar tarefas completadas hoje
+    const completedTasksToday = await prisma.task.count({
+      where: {
+        userId,
+        status: 'completed',
+        completedAt: {
+          gte: today,
+          lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
+        },
+        isDeleted: false
+      }
+    });
+
+    // Calcular pontos de energia planejados para hoje
+    const plannedEnergyPoints = await prisma.task.aggregate({
+      where: {
+        userId,
+        plannedForToday: true,
+        isDeleted: false,
+        OR: [
+          { dueDate: today },
+          { dueDate: null, plannedForToday: true }
+        ]
+      },
+      _sum: { energyPoints: true }
+    });
+
+    // Calcular pontos de energia completados hoje
+    const completedEnergyPoints = await prisma.task.aggregate({
+      where: {
+        userId,
+        status: 'completed',
+        completedAt: {
+          gte: today,
+          lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
+        },
+        isDeleted: false
+      },
+      _sum: { energyPoints: true }
+    });
+
+    // Atualizar progresso diário
+    await AchievementService.updateDailyProgress({
+      userId,
+      date: todayStr,
+      plannedTasks: plannedTasksCount,
+      completedTasks: completedTasksToday,
+      plannedEnergyPoints: plannedEnergyPoints._sum.energyPoints || 0,
+      completedEnergyPoints: completedEnergyPoints._sum.energyPoints || 0
+    });
+
+    // Verificar conquista de Mestre do Dia
+    const dailyAchievement = await AchievementService.checkDailyMastery(userId, todayStr);
+    if (dailyAchievement) newAchievements.push(dailyAchievement);
+
+    // Verificar conquista de Lenda da Semana (se for domingo)
+    const dayOfWeek = today.getDay();
+    if (dayOfWeek === 0) { // Domingo - final da semana
+      const weekStart = new Date(today);
+      weekStart.setDate(today.getDate() - 6);
+      const weeklyAchievement = await AchievementService.checkWeeklyLegend(userId, weekStart.toISOString().split('T')[0]);
+      if (weeklyAchievement) newAchievements.push(weeklyAchievement);
+    }
+
+  } catch (achievementError) {
+    // Log do erro mas não falha a conclusão da tarefa
+    console.error('Erro ao processar conquistas:', achievementError);
+  }
+
+  const taskResult = await getTaskById(taskId, userId);
+  return {
+    ...taskResult,
+    newAchievements
+  };
 };
 
 export const postponeTask = async (taskId: string, userId: string, data: PostponeTaskRequest): Promise<TaskResponse> => {
@@ -536,6 +666,9 @@ export const postponeTask = async (taskId: string, userId: string, data: Postpon
       id: taskId, 
       userId,
       isDeleted: false // Não permitir adiar tarefas excluídas
+    },
+    include: {
+      recurrence: true // Incluir dados de recorrência
     }
   });
 
@@ -550,10 +683,11 @@ export const postponeTask = async (taskId: string, userId: string, data: Postpon
 
   const postponedAt = new Date();
   const updateData: any = {
-    status: 'postponed',
+    status: 'POSTPONED',
     postponedAt,
     postponementCount: task.postponementCount + 1,
-    plannedForToday: false // Remove da lista "atuar hoje"
+    // Para tarefas recorrentes, manter plannedForToday para reprocessamento automático
+    plannedForToday: task.isRecurring ? true : false
   };
 
   if (data.reason) {
@@ -584,6 +718,11 @@ export const postponeTask = async (taskId: string, userId: string, data: Postpon
       }
     }
   });
+
+  // Processar adiamento de tarefa recorrente
+  if (task.isRecurring) {
+    await RecurringTaskService.handleRecurringTaskPostponement(task);
+  }
 
   return getTaskById(taskId, userId);
 };

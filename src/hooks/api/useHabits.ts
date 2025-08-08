@@ -223,6 +223,9 @@ export function useCompleteHabit() {
       await queryClient.refetchQueries({ queryKey: queryKeys.habits.all, type: 'active' });
       invalidateQueries.habits();
       
+      // Invalidar conquistas quando um hábito é completado - Sistema de Recompensas TDAH
+      queryClient.invalidateQueries({ queryKey: ['achievements'] });
+      
       console.log('🔄 Cache de hábitos invalidado e refeito');
     },
   });

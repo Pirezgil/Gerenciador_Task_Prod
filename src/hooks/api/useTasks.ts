@@ -142,6 +142,22 @@ export function useCompleteTask() {
 
       return { previousTasks };
     },
+    onSuccess: async (data, taskId) => {
+      // MOMENTO EXATO da finalização: marcar possíveis conquistas como pendentes
+      if (data?.newAchievements && data.newAchievements.length > 0) {
+        const current = JSON.parse(localStorage.getItem('pending-achievements') || '[]');
+        const newPendingIds = data.newAchievements.map((a: any) => a.id);
+        const updated = [...current, ...newPendingIds];
+        localStorage.setItem('pending-achievements', JSON.stringify(updated));
+        console.log('🎯 Conquistas marcadas como pendentes após finalização da tarefa:', newPendingIds);
+      } else {
+        // Fallback: Marcar o momento da finalização para detectar novas conquistas
+        const completionTimestamp = Date.now();
+        localStorage.setItem('task-completion-timestamp', completionTimestamp.toString());
+        localStorage.setItem('last-completed-task-id', taskId);
+        console.log('🎯 Momento de finalização marcado para detecção de novas conquistas:', completionTimestamp);
+      }
+    },
     onError: (err, taskId, context) => {
       if (context?.previousTasks) {
         queryClient.setQueryData(queryKeys.tasks.all, context.previousTasks);
@@ -150,6 +166,8 @@ export function useCompleteTask() {
     onSettled: () => {
       invalidateQueries.tasks();
       queryClient.invalidateQueries({ queryKey: ['energy', 'budget'] });
+      // Invalidar conquistas quando uma tarefa é completada - Sistema de Recompensas TDAH
+      queryClient.invalidateQueries({ queryKey: ['achievements'] });
     },
   });
 }
@@ -172,7 +190,7 @@ export function usePostponeTask() {
           task.id === taskId
             ? {
                 ...task,
-                status: 'postponed' as const,
+                status: 'POSTPONED' as const,
                 postponedAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
                 plannedForToday: false,
@@ -282,8 +300,42 @@ export function useTasksByProject(projectId?: string) {
   return tasks.filter(task => task.projectId === projectId);
 }
 
-// Hook para tarefas de hoje
+// Hook para tarefas de hoje - Nova versão que usa endpoint específico
 export function useTodayTasks() {
+  const { isAuthenticated } = useAuthStore();
+  
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['tasks', 'bombeiro'],
+    queryFn: tasksApi.getBombeiroTasks,
+    staleTime: 30 * 1000,
+    enabled: isAuthenticated,
+  });
+
+  // Combinar tarefas de hoje com tarefas atrasadas
+  const todayTasks = data ? [...data.todayTasks, ...data.missedTasks] : [];
+
+  console.log('🔍 useTodayTasks (Bombeiro) Debug:', {
+    todayTasksCount: data?.todayTasks?.length || 0,
+    missedTasksCount: data?.missedTasks?.length || 0,
+    completedTasksCount: data?.completedTasks?.length || 0,
+    totalTasks: todayTasks.length
+  });
+
+  console.log('🔍 useTodayTasks - Raw data:', data);
+  todayTasks.forEach(t => console.log('  - Frontend Task:', t.description, 'Status:', t.status, 'PostponedAt:', t.postponedAt));
+
+  return {
+    data: todayTasks,
+    todayTasks: data?.todayTasks || [],
+    missedTasks: data?.missedTasks || [],
+    completedTasks: data?.completedTasks || [],
+    isLoading,
+    error
+  };
+}
+
+// Hook para tarefas de hoje (versão anterior - manter para compatibilidade)
+export function useTodayTasksLegacy() {
   const { data: tasks = [], isLoading, error } = useTasks();
   const today = new Date().toISOString().split('T')[0];
 
@@ -300,16 +352,6 @@ export function useTodayTasks() {
     if (!task.dueDate || task.dueDate === 'Sem vencimento') return task.status === 'pending';
     
     return false;
-  });
-
-  // Debug log
-  console.log('🔍 useTodayTasks Debug:', {
-    totalTasks: tasks.length,
-    todayTasksFiltered: todayTasks.length,
-    today,
-    plannedTasks: tasks.filter(t => t.plannedForToday === true).length,
-    dueTodayTasks: tasks.filter(t => t.dueDate === today).length,
-    noDueDatePending: tasks.filter(t => (!t.dueDate || t.dueDate === 'Sem vencimento') && t.status === 'pending').length
   });
 
   return {

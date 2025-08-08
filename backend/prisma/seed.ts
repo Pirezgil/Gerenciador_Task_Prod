@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcrypt';
+// import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
@@ -7,7 +7,7 @@ async function main() {
   console.log('🌱 Iniciando seed do banco de dados...');
 
   // Criar usuário de exemplo
-  const hashedPassword = await bcrypt.hash('123456', 12);
+  // const hashedPassword = await bcrypt.hash('123456', 12); // Não usado atualmente
   
   const user = await prisma.user.upsert({
     where: { email: 'demo@gerenciador.com' },

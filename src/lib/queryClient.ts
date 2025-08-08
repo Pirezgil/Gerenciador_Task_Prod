@@ -70,6 +70,14 @@ export const queryKeys = {
     settings: ['user', 'settings'] as const,
     profile: ['user', 'profile'] as const,
   },
+  
+  // Achievements
+  achievements: {
+    all: ['achievements'] as const,
+    rewardsPage: ['achievements', 'rewards-page'] as const,
+    stats: ['achievements', 'stats'] as const,
+    dailyProgress: (date: string) => ['achievements', 'daily-progress', date] as const,
+  },
 } as const;
 
 // ============================================================================
@@ -99,6 +107,9 @@ export const invalidateQueries = {
     queryClient.invalidateQueries({ queryKey: queryKeys.user.settings });
     queryClient.invalidateQueries({ queryKey: queryKeys.user.profile });
   },
+  
+  // Invalidar todas as queries relacionadas a achievements
+  achievements: () => queryClient.invalidateQueries({ queryKey: queryKeys.achievements.all }),
   
   // Invalidar tudo (usar com cuidado)
   all: () => queryClient.invalidateQueries(),

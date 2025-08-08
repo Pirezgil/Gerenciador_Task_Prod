@@ -35,7 +35,27 @@
       "Bash(ESLINT_NO_DEV_ERRORS=true npm run dev)",
       "Bash(del check-habit.js)",
       "Bash(touch:*)",
-      "Bash(del test-habits.js test-habits-api.js get-user-id.js)"
+      "Bash(del test-habits.js test-habits-api.js get-user-id.js)",
+      "Bash(timeout 5 npm run build)",
+      "Bash(timeout 10 npm run build)",
+      "Bash(set ESLINT_NO_DEV_ERRORS=true)",
+      "Bash(del \"C:\\Users\\Gilmar Pires\\Desktop\\Projetos\\Gerenciador_Task\\clear_user_data.js\")",
+      "Bash(del \"C:\\Users\\Gilmar Pires\\Desktop\\Projetos\\Gerenciador_Task\\create_postponed_task.js\")",
+      "Bash(del \"C:\\Users\\Gilmar Pires\\Desktop\\Projetos\\Gerenciador_Task\\backend\\create_postponed_task.js\")",
+      "Bash(npx eslint:*)",
+      "Bash(del \"C:\\Users\\Gilmar Pires\\Desktop\\Projetos\\Gerenciador_Task\\create_test_task.js\")",
+      "Bash(PRISMA_CLI_BINARY_TARGETS=native node update_task_date.js)",
+      "Bash(del update_task_date.js)",
+      "Bash(del backendupdate_test.js)",
+      "Bash(PRISMA_CLI_BINARY_TARGETS=native node test_recurring_tasks.cjs)",
+      "Bash(del:*)",
+      "Bash(PRISMA_CLI_BINARY_TARGETS=native node setup_overdue_task_test.cjs)",
+      "Bash(PRISMA_CLI_BINARY_TARGETS=native node adjust_planned_task_test.cjs)",
+      "Bash(PRISMA_CLI_BINARY_TARGETS=native node fix_planned_for_today.cjs)",
+      "Bash(PRISMA_CLI_BINARY_TARGETS=native node get_task_info.cjs)",
+      "Bash(PRISMA_CLI_BINARY_TARGETS=native node setup_recurring_task_test.cjs)",
+      "Bash(PRISMA_CLI_BINARY_TARGETS=native npx prisma generate)",
+      "Bash(timeout 10 npm run dev)"
     ],
     "deny": []
   }

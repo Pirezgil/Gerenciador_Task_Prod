@@ -1,5 +1,6 @@
 import { Response, NextFunction } from 'express';
 import * as taskService from '../services/taskService';
+import DailyTaskTracker from '../services/dailyTaskTracker';
 import { AuthenticatedRequest } from '../types/api';
 import { CreateTaskRequest, UpdateTaskRequest, PostponeTaskRequest, CreateTaskCommentRequest } from '../types/task';
 
@@ -360,6 +361,28 @@ export const getEnergyBudget = async (req: AuthenticatedRequest, res: Response, 
     res.json({
       success: true,
       data: energyBudget,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getBombeiroTasks = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    if (!req.userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Não autenticado',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    const bombeiroTasks = await DailyTaskTracker.getBombeiroTasks(req.userId);
+    
+    res.json({
+      success: true,
+      data: bombeiroTasks,
       timestamp: new Date().toISOString()
     });
   } catch (error) {

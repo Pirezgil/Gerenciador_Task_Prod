@@ -28,6 +28,8 @@ import Link from 'next/link';
 import { scrollToElementWithDelay } from '@/utils/scrollUtils';
 import { formatHistoryMessage } from '@/utils/historyFormatter';
 import { useStandardAlert } from '@/components/shared/StandardAlert';
+import { AchievementNotificationSystem } from '@/components/rewards/AchievementNotificationSystem';
+import { useRecentAchievements } from '@/hooks/api/useAchievements';
 
 type FilterType = 'all' | 'today' | 'week' | 'completed' | 'pending';
 type SortType = 'date' | 'energy' | 'project' | 'status';
@@ -38,6 +40,7 @@ export function TasksPageClient() {
   // Primeiro todos os hooks, sempre na mesma ordem
   const { data: allTasks = [], isLoading } = useTasks();
   const { data: projects = [] } = useProjects();
+  const recentAchievements = useRecentAchievements();
   
   const completeTask = useCompleteTask();
   const deleteTask = useDeleteTask();
@@ -735,6 +738,14 @@ export function TasksPageClient() {
 
       {/* Modal de nova tarefa */}
       {showNewTaskModal && <NewTaskModal />}
+      
+      {/* Sistema de notificações de conquista */}
+      <AchievementNotificationSystem
+        achievements={recentAchievements}
+        onComplete={(achievement) => {
+          console.log('Conquista celebrada:', achievement.type);
+        }}
+      />
       
       <AlertComponent />
     </div>

@@ -8,12 +8,15 @@ import { NewProjectModal } from '@/components/shared/NewProjectModal';
 import { NewTaskModal } from '@/components/shared/NewTaskModal';
 import { ProjectContainer } from './ProjectContainer';
 import { Plus, Layout, CheckCircle, Play } from 'lucide-react';
+import { AchievementNotificationSystem } from '@/components/rewards/AchievementNotificationSystem';
+import { useRecentAchievements } from '@/hooks/api/useAchievements';
 
 export function ArquitetoPage() {
   const { isLoading } = useProjects();
   const activeProjects = useActiveProjects();
   const completedProjects = useCompletedProjects();
   const stats = useProjectsStats();
+  const recentAchievements = useRecentAchievements();
   const { openNewProjectModal } = useModalsStore();
   const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active');
 
@@ -147,6 +150,14 @@ export function ArquitetoPage() {
       <TaskEditModal />
       <NewProjectModal />
       <NewTaskModal />
+      
+      {/* Sistema de notificações de conquista */}
+      <AchievementNotificationSystem
+        achievements={recentAchievements}
+        onComplete={(achievement) => {
+          console.log('Conquista celebrada:', achievement.type);
+        }}
+      />
     </>
   );
 }

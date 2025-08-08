@@ -16,6 +16,7 @@ import {
   ChevronDown, 
   ChevronRight,
   CheckCircle2,
+  CheckSquare,
   Clock,
   Target,
   Plus,
@@ -111,10 +112,9 @@ export function PlanejamentoDiariaPage() {
 
   // Orçamento de energia do backend
   const { data: energyBudget = { used: 0, remaining: 15, total: 15, completedTasks: 0 } } = useEnergyBudget();
-  const dailyEnergyBudget = energyBudget.total;
 
-  const { plannedTasks, availableTasks } = useMemo(() => {
-    if (tasksLoading || projectsLoading) return { plannedTasks: [], availableTasks: [] };
+  const { plannedTasks, completedTasks, availableTasks } = useMemo(() => {
+    if (tasksLoading || projectsLoading) return { plannedTasks: [], completedTasks: [], availableTasks: [] };
     
     
     
@@ -125,13 +125,17 @@ export function PlanejamentoDiariaPage() {
     // Separar tarefas planejadas das disponíveis
     allTasks.forEach(task => {
       
-      // Incluir todas as tarefas não completadas (pending, postponed) OU marcadas para hoje
-      if (task.status === 'pending' || task.status === 'postponed' || task.plannedForToday === true) {
+      // Verificar se a tarefa foi adiada hoje
+      const wasPostponedToday = (task.status === 'postponed' || task.status === 'POSTPONED') && task.postponedAt && 
+        new Date(task.postponedAt).toDateString() === new Date().toDateString();
+      
+      // Incluir tarefas não completadas, mas EXCLUIR tarefas adiadas hoje
+      if ((task.status === 'pending' || ((task.status === 'postponed' || task.status === 'POSTPONED') && !wasPostponedToday)) || task.plannedForToday === true) {
         const project = projects.find(p => p.id === task.projectId);
         let source: 'today' | 'project' | 'postponed' = 'project';
         
         // Determinar a origem da tarefa
-        if (task.status === 'postponed') {
+        if (task.status === 'postponed' || task.status === 'POSTPONED') {
           source = 'postponed';
         } else if (task.dueDate === today || !task.dueDate) {
           source = 'today';
@@ -151,6 +155,7 @@ export function PlanejamentoDiariaPage() {
 
         // Separar entre planejadas e disponíveis
         if (task.plannedForToday === true) {
+          // Tarefas completed ficam na seção planejadas mas serão visualmente diferenciadas
           planned.push(taskWithProject);
         } else {
           available.push(taskWithProject);
@@ -201,35 +206,27 @@ export function PlanejamentoDiariaPage() {
       });
     };
 
+    // Separar tarefas planejadas entre pending e completed
+    const plannedPending = planned.filter(task => task.status === 'pending' || task.status === 'postponed');
+    const plannedCompleted = planned.filter(task => task.status === 'completed');
+
     return {
-      plannedTasks: sortByDeadline(planned),
+      plannedTasks: sortByDeadline(plannedPending), // Apenas pending/postponed para interação
+      completedTasks: sortByDeadline(plannedCompleted), // Completed para visualização
       availableTasks: sortByDeadline(available)
     };
   }, [allTasks, projects, tasksLoading, projectsLoading]);
 
 
-  const plannedEnergy = useMemo(() => {
-    return plannedTasks.reduce((total, task) => total + task.energyPoints, 0);
-  }, [plannedTasks]);
-
-  // Energia específica para esta página (planejada vs concluída)
-  const planningEnergyData = useMemo(() => {
-    const used = plannedEnergy; // Energia das tarefas planejadas (não concluídas)
-    const remaining = Math.max(0, energyBudget.total - used);
-    return {
-      used,
-      remaining,
-      total: energyBudget.total
-    };
-  }, [plannedEnergy, energyBudget.total]);
+  // Usar dados de energia direto do backend (sem cálculos no frontend)
 
   const handlePlanTask = async (taskId: string) => {
     const task = availableTasks.find(t => t.id === taskId);
     if (!task) return;
 
-    // Verificar se não excede o orçamento
-    const totalEnergy = plannedEnergy + task.energyPoints;
-    if (totalEnergy > dailyEnergyBudget) {
+    // Verificar se não excede o orçamento (usando dados do backend)
+    const totalEnergy = energyBudget.used + task.energyPoints;
+    if (totalEnergy > energyBudget.total) {
       return; // Não permitir se exceder orçamento
     }
 
@@ -241,8 +238,6 @@ export function PlanejamentoDiariaPage() {
           status: 'pending'
         }
       });
-      // Redirecionar para a página bombeiro após planejar
-      router.push('/bombeiro');
     } catch (error) {
       console.error('Erro ao planejar tarefa:', error);
     }
@@ -342,10 +337,10 @@ export function PlanejamentoDiariaPage() {
   };
 
 
-  // Métricas de energia para planejamento (baseadas nas tarefas planejadas)
-  const energyRemaining = planningEnergyData.remaining;
-  const energyPercentage = (planningEnergyData.used / planningEnergyData.total) * 100;
-  const isOverBudget = planningEnergyData.used > planningEnergyData.total;
+  // Métricas de energia diretas do backend
+  const energyRemaining = energyBudget.remaining;
+  const energyPercentage = (energyBudget.used / energyBudget.total) * 100;
+  const isOverBudget = energyBudget.used > energyBudget.total;
 
   // Mostrar loading se ainda carregando
   if (tasksLoading || projectsLoading) {
@@ -377,7 +372,7 @@ export function PlanejamentoDiariaPage() {
           {/* Quick Stats */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
-              <div className="text-2xl font-bold">{plannedTasks.length}</div>
+              <div className="text-2xl font-bold">{plannedTasks.length + completedTasks.length}</div>
               <div className="text-sm text-blue-100">Planejadas</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
@@ -385,11 +380,11 @@ export function PlanejamentoDiariaPage() {
               <div className="text-sm text-blue-100">Disponíveis</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
-              <div className="text-2xl font-bold">{planningEnergyData.used}</div>
-              <div className="text-sm text-blue-100">Energia Planejada</div>
+              <div className="text-2xl font-bold">{energyBudget.used}</div>
+              <div className="text-sm text-blue-100">Energia Usada</div>
             </div>
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
-              <div className="text-2xl font-bold">{planningEnergyData.remaining}</div>
+              <div className="text-2xl font-bold">{energyBudget.remaining}</div>
               <div className="text-sm text-blue-100">Disponível</div>
             </div>
           </div>
@@ -447,7 +442,7 @@ export function PlanejamentoDiariaPage() {
                             {task.deadline && task.deadline !== 'Sem vencimento' && (
                               <div className="flex items-center gap-1.5 px-3 py-1 bg-red-100 text-red-700 border-red-200 border rounded-full text-xs font-medium">
                                 <Clock className="w-3 h-3" />
-                                <span>{new Date(task.deadline).toLocaleDateString('pt-BR')}</span>
+                                <span>{task.deadline.split('T')[0].split('-').reverse().join('/')}</span>
                               </div>
                             )}
 
@@ -667,6 +662,58 @@ export function PlanejamentoDiariaPage() {
         </div>
       )}
 
+      {/* Seção de Tarefas Completadas */}
+      {completedTasks.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            🎉 Tarefas Completadas ({completedTasks.length})
+          </h2>
+          
+          <div className="bg-green-50 rounded-xl shadow-sm border border-green-200 p-6">
+            <div className="space-y-3">
+              {completedTasks.map((task) => {
+                const energyConfig = getEnergyConfig(task.energyPoints);
+
+                return (
+                  <div
+                    key={task.id}
+                    className="bg-gradient-to-r from-green-100 to-emerald-100 rounded-xl shadow-sm border border-green-300 p-3 opacity-75"
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <Link 
+                        href={`/task/${task.id}`}
+                        className="flex-1"
+                      >
+                        <h3 className="text-lg font-semibold text-green-800 hover:text-green-900 transition-colors cursor-pointer line-through">
+                          {task.description}
+                        </h3>
+                      </Link>
+                      <div className="flex items-center gap-3">
+                        {/* Energia */}
+                        <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
+                          task.energyPoints === 1 ? 'bg-green-200 text-green-800 border border-green-300' :
+                          task.energyPoints === 3 ? 'bg-blue-200 text-blue-800 border border-blue-300' :
+                          'bg-purple-200 text-purple-800 border border-purple-300'
+                        }`}>
+                          {energyConfig.icon}
+                          <span>{energyConfig.label}</span>
+                        </div>
+                        
+                        {/* Status completed */}
+                        <div className="flex items-center gap-1.5 px-3 py-1 bg-green-200 text-green-800 border border-green-300 rounded-full text-xs font-medium">
+                          <CheckSquare className="w-3 h-3" />
+                          <span>Concluída</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Seção de Atividades Disponíveis */}
       <div className="mb-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">
@@ -684,7 +731,7 @@ export function PlanejamentoDiariaPage() {
               {availableTasks.map((task) => {
                 const isExpanded = expandedTasks.has(task.id);
                 const energyConfig = getEnergyConfig(task.energyPoints);
-                const canPlan = (plannedEnergy + task.energyPoints) <= dailyEnergyBudget;
+                const canPlan = (energyBudget.used + task.energyPoints) <= energyBudget.total;
 
                 return (
                   <motion.div
@@ -723,7 +770,7 @@ export function PlanejamentoDiariaPage() {
                             {task.deadline && task.deadline !== 'Sem vencimento' && (
                               <div className="flex items-center gap-1.5 px-3 py-1 bg-red-100 text-red-700 border-red-200 border rounded-full text-xs font-medium">
                                 <Clock className="w-3 h-3" />
-                                <span>{new Date(task.deadline).toLocaleDateString('pt-BR')}</span>
+                                <span>{task.deadline.split('T')[0].split('-').reverse().join('/')}</span>
                               </div>
                             )}
 

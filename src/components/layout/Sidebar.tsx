@@ -20,6 +20,7 @@ import {
   CheckSquare,
   Box,
   Target,
+  Trophy,
   Settings,
   User,
   Menu,
@@ -78,9 +79,9 @@ export function Sidebar({ className = '' }: SidebarProps) {
     {
       key: 'bombeiro',
       label: 'Bombeiro',
-      description: 'Extintor gentil de urgências',
-      icon: Flame,
-      emoji: '🚒',
+      description: 'Extintor de urgências',
+      icon: '🚒',
+      emoji: '',
       path: '/bombeiro',
       energyType: 'baixa',
       gradient: 'from-red-400/80 to-orange-500/80',
@@ -93,8 +94,8 @@ export function Sidebar({ className = '' }: SidebarProps) {
       key: 'arquiteto',
       label: 'Arquiteto', 
       description: 'Construtor de sonhos',
-      icon: Building2,
-      emoji: '🏗️',
+      icon: '🏗️',
+      emoji: '',
       path: '/arquiteto',
       energyType: 'alta', 
       gradient: 'from-purple-400/80 to-indigo-500/80',
@@ -107,8 +108,8 @@ export function Sidebar({ className = '' }: SidebarProps) {
       key: 'tarefas',
       label: 'Tarefas',
       description: 'Central de ações gentis',
-      icon: CheckSquare,
-      emoji: '📋',
+      icon: '📋',
+      emoji: '',
       path: '/tarefas',
       energyType: 'normal',
       gradient: 'from-green-400/80 to-emerald-500/80',
@@ -121,8 +122,8 @@ export function Sidebar({ className = '' }: SidebarProps) {
       key: 'habitos',
       label: 'Hábitos',
       description: 'Construa rotinas',
-      icon: Target,
-      emoji: '🎯',
+      icon: '🎯',
+      emoji: '',
       path: '/habitos',
       energyType: 'normal',
       gradient: 'from-teal-400/80 to-cyan-500/80',
@@ -132,11 +133,25 @@ export function Sidebar({ className = '' }: SidebarProps) {
       hoverShadow: 'hover:shadow-teal-500/10'
     },
     {
+      key: 'recompensas',
+      label: 'Recompensas',
+      description: 'Suas conquistas épicas',
+      icon: '🏆',
+      emoji: '',
+      path: '/recompensas',
+      energyType: 'baixa',
+      gradient: 'from-yellow-400/80 to-orange-500/80',
+      bgColor: 'sentinela-card bg-yellow-50/50 hover:bg-yellow-100/50 border-yellow-200/30',
+      textColor: 'text-yellow-700',
+      iconColor: 'text-yellow-600',
+      hoverShadow: 'hover:shadow-yellow-500/10'
+    },
+    {
       key: 'caixa-de-areia',
       label: 'Caixa de Areia',
       description: 'Espaço criativo livre',
-      icon: Box,
-      emoji: '🏖️',
+      icon: '🏖️',
+      emoji: '',
       path: '/caixa-de-areia',
       energyType: 'baixa',
       gradient: 'from-amber-400/80 to-orange-400/80',
@@ -348,11 +363,15 @@ export function Sidebar({ className = '' }: SidebarProps) {
                               ? 'bg-white/20 backdrop-blur-sm shadow-lg' 
                               : 'bg-white/70 group-hover:bg-white group-hover:shadow-md'
                           }`}>
-                            <Icon className={`w-5 h-5 transition-colors ${
-                              active 
-                                ? 'text-white' 
-                                : `${item.iconColor} group-hover:scale-110 transition-transform`
-                            }`} />
+                            {typeof item.icon === 'string' ? (
+                              <span className="text-xl leading-none">{item.icon}</span>
+                            ) : (
+                              <Icon className={`w-5 h-5 transition-colors ${
+                                active 
+                                  ? 'text-white' 
+                                  : `${item.iconColor} group-hover:scale-110 transition-transform`
+                              }`} />
+                            )}
                           </div>
                           <div className="flex-1">
                             <div className={`font-semibold text-base transition-colors ${
@@ -360,7 +379,7 @@ export function Sidebar({ className = '' }: SidebarProps) {
                                 ? 'text-white' 
                                 : `${item.textColor} group-hover:text-gray-800`
                             }`}>
-                              <span className="mr-2">{item.emoji}</span>{item.label}
+                              {item.emoji && <span className="mr-2">{item.emoji}</span>}{item.label}
                             </div>
                             <div className={`text-sm transition-colors ${
                               active 
@@ -544,11 +563,15 @@ export function Sidebar({ className = '' }: SidebarProps) {
                     ? 'bg-white/20 backdrop-blur-sm shadow-lg' 
                     : 'bg-white/70 group-hover:bg-white group-hover:shadow-md'
                 }`}>
-                  <Icon className={`w-5 h-5 transition-all duration-200 ${
-                    active 
-                      ? 'text-white' 
-                      : `${item.iconColor} group-hover:scale-110`
-                  }`} />
+                  {typeof item.icon === 'string' ? (
+                    <span className="text-xl leading-none">{item.icon}</span>
+                  ) : (
+                    <Icon className={`w-5 h-5 transition-all duration-200 ${
+                      active 
+                        ? 'text-white' 
+                        : `${item.iconColor} group-hover:scale-110`
+                    }`} />
+                  )}
                 </div>
                 
                 <AnimatePresence>
@@ -565,7 +588,7 @@ export function Sidebar({ className = '' }: SidebarProps) {
                           ? 'text-white' 
                           : `${item.textColor} group-hover:text-gray-800`
                       }`}>
-                        <span className="mr-2">{item.emoji}</span>{item.label}
+                        {item.emoji && <span className="mr-2">{item.emoji}</span>}{item.label}
                       </div>
                       <div className={`text-sm transition-colors ${
                         active 

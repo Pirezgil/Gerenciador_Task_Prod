@@ -16,3 +16,6 @@ export * from './useNotes';
 
 // Habits hooks
 export * from './useHabits';
+
+// Achievements hooks
+export * from './useAchievements';

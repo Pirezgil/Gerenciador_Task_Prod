@@ -11,6 +11,8 @@ import { useHabits, useTodayHabits, useActiveHabits } from '@/hooks/api/useHabit
 import { HabitList } from '@/components/habits/HabitList';
 import { HabitStats } from '@/components/habits/HabitStats';
 import { NewHabitModal } from '@/components/habits/NewHabitModal';
+import { AchievementNotificationSystem } from '@/components/rewards/AchievementNotificationSystem';
+import { useRecentAchievements } from '@/hooks/api/useAchievements';
 
 type ViewMode = 'today' | 'all' | 'stats';
 
@@ -18,6 +20,7 @@ export default function HabitosPage() {
   const { data: allHabits = [], isLoading } = useHabits();
   const todayHabits = useTodayHabits();
   const activeHabits = useActiveHabits();
+  const recentAchievements = useRecentAchievements();
   const [currentView, setCurrentView] = useState<ViewMode>('today');
   const [showNewHabitModal, setShowNewHabitModal] = useState(false);
 
@@ -161,6 +164,14 @@ export default function HabitosPage() {
       <NewHabitModal 
         isOpen={showNewHabitModal}
         onClose={() => setShowNewHabitModal(false)}
+      />
+
+      {/* Sistema de notificações de conquista */}
+      <AchievementNotificationSystem
+        achievements={recentAchievements}
+        onComplete={(achievement) => {
+          console.log('Conquista celebrada:', achievement.type);
+        }}
       />
     </div>
   );

@@ -28,6 +28,8 @@ export interface UpdateTaskRequest {
   isRecurring?: boolean;
   isAppointment?: boolean;
   plannedForToday?: boolean;
+  plannedDate?: string;
+  missedDaysCount?: number;
   externalLinks?: string[];
 }
 
@@ -44,6 +46,8 @@ export interface TaskResponse {
   postponementCount: number;
   postponementReason?: string;
   plannedForToday: boolean;
+  plannedDate?: string;
+  missedDaysCount: number;
   externalLinks: string[];
   createdAt: string;
   completedAt?: string;
@@ -60,6 +64,14 @@ export interface TaskResponse {
   history: TaskHistoryResponse[];
   recurrence?: TaskRecurrenceResponse;
   appointment?: TaskAppointmentResponse;
+  newAchievements?: Array<{
+    id: string;
+    type: string;
+    subtype?: string;
+    relatedId?: string;
+    earnedAt: string;
+    metadata?: any;
+  }>;
 }
 
 export interface CreateTaskRecurrenceRequest {

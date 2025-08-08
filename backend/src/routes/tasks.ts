@@ -17,6 +17,7 @@ router.use(authenticate);
 
 // Rotas principais
 router.get('/', validateQuery(taskFilterSchema), tasksController.getTasks);
+router.get('/bombeiro', tasksController.getBombeiroTasks);
 router.post('/', validate(createTaskSchema), tasksController.createTask);
 
 router.get('/:id', tasksController.getTask);

@@ -5,6 +5,8 @@ import {
   HabitResponse,
   CompleteHabitRequest
 } from '../types/habit';
+import AchievementService from './achievementService';
+import { HabitStreakService } from './habitStreakService';
 
 export const getUserHabits = async (userId: string): Promise<HabitResponse[]> => {
   console.log('🔍 Buscando hábitos para usuário:', userId);
@@ -195,6 +197,27 @@ export const completeHabit = async (habitId: string, userId: string, data: Compl
     } else {
       console.log('🚫 Não é hoje, streak não atualizado');
     }
+  }
+  
+  // Processar conquistas de hábitos (sistema de recompensas TDAH)
+  try {
+    await AchievementService.processHabitCompletion(userId, habit, completion);
+    console.log('🏆 Conquistas de hábito processadas');
+  } catch (achievementError) {
+    console.error('❌ Erro ao processar conquistas de hábito:', achievementError);
+  }
+  
+  // Atualizar sequência de hábitos apenas para nova conclusão
+  if (!existingCompletion) {
+    try {
+      console.log('🔥 Chamando HabitStreakService.updateHabitStreak para userId:', userId);
+      await HabitStreakService.updateHabitStreak(userId);
+      console.log('✅ Sequência de hábitos atualizada com sucesso');
+    } catch (streakError) {
+      console.error('❌ ERRO CRÍTICO ao atualizar sequência de hábitos:', streakError);
+    }
+  } else {
+    console.log('⚠️ Completion já existia, não atualizando streak');
   }
   
   console.log('✅ Completação finalizada:', completion);

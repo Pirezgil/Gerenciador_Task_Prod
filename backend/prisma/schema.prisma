@@ -34,6 +34,9 @@ model User {
   themeConfigs        ThemeConfig[]
   dailyEnergyLogs     DailyEnergyLog[]
   dopamineAnimations  DopamineAnimation[]
+  achievements        Achievement[]
+  dailyProgress       DailyProgress[]
+  habitStreak         HabitStreak?
 
   @@map("users")
 }
@@ -106,6 +109,8 @@ model Task {
   postponementCount   Int       @default(0) @map("postponement_count")
   postponementReason  String?   @map("postponement_reason")
   plannedForToday     Boolean   @default(false) @map("planned_for_today")
+  plannedDate         DateTime? @db.Date @map("planned_date")
+  missedDaysCount     Int       @default(0) @map("missed_days_count")
   externalLinks       String[]  @map("external_links")
   isDeleted           Boolean   @default(false) @map("is_deleted")
   deletedAt           DateTime? @map("deleted_at")
@@ -365,4 +370,58 @@ model DopamineAnimation {
   lastCompletedTask Task? @relation(fields: [lastCompletedTaskId], references: [id])
 
   @@map("dopamine_animations")
+}
+
+// ===== SISTEMA DE RECOMPENSAS E CONQUISTAS =====
+
+model Achievement {
+  id            String   @id @default(cuid())
+  userId        String   @map("user_id")
+  type          String   // 'task_completion', 'project_completion', 'daily_master', 'weekly_legend'
+  subtype       String?  // Para tarefas: 'bronze', 'silver', 'gold' baseado em energyPoints
+  relatedId     String?  @map("related_id") // ID da tarefa/projeto relacionado
+  earnedAt      DateTime @default(now()) @map("earned_at")
+  metadata      Json?    // Dados extras (ex: quantas tarefas completadas no dia)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@index([userId, earnedAt])
+  @@map("achievements")
+}
+
+model DailyProgress {
+  id                String   @id @default(cuid())
+  userId            String   @map("user_id")
+  date              DateTime @db.Date
+  plannedTasks      Int      @default(0) @map("planned_tasks")
+  completedTasks    Int      @default(0) @map("completed_tasks")
+  plannedEnergyPoints Int    @default(0) @map("planned_energy_points")
+  completedEnergyPoints Int  @default(0) @map("completed_energy_points")
+  achievedMastery   Boolean  @default(false) @map("achieved_mastery")
+  allHabitsCompleted Boolean @default(false) @map("all_habits_completed")
+  celebrationShown  Boolean  @default(false) @map("celebration_shown")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@map("daily_progress")
+}
+
+model HabitStreak {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  currentStreak Int     @default(0) @map("current_streak")
+  bestStreak   Int      @default(0) @map("best_streak")
+  lastCompleted DateTime? @map("last_completed")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId])
+  @@map("habit_streaks")
 }

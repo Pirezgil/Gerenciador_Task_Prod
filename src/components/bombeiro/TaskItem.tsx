@@ -35,6 +35,8 @@ interface TaskItemProps {
   showProject?: boolean;
   isExpanded?: boolean;
   onToggleExpansion?: () => void;
+  variant?: 'default' | 'missed' | 'completed';
+  isCompleting?: boolean;
 }
 
 // Hook extraído para simplificar componente
@@ -90,7 +92,9 @@ export function TaskItem({
   onPostpone, 
   showProject = true,
   isExpanded: controlledExpanded,
-  onToggleExpansion
+  onToggleExpansion,
+  variant = 'default',
+  isCompleting = false
 }: TaskItemProps) {
   const [localExpanded, setLocalExpanded] = useState(false);
   const taskRef = useRef<HTMLDivElement>(null);
@@ -100,6 +104,18 @@ export function TaskItem({
   const project = task.projectId ? projects.find(p => p.id === task.projectId) : null;
   const config = useTaskItemConfig(task.energyPoints);
   const isCompleted = task.status === 'completed';
+  
+  // Classes CSS baseadas na variante
+  const getVariantClasses = () => {
+    switch (variant) {
+      case 'missed':
+        return 'bg-red-50 border-red-200 hover:bg-red-100';
+      case 'completed':
+        return 'bg-green-50 border-green-200 hover:bg-green-100 opacity-80';
+      default:
+        return 'bg-gradient-to-r from-white to-gray-50 border-gray-200 hover:shadow-lg';
+    }
+  };
 
 
   const handleToggleExpansion = () => {
@@ -124,7 +140,7 @@ export function TaskItem({
   return (
     <motion.div
       ref={taskRef}
-      className="bg-gradient-to-r from-white to-gray-50 rounded-xl shadow-md border border-gray-200 transition-all hover:shadow-lg hover:scale-[1.02]"
+      className={`rounded-xl shadow-md transition-all hover:scale-[1.02] ${getVariantClasses()}`}
       whileHover={{ scale: 1.02 }}
     >
       <div className="p-3">
@@ -135,13 +151,20 @@ export function TaskItem({
               href={`/task/${task.id}`}
               className="flex-1"
             >
-              <h3 className={`text-lg font-semibold hover:text-blue-600 transition-colors cursor-pointer ${
-                task.status === 'completed' 
-                  ? 'text-gray-500 line-through' 
-                  : 'text-gray-900'
-              }`}>
-                {task.description}
-              </h3>
+              <div className="flex items-center gap-2">
+                {variant === 'completed' && (
+                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <CheckCircle2 className="w-4 h-4 text-white" />
+                  </div>
+                )}
+                <h3 className={`text-lg font-semibold hover:text-blue-600 transition-colors cursor-pointer ${
+                  task.status === 'completed' 
+                    ? 'text-gray-500 line-through' 
+                    : 'text-gray-900'
+                }`}>
+                  {task.description}
+                </h3>
+              </div>
             </Link>
           </div>
           
@@ -183,11 +206,22 @@ export function TaskItem({
                   <span>{project.name}</span>
                 </div>
               )}
+
+              {/* Horário de conclusão para tarefas completadas */}
+              {variant === 'completed' && task.completedAt && (
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-200">
+                  <Clock className="w-3 h-3" />
+                  <span>Concluída às {new Date(task.completedAt).toLocaleTimeString('pt-BR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                  })}</span>
+                </div>
+              )}
             </div>
 
             {/* Actions - mantendo os originais */}
             <div className="flex items-center gap-3">
-              {!isCompleted && (
+              {!isCompleted && variant !== 'completed' && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -202,26 +236,28 @@ export function TaskItem({
                 </Button>
               )}
               
-              <Button
-                variant={isCompleted ? "default" : "outline"}
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  if (!isCompleted) {
-                    console.log('🎯 Completando tarefa:', task.id);
-                    onComplete(task.id);
-                  }
-                }}
-                disabled={isCompleted}
+              {variant !== 'completed' && (
+                <Button
+                  variant={isCompleted ? "default" : "outline"}
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    if (!isCompleted) {
+                      console.log('🎯 Completando tarefa:', task.id);
+                      onComplete(task.id);
+                    }
+                  }}
+                  disabled={isCompleted || variant === 'completed'}
                 className={isCompleted 
                   ? "bg-green-500 text-white" 
                   : "text-green-600 border-green-300 hover:bg-green-50"
                 }
                 title={isCompleted ? "Tarefa concluída" : "Marcar como concluída"}
-              >
-                <CheckCircle2 className="w-4 h-4" />
-              </Button>
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                </Button>
+              )}
 
               
               <Button

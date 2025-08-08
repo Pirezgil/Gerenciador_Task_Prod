@@ -155,6 +155,11 @@ export const tasksApi = {
     const response = await api.get<ApiResponse<{ used: number; remaining: number; total: number; completedTasks: number }>>('/tasks/energy/budget');
     return response.data.data;
   },
+
+  async getBombeiroTasks(): Promise<{ todayTasks: Task[]; missedTasks: Task[]; completedTasks: Task[] }> {
+    const response = await api.get<ApiResponse<{ todayTasks: Task[]; missedTasks: Task[]; completedTasks: Task[] }>>('/tasks/bombeiro');
+    return response.data.data;
+  },
 };
 
 // ============================================================================

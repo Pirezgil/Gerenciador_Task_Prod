@@ -16,7 +16,8 @@ export function Navigation() {
     { key: 'bombeiro', label: '🏎️ Bombeiro', color: 'blue', path: '/bombeiro' },
     { key: 'arquiteto', label: '🏗️ Arquiteto', color: 'purple', path: '/arquiteto' },
     { key: 'tarefas', label: '📋 Tarefas', color: 'green', path: '/tarefas' },
-    { key: 'caixa-de-areia', label: '🏖️ Caixa de Areia', color: 'amber', path: '/caixa-de-areia' }
+    { key: 'recompensas', label: '🏆 Recompensas', color: 'amber', path: '/recompensas' },
+    { key: 'caixa-de-areia', label: '🏖️ Caixa de Areia', color: 'indigo', path: '/caixa-de-areia' }
   ] as const;
 
   const getPageColors = (pageKey: string, isActive: boolean) => {

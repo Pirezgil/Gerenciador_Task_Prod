@@ -5,6 +5,7 @@ import {
   ProjectResponse, 
   ProjectWithTasksResponse 
 } from '../types/project';
+import AchievementService from './achievementService';
 
 export const getUserProjects = async (userId: string, includeStats = false): Promise<ProjectResponse[]> => {
   const projects = await prisma.project.findMany({
@@ -49,7 +50,7 @@ export const getUserProjects = async (userId: string, includeStats = false): Pro
         id: task.id,
         description: task.description,
         status: task.status,
-        energyPoints: task.energyPoints,
+        energyPoints: Number(task.energyPoints),
         type: task.type,
         deadline: task.dueDate?.toISOString(),
         projectId: project.id,
@@ -57,20 +58,29 @@ export const getUserProjects = async (userId: string, includeStats = false): Pro
         updatedAt: task.updatedAt.toISOString(),
         completedAt: task.completedAt?.toISOString(),
         postponedAt: task.postponedAt?.toISOString(),
-        comments: task.comments || [],
-        attachments: task.attachments || [],
+        comments: (task.comments || []).map((c: any) => ({
+          ...c,
+          size: c.size ? Number(c.size) : c.size
+        })),
+        attachments: (task.attachments || []).map((a: any) => ({
+          ...a,
+          size: a.size ? Number(a.size) : a.size
+        })),
         externalLinks: task.externalLinks || [],
-        history: task.history || []
+        history: (task.history || []).map((h: any) => ({
+          ...h,
+          id: h.id ? String(h.id) : h.id
+        }))
       }))
     };
 
     if (includeStats) {
-      result.tasksCount = tasks.length;
-      result.completedTasksCount = tasks.filter(t => t.status === 'completed').length;
-      result.totalEnergyPoints = tasks.reduce((sum, t) => sum + t.energyPoints, 0);
-      result.completedEnergyPoints = tasks
+      result.tasksCount = Number(tasks.length);
+      result.completedTasksCount = Number(tasks.filter(t => t.status === 'completed').length);
+      result.totalEnergyPoints = Number(tasks.reduce((sum, t) => sum + Number(t.energyPoints), 0));
+      result.completedEnergyPoints = Number(tasks
         .filter(t => t.status === 'completed')
-        .reduce((sum, t) => sum + t.energyPoints, 0);
+        .reduce((sum, t) => sum + Number(t.energyPoints), 0));
     }
 
     return result;
@@ -121,19 +131,19 @@ export const getProjectById = async (projectId: string, userId: string, includeT
       id: task.id,
       description: task.description,
       status: task.status,
-      energyPoints: task.energyPoints,
+      energyPoints: Number(task.energyPoints),
       type: task.type,
       createdAt: task.createdAt.toISOString(),
       completedAt: task.completedAt?.toISOString()
     }));
 
     // Calcular estatísticas
-    result.tasksCount = result.tasks.length;
-    result.completedTasksCount = result.tasks.filter(t => t.status === 'completed').length;
-    result.totalEnergyPoints = result.tasks.reduce((sum, t) => sum + t.energyPoints, 0);
-    result.completedEnergyPoints = result.tasks
+    result.tasksCount = Number(result.tasks.length);
+    result.completedTasksCount = Number(result.tasks.filter(t => t.status === 'completed').length);
+    result.totalEnergyPoints = Number(result.tasks.reduce((sum, t) => sum + Number(t.energyPoints), 0));
+    result.completedEnergyPoints = Number(result.tasks
       .filter(t => t.status === 'completed')
-      .reduce((sum, t) => sum + t.energyPoints, 0);
+      .reduce((sum, t) => sum + Number(t.energyPoints), 0));
   }
 
   return result;
@@ -202,6 +212,16 @@ export const updateProject = async (projectId: string, userId: string, data: Upd
     where: { id: projectId },
     data: updateData
   });
+
+  // ===== SISTEMA DE CONQUISTAS =====
+  // Se o projeto foi completado, processar conquista
+  if (data.status === 'completed') {
+    try {
+      await AchievementService.processProjectCompletion(userId, project);
+    } catch (achievementError) {
+      console.error('Erro ao processar conquista de projeto:', achievementError);
+    }
+  }
 
   return {
     id: project.id,

@@ -2,11 +2,10 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, Plus, Minus, Calendar, Flame, Target, Edit3, Eye } from 'lucide-react';
+import { Plus, Minus, Calendar, Flame, Target } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCompleteHabit } from '@/hooks/api/useHabits';
 import { HabitCompletionAnimation } from './HabitCompletionAnimation';
-import { HabitEditModal } from '@/components/shared/HabitEditModal';
 import type { Habit } from '@/types/habit';
 
 interface HabitListProps {
@@ -22,7 +21,6 @@ export function HabitList({ habits, showDate = false }: HabitListProps) {
     habitName: string;
     streak: number;
   } | null>(null);
-  const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
   
   const today = new Date().toISOString().split('T')[0];
 
@@ -104,7 +102,7 @@ export function HabitList({ habits, showDate = false }: HabitListProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {habits.map((habit, index) => {
         const completed = isCompletedToday(habit);
         const count = getTodayCompletionCount(habit);
@@ -137,30 +135,6 @@ export function HabitList({ habits, showDate = false }: HabitListProps) {
                 </h3>
               </div>
 
-              {/* Ações secundárias */}
-              <div className="flex items-center space-x-1 opacity-70 hover:opacity-100 transition-opacity">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    router.push(`/habit/${habit.id}`);
-                  }}
-                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                  title="Visualizar hábito"
-                >
-                  <Eye className="w-4 h-4 text-gray-500" />
-                </button>
-                
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setEditingHabit(habit);
-                  }}
-                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                  title="Editar hábito"
-                >
-                  <Edit3 className="w-4 h-4 text-gray-500" />
-                </button>
-              </div>
             </div>
 
             {/* Estatísticas e ação principal */}
@@ -179,7 +153,7 @@ export function HabitList({ habits, showDate = false }: HabitListProps) {
 
               {/* Ação principal */}
               <div className="flex items-center">
-                {hasTarget ? (
+                {hasTarget && (
                   <div className="flex items-center space-x-3 bg-gray-50 rounded-2xl p-2">
                     <button
                       onClick={(e) => {
@@ -214,36 +188,6 @@ export function HabitList({ habits, showDate = false }: HabitListProps) {
                       <Plus className="w-4 h-4" />
                     </motion.button>
                   </div>
-                ) : (
-                  <motion.button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleComplete(habit);
-                    }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    animate={completed ? { 
-                      scale: [1, 1.1, 1],
-                      transition: { duration: 0.6, ease: "easeInOut" }
-                    } : {}}
-                    className={`px-6 py-3 rounded-2xl flex items-center space-x-2 font-semibold transition-all shadow-lg ${
-                      completed
-                        ? 'bg-green-500 text-white hover:bg-green-600 shadow-green-500/30'
-                        : 'bg-blue-500 text-white hover:bg-blue-600 shadow-blue-500/30'
-                    }`}
-                  >
-                    <motion.div
-                      animate={completed ? {
-                        rotate: [0, 360],
-                        transition: { duration: 0.6 }
-                      } : {}}
-                    >
-                      <Check className="w-5 h-5" />
-                    </motion.div>
-                    <span className="text-sm">
-                      {completed ? 'Concluído' : 'Completar'}
-                    </span>
-                  </motion.button>
                 )}
               </div>
             </div>
@@ -258,15 +202,6 @@ export function HabitList({ habits, showDate = false }: HabitListProps) {
         streak={completionAnimationData?.streak || 0}
         onComplete={() => setCompletionAnimation(false)}
       />
-      
-      {/* Modal de edição */}
-      {editingHabit && (
-        <HabitEditModal
-          habit={editingHabit}
-          isOpen={true}
-          onClose={() => setEditingHabit(null)}
-        />
-      )}
     </div>
   );
 }

@@ -117,8 +117,12 @@ export function useUpdateProject() {
         queryClient.setQueryData(queryKeys.projects.all, context.previousProjects);
       }
     },
-    onSettled: (data, error, { projectId }) => {
+    onSettled: (data, error, { projectId, updates }) => {
       invalidateQueries.project(projectId);
+      // Se o projeto foi completado, invalidar conquistas - Sistema de Recompensas TDAH
+      if (updates.status === 'completed') {
+        queryClient.invalidateQueries({ queryKey: ['achievements'] });
+      }
     },
   });
 }

@@ -153,6 +153,13 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
         confirmText: 'Finalizar',
         onConfirm: async () => {
           try {
+            // Registrar timestamp para detectar conquistas de projeto
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('project-completion-timestamp', Date.now().toString());
+              localStorage.setItem('last-completed-project-id', project.id);
+              localStorage.setItem('project-completion-triggered', 'true');
+            }
+
             await updateProjectMutation.mutateAsync({
               projectId: project.id,
               updates: { status: 'completed' }

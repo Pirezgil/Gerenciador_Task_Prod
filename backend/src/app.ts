@@ -15,6 +15,12 @@ import { projectRoutes } from './routes/projects';
 import { noteRoutes } from './routes/notes';
 import { habitRoutes } from './routes/habits';
 import { userRoutes } from './routes/users';
+import achievementRoutes from './routes/achievements';
+import habitStreakRoutes from './routes/habitStreak';
+import { dailyProgressRoutes } from './routes/dailyProgress';
+
+// Services imports
+import DailyTaskScheduler from './services/dailyTaskScheduler';
 
 // Load environment variables
 dotenv.config();
@@ -47,7 +53,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(morgan('combined'));
 
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
@@ -62,6 +68,9 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/notes', noteRoutes);
 app.use('/api/habits', habitRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/achievements', achievementRoutes);
+app.use('/api/habit-streak', habitStreakRoutes);
+app.use('/api/daily-progress', dailyProgressRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
@@ -75,15 +84,20 @@ app.use('*', (req, res) => {
 // Global error handler (must be last)
 app.use(errorHandler);
 
+// Iniciar agendador de tarefas diárias
+DailyTaskScheduler.start();
+
 // Graceful shutdown
 process.on('SIGINT', async () => {
   console.log('🔄 Encerrando servidor...');
+  DailyTaskScheduler.stop();
   await prisma.$disconnect();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
   console.log('🔄 Encerrando servidor...');
+  DailyTaskScheduler.stop();
   await prisma.$disconnect();
   process.exit(0);
 });
