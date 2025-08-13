@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import * as notesController from '../controllers/notesController';
-import { authenticate } from '../middleware/auth';
+import { requireAuth } from '../middleware/auth';
 import { validate } from '../lib/validation';
 import { createNoteSchema, updateNoteSchema, sandboxAuthSchema } from '../lib/validation';
 
 const router = Router();
 
-router.use(authenticate);
+// ETAPA 2: Proteção de rotas server-side robusta
+router.use(requireAuth);
 
 router.get('/', notesController.getNotes);
 router.post('/', validate(createNoteSchema), notesController.createNote);

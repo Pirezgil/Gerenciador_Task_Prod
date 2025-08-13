@@ -17,6 +17,7 @@ export const getUserSettings = async (userId: string) => {
     timezone: settings.timezone,
     notifications: settings.notifications,
     sandboxEnabled: settings.sandboxEnabled,
+    sandboxPassword: settings.sandboxPassword,
     createdAt: settings.createdAt.toISOString(),
     updatedAt: settings.updatedAt.toISOString()
   };
@@ -83,6 +84,7 @@ export const updateUserProfile = async (userId: string, data: UpdateUserProfileR
   // Separar dados do perfil dos dados de configurações
   if (data.name !== undefined) updateData.name = data.name;
   if (data.email !== undefined) updateData.email = data.email;
+  if (data.avatarUrl !== undefined) updateData.avatarUrl = data.avatarUrl;
   
   if (data.timezone !== undefined) settingsData.timezone = data.timezone;
   if (data.dailyEnergyBudget !== undefined) settingsData.dailyEnergyBudget = data.dailyEnergyBudget;

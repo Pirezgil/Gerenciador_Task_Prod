@@ -2,11 +2,12 @@
 
 import React, { useState } from 'react';
 import { useAddComment } from '@/hooks/api/useTasks';
-import { useAuthStore } from '@/stores/authStore';
+import { useAuth } from '@/providers/AuthProvider';
 import { Button } from '@/components/ui/button';
 import { Send } from 'lucide-react';
 import { Task } from '@/types/task';
 import { AutoExpandingTextarea } from '@/components/shared/AutoExpandingTextarea';
+import { useNotification, useAsyncNotification } from '@/hooks/useNotification';
 
 interface CommentSectionProps {
   task: Task;
@@ -15,22 +16,38 @@ interface CommentSectionProps {
 export function CommentSection({ task }: CommentSectionProps) {
   const [newComment, setNewComment] = useState('');
   const addCommentMutation = useAddComment();
-  const { user } = useAuthStore();
+  const { user } = useAuth();
+  
+  // Hooks de notificação
+  const { success, error } = useNotification();
+  const { withLoading } = useAsyncNotification();
 
   const handleAddComment = async () => {
     if (newComment.trim() === '' || !user) return;
     
     try {
-      await addCommentMutation.mutateAsync({
-        taskId: task.id,
-        comment: { 
-          author: user.name || 'Usuário', 
-          content: newComment.trim() 
+      await withLoading(
+        () => addCommentMutation.mutateAsync({
+          taskId: task.id,
+          comment: { 
+            author: user.name || 'Usuário', 
+            content: newComment.trim() 
+          }
+        }),
+        {
+          loading: 'Adicionando comentário...',
+          success: 'Comentário adicionado!'
+        },
+        {
+          context: 'task_crud'
         }
-      });
+      );
       setNewComment('');
-    } catch (error) {
-      console.error('Erro ao adicionar comentário:', error);
+    } catch (err) {
+      error('Erro ao adicionar comentário', {
+        description: err instanceof Error ? err.message : 'Tente novamente',
+        context: 'task_crud'
+      });
     }
   };
 

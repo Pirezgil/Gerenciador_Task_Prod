@@ -7,6 +7,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLogin } from '@/hooks/api/useAuth';
+import { useAuthNotifications, useAsyncNotification } from '@/hooks/useNotification';
 import { Button } from '@/components/ui/button';
 
 export function LoginForm() {
@@ -16,21 +17,38 @@ export function LoginForm() {
   
   const login = useLogin();
   const router = useRouter();
+  
+  // Hooks de notificação
+  const authNotifications = useAuthNotifications();
+  const { withLoading } = useAsyncNotification();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     if (!email || !password) {
-      setError('Por favor, preencha todos os campos');
+      authNotifications.loginError('Por favor, preencha todos os campos');
       return;
     }
 
     try {
-      await login.mutateAsync({ email, password });
-      router.push('/'); // Redirecionar para dashboard
+      const result = await withLoading(
+        () => login.mutateAsync({ email, password }),
+        {
+          loading: 'Fazendo login...',
+          success: `Bem-vindo de volta!`
+        },
+        {
+          context: 'authentication'
+        }
+      );
+      
+      // Sucesso já é mostrado pelo withLoading, apenas redirecionar
+      router.push('/');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Erro ao fazer login');
+      const errorMessage = err.response?.data?.message || 'Erro ao fazer login';
+      authNotifications.loginError(errorMessage);
+      setError(errorMessage);
     }
   };
 
@@ -84,10 +102,17 @@ export function LoginForm() {
         </Button>
       </form>
 
-      <div className="mt-4 text-center">
-        <a href="/register" className="text-sm text-blue-600 hover:text-blue-800">
-          Não tem conta? Cadastre-se
-        </a>
+      <div className="mt-4 text-center space-y-2">
+        <div>
+          <a href="/auth/forgot-password" className="text-sm text-gray-600 hover:text-gray-800">
+            Esqueci minha senha
+          </a>
+        </div>
+        <div>
+          <a href="/register" className="text-sm text-blue-600 hover:text-blue-800">
+            Não tem conta? Cadastre-se
+          </a>
+        </div>
       </div>
     </div>
   );

@@ -1,3 +1,5 @@
+import { CreateReminderRequest, ReminderResponse } from './reminder';
+
 export type HabitFrequencyType = 'daily' | 'weekly' | 'custom';
 
 export interface CreateHabitRequest {
@@ -7,6 +9,7 @@ export interface CreateHabitRequest {
   color?: string;
   targetCount?: number;
   frequency: CreateHabitFrequencyRequest;
+  reminders?: CreateReminderRequest[];
 }
 
 export interface UpdateHabitRequest {
@@ -17,6 +20,7 @@ export interface UpdateHabitRequest {
   targetCount?: number;
   isActive?: boolean;
   frequency?: UpdateHabitFrequencyRequest;
+  reminders?: CreateReminderRequest[];
 }
 
 export interface CreateHabitFrequencyRequest {
@@ -47,6 +51,7 @@ export interface HabitResponse {
   completions?: HabitCompletionResponse[];
   todayCompletion?: HabitCompletionResponse;
   completionRate?: number;
+  reminders?: ReminderResponse[];
 }
 
 export interface HabitFrequencyResponse {

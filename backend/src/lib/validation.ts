@@ -1,28 +1,101 @@
 import { z } from 'zod';
 
+// ETAPA 3: Validação rigorosa de entrada (P2)
+// Proteção contra ataques de injeção e dados maliciosos
+
+// SECURITY: Sanitização adicional de inputs
+export const sanitizeInput = (str: string): string => {
+  return str
+    .trim()
+    .replace(/[<>]/g, '') // Remove caracteres perigosos
+    .substring(0, 1000);   // Limita tamanho
+};
+
+// SECURITY: Validação de UUID
+export const isValidUUID = (uuid: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
+};
+
 // ===== AUTH SCHEMAS =====
 
 export const loginSchema = z.object({
   email: z.string()
     .email('Email inválido')
-    .min(1, 'Email é obrigatório'),
+    .min(1, 'Email é obrigatório')
+    .max(254, 'Email muito longo') // RFC 5321 limit
+    .toLowerCase()
+    .trim()
+    // Proteção contra injeção
+    .refine(val => !val.includes('<') && !val.includes('>') && !val.includes('"'), {
+      message: 'Email contém caracteres inválidos'
+    }),
   password: z.string()
     .min(6, 'Senha deve ter pelo menos 6 caracteres')
-    .max(100, 'Senha muito longa')
+    .max(128, 'Senha muito longa') // Limite de segurança
+    // Proteção contra caracteres maliciosos
+    .refine(val => !/[<>"'`]/.test(val), {
+      message: 'Senha contém caracteres inválidos'
+    })
 });
 
 export const registerSchema = z.object({
   name: z.string()
     .min(2, 'Nome deve ter pelo menos 2 caracteres')
     .max(100, 'Nome muito longo')
-    .trim(),
+    .trim()
+    // Apenas letras, números, espaços e alguns caracteres especiais
+    .regex(/^[a-zA-Z0-9À-ſ\s.'-]+$/, 'Nome contém caracteres não permitidos')
+    // Proteção contra XSS e injeção
+    .refine(val => !/[<>"'`{}\[\]\\]/.test(val), {
+      message: 'Nome contém caracteres inválidos'
+    }),
   email: z.string()
     .email('Email inválido')
     .min(1, 'Email é obrigatório')
-    .toLowerCase(),
+    .max(254, 'Email muito longo')
+    .toLowerCase()
+    .trim()
+    .refine(val => !val.includes('<') && !val.includes('>') && !val.includes('"'), {
+      message: 'Email contém caracteres inválidos'
+    }),
   password: z.string()
-    .min(6, 'Senha deve ter pelo menos 6 caracteres')
+    .min(8, 'Senha deve ter pelo menos 8 caracteres') // Fortalecido
+    .max(128, 'Senha muito longa')
+    // Senha forte obrigatória
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/, 
+           'Senha deve conter: letra minúscula, maiúscula, número e símbolo')
+    // Proteção contra caracteres perigosos
+    .refine(val => !/[<>"'`]/.test(val), {
+      message: 'Senha contém caracteres inválidos'
+    })
+});
+
+export const forgotPasswordSchema = z.object({
+  email: z.string()
+    .email('Email inválido')
+    .min(1, 'Email é obrigatório')
+    .max(254, 'Email muito longo')
+    .toLowerCase()
+    .trim()
+    // Proteção adicional
+    .refine(val => !val.includes('<') && !val.includes('>') && !val.includes('"'), {
+      message: 'Email contém caracteres inválidos'
+    })
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string()
+    .min(1, 'Token é obrigatório'),
+  password: z.string()
+    .min(8, 'Senha deve ter pelo menos 8 caracteres')
     .max(100, 'Senha muito longa')
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Senha deve conter pelo menos uma letra minúscula, uma maiúscula e um número'),
+  confirmPassword: z.string()
+    .min(1, 'Confirmação de senha é obrigatória')
+}).refine(data => data.password === data.confirmPassword, {
+  message: 'As senhas não coincidem',
+  path: ['confirmPassword']
 });
 
 // ===== TASK SCHEMAS =====
@@ -31,13 +104,25 @@ export const createTaskSchema = z.object({
   description: z.string()
     .min(1, 'Descrição é obrigatória')
     .max(1000, 'Descrição muito longa')
-    .trim(),
+    .trim()
+    // SECURITY: Proteção contra XSS e injeção
+    .refine(val => !/[<>"'`{}\[\]\\]/.test(val), {
+      message: 'Descrição contém caracteres inválidos'
+    }),
   energyPoints: z.number()
     .int('Pontos de energia devem ser um número inteiro')
+    .min(1, 'Mínimo 1 ponto')
+    .max(5, 'Máximo 5 pontos')
     .refine(val => [1, 3, 5].includes(val), 'Pontos de energia devem ser 1, 3 ou 5'),
-  type: z.enum(['task', 'brick']).optional().default('task'),
-  projectId: z.string().min(1, 'ID do projeto inválido').optional(),
-  dueDate: z.string().optional(),
+  type: z.string().min(1, 'Tipo é obrigatório').max(50, 'Tipo muito longo').optional().default('task'),
+  projectId: z.string()
+    .min(1, 'ID de projeto inválido')
+    .regex(/^[a-zA-Z0-9]+$/, 'ID de projeto deve conter apenas caracteres alfanuméricos')
+    .optional(),
+  dueDate: z.string()
+    .datetime('Data inválida')
+    .optional()
+    .transform(val => val ? new Date(val) : undefined),
   isRecurring: z.boolean().optional().default(false),
   isAppointment: z.boolean().optional().default(false),
   externalLinks: z.array(z.string()).optional().default([]),
@@ -70,19 +155,37 @@ export const updateTaskSchema = z.object({
     .max(1000, 'Descrição muito longa')
     .trim()
     .optional(),
-  status: z.enum(['pending', 'in_progress', 'completed']).optional(),
+  status: z.enum(['pending', 'in_progress', 'completed', 'postponed']).optional(),
   energyPoints: z.number()
     .int('Pontos de energia devem ser um número inteiro')
     .refine(val => [1, 3, 5].includes(val), 'Pontos de energia devem ser 1, 3 ou 5')
     .optional(),
-  type: z.enum(['task', 'brick']).optional(),
+  type: z.string().min(1, 'Tipo é obrigatório').max(50, 'Tipo muito longo').optional(),
   projectId: z.string().min(1, 'ID do projeto inválido').nullable().optional(),
   dueDate: z.string().nullable().optional(),
   rescheduleDate: z.string().nullable().optional(),
   isRecurring: z.boolean().optional(),
   isAppointment: z.boolean().optional(),
   plannedForToday: z.boolean().optional(),
-  externalLinks: z.array(z.string().url('URL inválida')).optional()
+  externalLinks: z.array(z.string().url('URL inválida')).optional(),
+  recurrence: z.object({
+    frequency: z.enum(['daily', 'weekly', 'custom']),
+    daysOfWeek: z.array(z.number().min(0).max(6)).optional()
+  }).nullable().optional(),
+  appointment: z.object({
+    scheduledTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Horário inválido (HH:MM)'),
+    preparationTime: z.number().min(0).optional().default(0),
+    location: z.string().max(200, 'Localização muito longa').optional(),
+    notes: z.string().max(500, 'Notas muito longas').optional(),
+    reminderTime: z.number().min(0).optional()
+  }).nullable().optional(),
+  attachments: z.array(z.object({
+    id: z.string().optional(),
+    name: z.string().min(1, 'Nome do arquivo é obrigatório').max(255, 'Nome muito longo'),
+    url: z.string().min(1, 'URL é obrigatória'),
+    type: z.string().min(1, 'Tipo é obrigatório'),
+    size: z.string().min(1, 'Tamanho é obrigatório')
+  })).optional()
 });
 
 export const postponeTaskSchema = z.object({
@@ -92,6 +195,21 @@ export const postponeTaskSchema = z.object({
 
 export const completeTaskSchema = z.object({
   completedAt: z.string().optional()
+});
+
+// ============================================================================
+// ATTACHMENT SCHEMAS
+// ============================================================================
+
+export const createAttachmentSchema = z.object({
+  name: z.string().min(1, 'Nome do arquivo é obrigatório').max(255, 'Nome muito longo'),
+  url: z.string().min(1, 'URL é obrigatória'),
+  type: z.string().min(1, 'Tipo é obrigatório'),
+  size: z.string().min(1, 'Tamanho é obrigatório')
+});
+
+export const deleteAttachmentSchema = z.object({
+  // Validation será feita nos params da URL
 });
 
 export const createTaskCommentSchema = z.object({
@@ -249,7 +367,12 @@ export const updateUserProfileSchema = z.object({
     .optional(),
   email: z.string().email('Email inválido').optional(),
   timezone: z.string().max(100, 'Timezone inválido').optional(),
-  dailyEnergyBudget: z.number().int().min(1).optional()
+  dailyEnergyBudget: z.number().int().min(1).optional(),
+  avatarUrl: z.string()
+    .max(2000000, 'Imagem muito grande') // ~2MB em base64
+    .refine(val => val.startsWith('data:image/'), 'Deve ser uma imagem em formato base64')
+    .nullable()
+    .optional()
 });
 
 export const updateUserSettingsSchema = z.object({
@@ -271,8 +394,8 @@ export const paginationSchema = z.object({
 });
 
 export const taskFilterSchema = z.object({
-  status: z.enum(['pending', 'completed', 'postponed']).optional(),
-  type: z.enum(['task', 'brick']).optional(),
+  status: z.enum(['pending', 'in_progress', 'completed', 'postponed']).optional(),
+  type: z.string().max(50, 'Tipo muito longo').optional(),
   projectId: z.string().min(1, 'ID do projeto inválido').optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
@@ -284,46 +407,185 @@ export const habitFilterSchema = z.object({
   search: z.string().max(100, 'Termo de busca muito longo').optional()
 });
 
-// ===== MIDDLEWARE DE VALIDAÇÃO =====
+// ===== REMINDER SCHEMAS =====
 
+export const createReminderSchema = z.object({
+  entityId: z.string().min(1, 'ID da entidade inválido').optional(),
+  entityType: z.enum(['task', 'habit', 'standalone'], {
+    errorMap: () => ({ message: 'Tipo de entidade deve ser: task, habit ou standalone' })
+  }),
+  type: z.enum(['before_due', 'scheduled', 'recurring'], {
+    errorMap: () => ({ message: 'Tipo de lembrete deve ser: before_due, scheduled ou recurring' })
+  }),
+  scheduledTime: z.string()
+    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Horário deve estar no formato HH:MM')
+    .optional(),
+  minutesBefore: z.number()
+    .int('Minutos devem ser um número inteiro')
+    .min(1, 'Mínimo 1 minuto')
+    .max(1440, 'Máximo 24 horas (1440 minutos)')
+    .optional(),
+  daysOfWeek: z.array(z.number().min(0).max(6))
+    .max(7, 'Máximo 7 dias da semana')
+    .optional()
+    .default([]),
+  notificationTypes: z.array(z.enum(['push', 'email', 'sms']))
+    .min(1, 'Pelo menos um tipo de notificação é obrigatório')
+    .max(3, 'Máximo 3 tipos de notificação'),
+  message: z.string()
+    .max(500, 'Mensagem muito longa')
+    .optional(),
+  isActive: z.boolean().optional().default(true)
+}).refine(data => {
+  // Validações condicionais
+  if (data.type === 'before_due' && !data.minutesBefore) {
+    return false;
+  }
+  if ((data.type === 'scheduled' || data.type === 'recurring') && !data.scheduledTime) {
+    return false;
+  }
+  if (data.type === 'recurring' && data.daysOfWeek.length === 0) {
+    return false;
+  }
+  return true;
+}, {
+  message: 'Dados de lembrete inconsistentes: before_due precisa de minutesBefore, scheduled/recurring precisam de scheduledTime, recurring precisa de daysOfWeek'
+});
+
+export const updateReminderSchema = z.object({
+  type: z.enum(['before_due', 'scheduled', 'recurring']).optional(),
+  scheduledTime: z.string()
+    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Horário deve estar no formato HH:MM')
+    .optional(),
+  minutesBefore: z.number()
+    .int('Minutos devem ser um número inteiro')
+    .min(1, 'Mínimo 1 minuto')
+    .max(1440, 'Máximo 24 horas (1440 minutos)')
+    .optional(),
+  daysOfWeek: z.array(z.number().min(0).max(6))
+    .max(7, 'Máximo 7 dias da semana')
+    .optional(),
+  notificationTypes: z.array(z.enum(['push', 'email', 'sms']))
+    .min(1, 'Pelo menos um tipo de notificação é obrigatório')
+    .max(3, 'Máximo 3 tipos de notificação')
+    .optional(),
+  message: z.string()
+    .max(500, 'Mensagem muito longa')
+    .optional(),
+  isActive: z.boolean().optional()
+});
+
+export const reminderFilterSchema = z.object({
+  entityType: z.enum(['task', 'habit', 'standalone']).optional(),
+  entityId: z.string().min(1, 'ID da entidade inválido').optional(),
+  type: z.enum(['before_due', 'scheduled', 'recurring']).optional(),
+  isActive: z.enum(['true', 'false']).optional()
+});
+
+// ===== MIDDLEWARE DE VALIDAÇÃO PADRONIZADO =====
+
+import { Request, Response, NextFunction } from 'express';
+import { createValidationErrorResponse } from './errors';
+
+/**
+ * Middleware para validação de body com sistema padronizado
+ */
 export const validate = (schema: z.ZodSchema) => {
-  return (req: any, res: any, next: any) => {
+  return (req: Request, res: Response, next: NextFunction) => {
     try {
       const result = schema.parse(req.body);
       req.body = result;
       next();
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({
-          error: 'Dados inválidos',
-          details: error.errors.map(err => ({
-            field: err.path.join('.'),
-            message: err.message
-          }))
-        });
+        const validationErrors = error.errors.map(err => ({
+          field: err.path.join('.'),
+          message: err.message,
+          code: err.code
+        }));
+
+        const response = createValidationErrorResponse(
+          validationErrors,
+          'Dados do corpo da requisição são inválidos'
+        );
+        
+        res.status(400).json(response);
+        return;
       }
       next(error);
     }
   };
 };
 
+/**
+ * Middleware para validação de query parameters com sistema padronizado
+ */
 export const validateQuery = (schema: z.ZodSchema) => {
-  return (req: any, res: any, next: any) => {
+  return (req: Request, res: Response, next: NextFunction) => {
     try {
       const result = schema.parse(req.query);
       req.query = result;
       next();
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({
-          error: 'Parâmetros de consulta inválidos',
-          details: error.errors.map(err => ({
-            field: err.path.join('.'),
-            message: err.message
-          }))
-        });
+        const validationErrors = error.errors.map(err => ({
+          field: err.path.join('.'),
+          message: err.message,
+          code: err.code
+        }));
+
+        const response = createValidationErrorResponse(
+          validationErrors,
+          'Parâmetros de consulta são inválidos'
+        );
+        
+        res.status(400).json(response);
+        return;
       }
       next(error);
     }
   };
 };
+
+/**
+ * Middleware para validação de params com sistema padronizado
+ */
+export const validateParams = (schema: z.ZodSchema) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = schema.parse(req.params);
+      req.params = result;
+      next();
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const validationErrors = error.errors.map(err => ({
+          field: err.path.join('.'),
+          message: err.message,
+          code: err.code
+        }));
+
+        const response = createValidationErrorResponse(
+          validationErrors,
+          'Parâmetros da URL são inválidos'
+        );
+        
+        res.status(400).json(response);
+        return;
+      }
+      next(error);
+    }
+  };
+};
+
+// ===== SCHEMAS PARA VALIDAÇÃO DE PARAMS =====
+
+export const idParamSchema = z.object({
+  id: z.string()
+    .min(1, 'ID é obrigatório')
+    .regex(/^[a-zA-Z0-9]+$/, 'ID deve conter apenas caracteres alfanuméricos')
+});
+
+export const paginationParamsSchema = z.object({
+  page: z.string().regex(/^\d+$/, 'Página deve ser um número').optional(),
+  limit: z.string().regex(/^\d+$/, 'Limite deve ser um número').optional()
+});

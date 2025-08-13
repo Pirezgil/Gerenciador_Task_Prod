@@ -8,12 +8,12 @@ import React, { useState, useRef } from 'react';
 import NextImage from 'next/image';
 import { Save, Edit3, X, User, Mail, MapPin, Brain, Zap, Battery, Camera, Upload, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAuthStore } from '../../stores/authStore';
+import { useAuth } from '@/providers/AuthProvider';
 import { ImageCropper } from '../shared/ImageCropper';
 import { useStandardAlert } from '../shared/StandardAlert';
 
 export function UserProfile() {
-  const { user, setUser, clearAuth } = useAuthStore();
+  const { user, logout, refreshUser } = useAuth();
   const { showAlert, AlertComponent } = useStandardAlert();
   const [isEditing, setIsEditing] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
@@ -37,51 +37,22 @@ export function UserProfile() {
           dailyEnergyBudget: formData.dailyEnergyBudget,
         };
 
-        // Chamar API para salvar no backend
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-        const token = localStorage.getItem('auth-token');
+        // Usar a API configurada do sistema
+        const { userApi } = await import('@/lib/api');
+        await userApi.updateProfile(updatedProfile);
         
-        const response = await fetch(`${apiUrl}/users/profile`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          credentials: 'include',
-          body: JSON.stringify(updatedProfile),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          
-          // Atualizar store local com dados do servidor
-          setUser(data.data);
-          
-          // Forçar atualização da energia na sidebar
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('energy-budget-updated'));
-          }
-          
-          showAlert('Sucesso', 'Configurações salvas com sucesso!', 'success');
-        } else {
-          throw new Error('Erro ao salvar configurações');
+        // Refresh user data from the server
+        await refreshUser();
+        
+        // Forçar atualização da energia na sidebar
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('energy-budget-updated'));
         }
+        
+        showAlert('Sucesso', 'Configurações salvas com sucesso!', 'success');
       } catch (error) {
         console.error('Erro ao salvar:', error);
-        showAlert('Erro', 'Erro ao salvar configurações. Salvando localmente.', 'error');
-        
-        // Fallback: salvar localmente
-        setUser({
-          ...user,
-          name: formData.name,
-          email: formData.email,
-          settings: {
-            ...user.settings,
-            timezone: formData.timezone,
-            dailyEnergyBudget: formData.dailyEnergyBudget,
-          },
-          updatedAt: new Date().toISOString(),
-        });
+        showAlert('Erro', 'Erro ao salvar configurações. Tente novamente.', 'error');
       }
     }
     setIsEditing(false);
@@ -145,14 +116,16 @@ export function UserProfile() {
     setShowCropper(false);
 
     try {      
-      // Salvar no localStorage/authStore
+      // Fazer upload da imagem cortada
+      const { userApi } = await import('@/lib/api');
+      await userApi.uploadAvatar(croppedImage);
+      
+      // Refresh user data to get updated avatar
       if (user) {
-        setUser({
-          ...user,
-          avatar_url: croppedImage,
-          updatedAt: new Date().toISOString(),
-        });
+        await refreshUser();
       }
+      
+      showAlert('Sucesso', 'Foto de perfil atualizada com sucesso!', 'success');
       
     } catch (error) {
       console.error('Erro ao fazer upload da foto:', error);
@@ -180,11 +153,8 @@ export function UserProfile() {
       {
         showCancel: true,
         confirmText: 'Sair',
-        onConfirm: () => {
-          clearAuth();
-          if (typeof window !== 'undefined') {
-            window.location.href = '/auth';
-          }
+        onConfirm: async () => {
+          await logout();
         }
       }
     );

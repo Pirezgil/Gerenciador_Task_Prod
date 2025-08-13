@@ -1,12 +1,21 @@
 import bcrypt from 'bcrypt';
 import { prisma } from '../app';
 import { generateToken } from '../lib/jwt';
-import { LoginRequest, RegisterRequest, AuthResponse, AuthUser } from '../types/auth';
+import { LoginRequest, RegisterRequest, AuthUser } from '../types/auth';
+import { AppError, ErrorCode } from '../lib/errors';
+
+// Interface interna para retornar dados completos (incluindo token)
+export interface AuthServiceResponse {
+  user: AuthUser;
+  token: string;
+  expiresIn: string;
+}
 
 const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || '12');
 
-export const registerUser = async (data: RegisterRequest): Promise<AuthResponse> => {
+export const registerUser = async (data: RegisterRequest): Promise<AuthServiceResponse> => {
   const { name, email, password } = data;
+  const startTime = Date.now();
 
   // Verificar se o usuário já existe
   const existingUser = await prisma.user.findUnique({
@@ -14,7 +23,18 @@ export const registerUser = async (data: RegisterRequest): Promise<AuthResponse>
   });
 
   if (existingUser) {
-    throw new Error('Usuário já existe com este email');
+    // Fazer hash dummy para manter timing consistente
+    await bcrypt.hash('dummy-password-for-timing', BCRYPT_ROUNDS);
+    
+    // Tempo mínimo para prevenir timing attacks
+    const elapsedTime = Date.now() - startTime;
+    const minimumTime = 150;
+    if (elapsedTime < minimumTime) {
+      await new Promise(resolve => setTimeout(resolve, minimumTime - elapsedTime));
+    }
+    
+    // Usar código de erro apropriado para usuário existente
+    throw new AppError(ErrorCode.AUTH_USER_EXISTS, undefined, 'email', 'user_registration');
   }
 
   // Hash da senha
@@ -89,8 +109,9 @@ export const registerUser = async (data: RegisterRequest): Promise<AuthResponse>
   };
 };
 
-export const loginUser = async (data: LoginRequest): Promise<AuthResponse> => {
+export const loginUser = async (data: LoginRequest): Promise<AuthServiceResponse> => {
   const { email, password } = data;
+  const startTime = Date.now();
 
   // Buscar usuário
   const user = await prisma.user.findUnique({
@@ -117,22 +138,39 @@ export const loginUser = async (data: LoginRequest): Promise<AuthResponse> => {
     }
   });
 
-  if (!user) {
-    throw new Error('Credenciais inválidas');
+  // SEMPRE fazer hash check para manter timing consistente
+  const dummyHash = '$2b$12$dummyHashForTimingConsistencyWithProperLength..';
+  const isValidPassword = user?.password ? 
+    await bcrypt.compare(password, user.password) : 
+    await bcrypt.compare(password, dummyHash);
+
+  // Tempo mínimo para prevenir timing attacks
+  const elapsedTime = Date.now() - startTime;
+  const minimumTime = 150; // 150ms mínimo
+  if (elapsedTime < minimumTime) {
+    await new Promise(resolve => setTimeout(resolve, minimumTime - elapsedTime));
   }
 
-  // Verificar se o usuário tem senha
-  if (!user.password) {
-    throw new Error('Esta conta foi criada com login social. Use a opção de login com Google.');
+  // Verificações unificadas com mensagem genérica
+  if (!user || !user.password || !isValidPassword) {
+    throw new AppError(ErrorCode.AUTH_INVALID_CREDENTIALS, undefined, undefined, 'user_login');
   }
 
-  // Verificar senha
-  const isValidPassword = await bcrypt.compare(password, user.password);
-  if (!isValidPassword) {
-    throw new Error('Credenciais inválidas');
+  // Verificar se é conta social (apenas para usuários válidos)
+  if (!user.password && user.googleId) {
+    throw new AppError(ErrorCode.AUTH_SOCIAL_ACCOUNT, undefined, undefined, 'user_login');
   }
 
-  // Gerar token
+  // SESSION FIXATION PROTECTION: Update user's last login to invalidate any existing sessions
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { 
+      updatedAt: new Date() // Forces session regeneration by updating timestamp
+    }
+  });
+
+  // SESSION FIXATION PROTECTION: Generate fresh token with current timestamp
+  // This ensures any old tokens become invalid due to timing checks
   const token = generateToken({
     userId: user.id,
     email: user.email
@@ -183,7 +221,7 @@ export const getUserById = async (userId: string): Promise<AuthUser> => {
   });
 
   if (!user) {
-    throw new Error('Usuário não encontrado');
+    throw new AppError(ErrorCode.AUTH_USER_NOT_FOUND, undefined, undefined, 'user_profile');
   }
 
   return {

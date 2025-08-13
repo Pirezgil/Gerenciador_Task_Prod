@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import AchievementService from '../services/achievementService';
-import { authenticate } from '../middleware/auth';
+import { requireAuth } from '../middleware/auth';
 import { AchievementType, TaskAchievementSubtype } from '../types/achievement';
 
 const router = Router();
@@ -11,7 +11,7 @@ const router = Router();
  * GET /api/achievements
  * Busca todas as conquistas do usuário
  */
-router.get('/', authenticate, async (req: Request, res: Response) => {
+router.get('/', requireAuth, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
     const { type, subtype, startDate, endDate, limit, offset } = req.query;
@@ -49,7 +49,7 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
  * GET /api/achievements/rewards-page
  * Busca dados completos para a página de recompensas
  */
-router.get('/rewards-page', authenticate, async (req: Request, res: Response) => {
+router.get('/rewards-page', requireAuth, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
     
@@ -69,7 +69,7 @@ router.get('/rewards-page', authenticate, async (req: Request, res: Response) =>
  * POST /api/achievements
  * Criar uma conquista manualmente (para testes/admin)
  */
-router.post('/', authenticate, async (req: Request, res: Response) => {
+router.post('/', requireAuth, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
     const { type, subtype, relatedId, metadata } = req.body;
@@ -87,11 +87,11 @@ router.post('/', authenticate, async (req: Request, res: Response) => {
     };
 
     const achievement = await AchievementService.createAchievement(achievementData);
-    res.status(201).json(achievement);
+    return res.status(201).json(achievement);
 
   } catch (error: any) {
     console.error('Erro ao criar conquista:', error);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       error: 'Erro interno do servidor',
       message: error.message 
     });
@@ -104,7 +104,7 @@ router.post('/', authenticate, async (req: Request, res: Response) => {
  * GET /api/achievements/daily-progress/:date
  * Busca progresso diário específico
  */
-router.get('/daily-progress/:date', authenticate, async (req: Request, res: Response) => {
+router.get('/daily-progress/:date', requireAuth, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
     const { date } = req.params;
@@ -115,11 +115,11 @@ router.get('/daily-progress/:date', authenticate, async (req: Request, res: Resp
       return res.status(404).json({ error: 'Progresso não encontrado para esta data' });
     }
 
-    res.json(progress);
+    return res.json(progress);
 
   } catch (error: any) {
     console.error('Erro ao buscar progresso diário:', error);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       error: 'Erro interno do servidor',
       message: error.message 
     });
@@ -130,7 +130,7 @@ router.get('/daily-progress/:date', authenticate, async (req: Request, res: Resp
  * PUT /api/achievements/daily-progress/:date
  * Atualiza progresso diário
  */
-router.put('/daily-progress/:date', authenticate, async (req: Request, res: Response) => {
+router.put('/daily-progress/:date', requireAuth, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
     const { date } = req.params;
@@ -160,7 +160,7 @@ router.put('/daily-progress/:date', authenticate, async (req: Request, res: Resp
  * GET /api/achievements/stats
  * Busca estatísticas resumidas das conquistas
  */
-router.get('/stats', authenticate, async (req: Request, res: Response) => {
+router.get('/stats', requireAuth, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
     
@@ -184,7 +184,7 @@ router.get('/stats', authenticate, async (req: Request, res: Response) => {
  * GET /api/achievements/weekly
  * Busca medalhas da semana (domingo a sábado)
  */
-router.get('/weekly', authenticate, async (req: Request, res: Response) => {
+router.get('/weekly', requireAuth, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
     const targetDate = (req.query.date as string) || new Date().toISOString().split('T')[0];
@@ -206,7 +206,7 @@ router.get('/weekly', authenticate, async (req: Request, res: Response) => {
  * GET /api/achievements/today-count
  * Busca quantidade de medalhas ganhas hoje
  */
-router.get('/today-count', authenticate, async (req: Request, res: Response) => {
+router.get('/today-count', requireAuth, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
     const today = new Date().toISOString().split('T')[0];
@@ -228,7 +228,7 @@ router.get('/today-count', authenticate, async (req: Request, res: Response) => 
  * POST /api/achievements/check-daily-mastery
  * Força verificação de conquista de Mestre do Dia (para testes)
  */
-router.post('/check-daily-mastery', authenticate, async (req: Request, res: Response) => {
+router.post('/check-daily-mastery', requireAuth, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
     const { date } = req.body;
@@ -262,7 +262,7 @@ router.post('/check-daily-mastery', authenticate, async (req: Request, res: Resp
  * POST /api/achievements/check-weekly-legend
  * Força verificação de conquista de Lenda da Semana (para testes)
  */
-router.post('/check-weekly-legend', authenticate, async (req: Request, res: Response) => {
+router.post('/check-weekly-legend', requireAuth, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
     const { weekStartDate } = req.body;
@@ -274,12 +274,12 @@ router.post('/check-weekly-legend', authenticate, async (req: Request, res: Resp
     const achievement = await AchievementService.checkWeeklyLegend(userId, weekStartDate);
     
     if (achievement) {
-      res.json({ 
+      return res.json({ 
         message: 'Conquista de Lenda da Semana obtida!',
         achievement 
       });
     } else {
-      res.json({ 
+      return res.json({ 
         message: 'Condições para Lenda da Semana ainda não foram atingidas',
         achievement: null 
       });
@@ -287,7 +287,7 @@ router.post('/check-weekly-legend', authenticate, async (req: Request, res: Resp
 
   } catch (error: any) {
     console.error('Erro ao verificar lenda semanal:', error);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       error: 'Erro interno do servidor',
       message: error.message 
     });
@@ -298,7 +298,7 @@ router.post('/check-weekly-legend', authenticate, async (req: Request, res: Resp
  * POST /api/achievements/create-sample-data
  * Cria dados de exemplo para demonstração (APENAS PARA DESENVOLVIMENTO)
  */
-router.post('/create-sample-data', authenticate, async (req: Request, res: Response) => {
+router.post('/create-sample-data', requireAuth, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
     
@@ -309,7 +309,7 @@ router.post('/create-sample-data', authenticate, async (req: Request, res: Respo
         type: 'task_completion' as AchievementType,
         subtype: 'bronze' as TaskAchievementSubtype,
         metadata: {
-          energyPoints: 1 as 1,
+          energyPoints: 1 as const,
           taskDescription: 'Organizar mesa de trabalho',
         }
       },
@@ -318,7 +318,7 @@ router.post('/create-sample-data', authenticate, async (req: Request, res: Respo
         type: 'task_completion' as AchievementType,
         subtype: 'silver' as TaskAchievementSubtype,
         metadata: {
-          energyPoints: 3 as 3,
+          energyPoints: 3 as const,
           taskDescription: 'Completar relatório mensal',
         }
       },

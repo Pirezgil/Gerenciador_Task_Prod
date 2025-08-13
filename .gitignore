@@ -59,6 +59,7 @@ backup_*/
 # Temporary files
 .tmp/
 temp/
+nul
 
 # =================================================================
 # REGRAS ESPECÍFICAS DO PROJETO GERENCIADOR DE TAREFAS

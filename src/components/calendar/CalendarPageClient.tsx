@@ -62,17 +62,17 @@ export function CalendarPageClient() {
       }
       
       // Tarefas recorrentes
-      if (task.isRecurring && task.recurrenceType) {
+      if (task.isRecurring && task.recurrence) {
         const taskCreatedDate = new Date(task.createdAt);
         const daysDiff = Math.floor((date.getTime() - taskCreatedDate.getTime()) / (1000 * 60 * 60 * 24));
         
-        switch (task.recurrenceType) {
+        switch (task.recurrence.frequency) {
           case 'daily':
             return daysDiff >= 0;
           case 'weekly':
             return daysDiff >= 0 && daysDiff % 7 === 0;
-          case 'monthly':
-            return daysDiff >= 0 && date.getDate() === taskCreatedDate.getDate();
+          case 'custom':
+            return daysDiff >= 0;
           default:
             return false;
         }

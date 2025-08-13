@@ -15,8 +15,9 @@ import {
   Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAuthStore } from '@/stores/authStore';
+import { useAuth } from '@/providers/AuthProvider';
 import { useStandardAlert } from '@/components/shared/StandardAlert';
+import { useCreateAttachment, useDeleteAttachment } from '@/hooks/api/useAttachments';
 
 interface Attachment {
   id: string;
@@ -25,6 +26,8 @@ interface Attachment {
   type: string;
   url: string;
   uploadedAt: string;
+  isSaving?: boolean; // Estado de salvamento
+  hasError?: boolean; // Estado de erro
 }
 
 interface AttachmentManagerProps {
@@ -44,101 +47,74 @@ export function AttachmentManager({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [currentAttachments, setCurrentAttachments] = useState<Attachment[]>(attachments);
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const { showAlert, AlertComponent } = useStandardAlert();
+
+  // 🚀 React Query Hooks Otimistas
+  const createAttachmentMutation = useCreateAttachment();
+  const deleteAttachmentMutation = useDeleteAttachment();
 
   // Sincronizar com props quando mudarem
   useEffect(() => {
     setCurrentAttachments(attachments);
   }, [attachments]);
 
-  // Limite de 2GB por usuário
-  const USER_STORAGE_LIMIT = 2 * 1024 * 1024 * 1024; // 2GB em bytes
+  // Storage validation removed from frontend - handled by backend
 
-  // Calcular tamanho total dos anexos do usuário
-  const getUserStorageUsed = (): number => {
-    return currentAttachments.reduce((total, att) => total + att.size, 0);
-  };
-
-  // Função para obter token de autenticação
-  const getAuthToken = (): string | null => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('auth-token');
-    }
-    return null;
-  };
-
-  // Função para salvar anexo no backend
-  const saveAttachmentToBackend = async (attachment: Attachment): Promise<void> => {
+  // 🚀 NOVA: Função para salvar anexo individual via API específica
+  const saveAttachmentToTask = async (attachment: Attachment): Promise<void> => {
     if (!taskId || !user?.id) {
       console.error('Dados insuficientes:', { taskId, userId: user?.id });
       return;
     }
     
-    const token = getAuthToken();
-    if (!token) {
-      throw new Error('Token de autenticação não encontrado');
-    }
-    
-    const payload = {
-      taskId,
-      name: attachment.name,
-      url: attachment.url,
-      type: attachment.type,
-      size: attachment.size
-    };
-    
-    console.log('Enviando dados para API:', payload);
-    
     try {
-      const response = await fetch('/api/tasks/attachments', {
+      // Usar endpoint específico para anexos com autenticação por cookies
+      const response = await fetch(`http://localhost:3001/api/tasks/${taskId}/attachments`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify(payload)
+        credentials: 'include', // Para enviar cookies automaticamente
+        body: JSON.stringify({
+          name: attachment.name,
+          url: attachment.url,
+          type: attachment.type,
+          size: attachment.size.toString()
+        })
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Erro da API:', errorData);
         throw new Error(errorData.error || 'Erro ao salvar anexo');
       }
       
-      const result = await response.json();
-      console.log('Anexo salvo com sucesso:', result);
+      console.log('✅ Anexo salvo individualmente na tarefa');
     } catch (error) {
-      console.error('Erro ao salvar anexo no backend:', error);
+      console.error('❌ Erro ao salvar anexo:', error);
       throw error;
     }
   };
 
-  // Função para remover anexo do backend
-  const removeAttachmentFromBackend = async (attachmentId: string): Promise<void> => {
+  // 🚀 NOVA: Função para remover anexo individual via API específica
+  const removeAttachmentFromTask = async (attachmentId: string): Promise<void> => {
     if (!taskId || !user?.id) return;
     
-    const token = getAuthToken();
-    if (!token) {
-      throw new Error('Token de autenticação não encontrado');
-    }
-    
     try {
-      const response = await fetch(`/api/tasks/attachments/${attachmentId}`, {
+      // Usar endpoint específico para remoção com autenticação por cookies
+      const response = await fetch(`http://localhost:3001/api/tasks/${taskId}/attachments/${attachmentId}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        }
+        credentials: 'include' // Para enviar cookies automaticamente
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Erro ao remover anexo');
       }
       
-      console.log('Anexo removido com sucesso');
+      console.log('✅ Anexo removido individualmente da tarefa');
     } catch (error) {
-      console.error('Erro ao remover anexo do backend:', error);
+      console.error('❌ Erro ao remover anexo:', error);
       throw error;
     }
   };
@@ -200,7 +176,6 @@ export function AttachmentManager({
 
     try {
       const newAttachments: Attachment[] = [];
-      const currentStorageUsed = getUserStorageUsed();
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
@@ -215,16 +190,10 @@ export function AttachmentManager({
           continue;
         }
 
-        // Verificar se não excede o limite total do usuário
-        const totalNewSize = newAttachments.reduce((sum, att) => sum + att.size, 0);
-        if (currentStorageUsed + totalNewSize + file.size > USER_STORAGE_LIMIT) {
-          showAlert(
-            'Limite de Armazenamento',
-            `O arquivo "${file.name}" excederia o limite de armazenamento de 2GB por usuário.`,
-            'warning'
-          );
-          break;
-        }
+        // NOTA: Validação de limite total removida do frontend
+        // Motivo: O frontend só tem visibilidade dos anexos da tarefa atual,
+        // mas o limite é por usuário (todos os anexos). A validação correta
+        // está no backend (attachmentService.ts) que tem visão completa.
 
         setUploadProgress(((i + 1) / files.length) * 100);
 
@@ -271,30 +240,69 @@ export function AttachmentManager({
           type: fileType,
           url: compressedData,
           uploadedAt: new Date().toISOString(),
+          isSaving: true, // Marcar como salvando
         };
 
-        // Salvar no backend se taskId estiver disponível
-        if (taskId) {
-          try {
-            await saveAttachmentToBackend(attachment);
-          } catch (error) {
-            console.error('Erro ao salvar anexo:', error);
-            showAlert(
-              'Erro ao Salvar',
-              `Erro ao salvar anexo "${file.name}". Tente novamente.`,
-              'error'
-            );
-            continue;
-          }
-        }
+        // TODO: Implementar endpoints de anexos no backend
+        // Por enquanto, salvando apenas no estado local
+        // if (taskId) {
+        //   try {
+        //     await saveAttachmentToBackend(attachment);
+        //   } catch (error) {
+        //     console.error('Erro ao salvar anexo:', error);
+        //     showAlert(
+        //       'Erro ao Salvar',
+        //       `Erro ao salvar anexo "${file.name}". Tente novamente.`,
+        //       'error'
+        //     );
+        //     continue;
+        //   }
+        // }
 
         newAttachments.push(attachment);
       }
 
       if (newAttachments.length > 0) {
+        // 🚀 OTIMIZAÇÃO: Mostrar anexos imediatamente com estado "salvando"
         const updatedAttachments = [...currentAttachments, ...newAttachments];
         setCurrentAttachments(updatedAttachments);
         onAttachmentsChange(updatedAttachments);
+
+        // 🚀 Salvar anexos usando React Query otimista
+        if (taskId) {
+          // Processar cada anexo individualmente com updates otimistas
+          for (const attachment of newAttachments) {
+            try {
+              await createAttachmentMutation.mutateAsync({
+                taskId,
+                name: attachment.name,
+                url: attachment.url,
+                type: attachment.type,
+                size: attachment.size.toString()
+              });
+              
+              // ✅ Sucesso: Update otimista já foi aplicado pelo React Query
+              console.log('✅ Anexo salvo com sucesso:', attachment.name);
+              
+              // Mostrar aviso de arquivo adicionado
+              showAlert(
+                'Arquivo Adicionado',
+                `O arquivo "${attachment.name}" foi adicionado com sucesso.`,
+                'success'
+              );
+              
+            } catch (error) {
+              console.error('❌ Erro ao salvar anexo individual:', error);
+              
+              // ❌ Erro: React Query já reverteu o update otimista
+              showAlert(
+                'Erro ao Salvar',
+                `Erro ao salvar anexo "${attachment.name}". Tente novamente.`,
+                'error'
+              );
+            }
+          }
+        }
       }
 
     } catch (error) {
@@ -314,17 +322,56 @@ export function AttachmentManager({
   };
 
   const handleRemoveAttachment = async (attachmentId: string) => {
-    try {
-      // Remover do backend se taskId estiver disponível
-      if (taskId) {
-        await removeAttachmentFromBackend(attachmentId);
-      }
-      
+    const attachment = currentAttachments.find(att => att.id === attachmentId);
+    if (!attachment) return;
+
+    // Mostrar confirmação antes de excluir
+    const confirmed = window.confirm(
+      `Tem certeza que deseja excluir o arquivo "${attachment.name}"?\n\nEsta ação não pode ser desfeita.`
+    );
+    
+    if (!confirmed) {
+      return;
+    }
+
+    if (!taskId) {
+      // Sem taskId, apenas remover do estado local
       const updatedAttachments = currentAttachments.filter(att => att.id !== attachmentId);
       setCurrentAttachments(updatedAttachments);
       onAttachmentsChange(updatedAttachments);
+      
+      // Mostrar aviso de arquivo excluído
+      showAlert(
+        'Arquivo Excluído',
+        `O arquivo "${attachment.name}" foi excluído com sucesso.`,
+        'success'
+      );
+      return;
+    }
+
+    try {
+      // 🚀 Usar React Query para remoção otimista
+      await deleteAttachmentMutation.mutateAsync({ taskId, attachmentId });
+      
+      // ✅ Sucesso: Update otimista já foi aplicado pelo React Query
+      console.log('✅ Anexo removido com sucesso');
+      
+      // Sincronizar estado local
+      const updatedAttachments = currentAttachments.filter(att => att.id !== attachmentId);
+      setCurrentAttachments(updatedAttachments);
+      onAttachmentsChange(updatedAttachments);
+      
+      // Mostrar aviso de sucesso
+      showAlert(
+        'Arquivo Excluído',
+        `O arquivo "${attachment.name}" foi excluído com sucesso.`,
+        'success'
+      );
+      
     } catch (error) {
-      console.error('Erro ao remover anexo:', error);
+      console.error('❌ Erro ao remover anexo:', error);
+      
+      // ❌ Erro: React Query já reverteu o update otimista
       showAlert(
         'Erro ao Remover',
         'Erro ao remover anexo. Tente novamente.',
@@ -342,12 +389,11 @@ export function AttachmentManager({
     document.body.removeChild(link);
   };
 
-  const storageUsed = getUserStorageUsed();
-  const storagePercentage = (storageUsed / USER_STORAGE_LIMIT) * 100;
+  // Storage usage calculation removed - validation now handled by backend
 
   return (
     <div className="space-y-4">
-      {/* Cabeçalho com informações de armazenamento */}
+      {/* Cabeçalho */}
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
           <Paperclip className="w-5 h-5" />
@@ -355,21 +401,7 @@ export function AttachmentManager({
         </h3>
         
         <div className="text-xs text-gray-500">
-          <div className="flex items-center gap-2">
-            <span>{formatFileSize(storageUsed)} / 2GB usados</span>
-            {storagePercentage > 80 && (
-              <AlertCircle className="w-4 h-4 text-orange-500" />
-            )}
-          </div>
-          <div className="w-24 h-1 bg-gray-200 rounded-full mt-1">
-            <div 
-              className={`h-full rounded-full transition-all ${
-                storagePercentage > 90 ? 'bg-red-500' : 
-                storagePercentage > 80 ? 'bg-orange-500' : 'bg-blue-500'
-              }`}
-              style={{ width: `${Math.min(storagePercentage, 100)}%` }}
-            />
-          </div>
+          <span>Limite: 50MB por arquivo, 2GB total por usuário</span>
         </div>
       </div>
 
@@ -377,7 +409,7 @@ export function AttachmentManager({
       <div className="flex items-center gap-2">
         <Button
           onClick={() => fileInputRef.current?.click()}
-          disabled={isUploading || storagePercentage >= 100}
+          disabled={isUploading}
           variant="outline"
           size="sm"
           className="flex items-center gap-2"
@@ -404,12 +436,7 @@ export function AttachmentManager({
           accept="*/*"
         />
 
-        {storagePercentage >= 100 && (
-          <span className="text-xs text-red-600 flex items-center gap-1">
-            <AlertCircle className="w-3 h-3" />
-            Limite de armazenamento atingido
-          </span>
-        )}
+{/* Validação de limite removida - será feita no backend */}
       </div>
 
       {/* Barra de progresso durante upload */}
@@ -436,13 +463,35 @@ export function AttachmentManager({
               className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
             >
               <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div className="text-gray-600">
-                  {getFileIcon(attachment.type)}
+                <div className={`text-gray-600 ${attachment.isSaving ? 'opacity-50' : ''}`}>
+                  {attachment.isSaving ? (
+                    <div className="w-5 h-5 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
+                  ) : (
+                    getFileIcon(attachment.type)
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {attachment.name}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className={`text-sm font-medium truncate ${
+                      attachment.hasError 
+                        ? 'text-red-600' 
+                        : attachment.isSaving 
+                          ? 'text-gray-500' 
+                          : 'text-gray-900'
+                    }`}>
+                      {attachment.name}
+                    </p>
+                    {attachment.isSaving && (
+                      <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                        Salvando...
+                      </span>
+                    )}
+                    {attachment.hasError && (
+                      <span className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded-full">
+                        Erro ao salvar
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-gray-500">
                     {formatFileSize(attachment.size)} • {new Date(attachment.uploadedAt).toLocaleDateString()}
                   </p>
@@ -456,6 +505,7 @@ export function AttachmentManager({
                   size="sm"
                   className="p-2"
                   title="Download"
+                  disabled={attachment.isSaving}
                 >
                   <Download className="w-4 h-4" />
                 </Button>
@@ -465,6 +515,7 @@ export function AttachmentManager({
                   size="sm"
                   className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50"
                   title="Remover"
+                  disabled={attachment.isSaving}
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>

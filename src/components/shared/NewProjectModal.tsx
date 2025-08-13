@@ -10,6 +10,7 @@ import { X, FolderPlus, Save, AlertCircle, Plus, Trash2, Battery, Brain, Zap } f
 import { Button } from '@/components/ui/button';
 import { useCreateProject } from '@/hooks/api/useProjects';
 import { useModalsStore } from '@/stores/modalsStore';
+import { useNotification, useAsyncNotification } from '@/hooks/useNotification';
 
 interface InitialTask {
   id: string;
@@ -39,6 +40,10 @@ export function NewProjectModal() {
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isCreating, setIsCreating] = useState(false);
+
+  // Hooks de notificação
+  const { success, error } = useNotification();
+  const { withLoading } = useAsyncNotification();
 
   // Effect para pré-popular com nota transformada
   useEffect(() => {
@@ -104,25 +109,36 @@ export function NewProjectModal() {
     setIsCreating(true);
 
     try {
-      await createProject.mutateAsync({
-        name: formData.name.trim(),
-        icon: formData.icon,
-        color: '#3B82F6',
-        status: 'active',
-        backlog: initialTasks.map(task => ({
-          description: task.description,
-          energyPoints: task.energyPoints,
-          status: 'pending',
-          isRecurring: false,
-          isAppointment: false,
-          comments: [],
-          attachments: [],
-          externalLinks: [],
-          history: [],
-        })),
-        sandboxNotes: formData.notes,
-      });
+      await withLoading(
+        () => createProject.mutateAsync({
+          name: formData.name.trim(),
+          icon: formData.icon,
+          color: '#3B82F6',
+          status: 'active',
+          backlog: initialTasks.map(task => ({
+            description: task.description,
+            energyPoints: task.energyPoints,
+            status: 'pending',
+            isRecurring: false,
+            isAppointment: false,
+            comments: [],
+            attachments: [],
+            externalLinks: [],
+            history: [],
+          })),
+          sandboxNotes: formData.notes,
+        }),
+        {
+          loading: 'Criando projeto...',
+          success: `Projeto "${formData.name.trim()}" criado com sucesso!`
+        },
+        {
+          context: 'project_crud',
+          description: initialTasks.length > 0 ? `Com ${initialTasks.length} tarefa${initialTasks.length !== 1 ? 's' : ''} inicial${initialTasks.length !== 1 ? 's' : ''}` : undefined
+        }
+      );
 
+      // Limpar formulário
       setFormData({
         name: '',
         icon: '🏗️',
@@ -134,9 +150,11 @@ export function NewProjectModal() {
 
       openNewProjectModal(false);
 
-    } catch (error) {
-      console.error('Erro ao criar projeto:', error);
-      setErrors({ general: 'Erro ao criar projeto. Tente novamente.' });
+    } catch (err) {
+      error('Erro ao criar projeto', {
+        description: err instanceof Error ? err.message : 'Tente novamente',
+        context: 'project_crud'
+      });
     } finally {
       setIsCreating(false);
     }

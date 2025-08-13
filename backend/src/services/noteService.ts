@@ -5,8 +5,7 @@ import {
   UpdateNoteRequest, 
   NoteResponse,
   CreateSandboxLayoutRequest,
-  UpdateSandboxLayoutRequest,
-  SandboxAuthRequest
+  UpdateSandboxLayoutRequest
 } from '../types/note';
 
 export const getUserNotes = async (userId: string): Promise<NoteResponse[]> => {

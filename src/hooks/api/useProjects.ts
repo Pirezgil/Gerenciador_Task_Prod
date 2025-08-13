@@ -5,7 +5,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { projectsApi } from '@/lib/api';
 import { queryKeys, invalidateQueries } from '@/lib/queryClient';
-import { useAuthStore } from '@/stores/authStore';
+import { useAuth } from '@/providers/AuthProvider';
 import type { Project, Task } from '@/types/task';
 
 // ============================================================================
@@ -14,7 +14,7 @@ import type { Project, Task } from '@/types/task';
 
 // Hook para buscar todos os projetos do usuário
 export function useProjects() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated } = useAuth();
   
   return useQuery({
     queryKey: queryKeys.projects.all,
@@ -26,7 +26,7 @@ export function useProjects() {
 
 // Hook para buscar um projeto específico
 export function useProject(projectId: string) {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated } = useAuth();
   
   return useQuery({
     queryKey: queryKeys.projects.detail(projectId),

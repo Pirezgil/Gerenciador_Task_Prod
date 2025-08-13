@@ -6,6 +6,7 @@ import { Trash2, Lock, Sparkles, Edit3, Archive, Plus, SortAsc, SortDesc } from 
 import { useRouter } from 'next/navigation';
 import { useNotes, useCreateNote, useUpdateNote, useDeleteNote } from '@/hooks/api/useNotes';
 import { useAuthStore } from '@/stores/authStore';
+import { useAuth } from '@/providers/AuthProvider';
 import { useModalsStore } from '@/stores/modalsStore';
 
 import { TaskEditModal } from '@/components/shared/TaskEditModal';
@@ -26,7 +27,8 @@ export function CaixaDeAreiaPage() {
   const deleteNote = useDeleteNote();
   
   const { setShowTransformModal } = useModalsStore();
-  const { sandboxAuth, user, unlockSandbox } = useAuthStore();
+  const { user } = useAuth(); // Get user from AuthProvider
+  const { sandboxAuth, unlockSandbox } = useAuthStore(); // Only sandbox-specific state
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
 
@@ -74,6 +76,7 @@ export function CaixaDeAreiaPage() {
         await createNote.mutateAsync({
           content: newNoteContent,
           status: 'active',
+          updatedAt: new Date().toISOString(),
         });
         setNewNoteContent('');
         setShowAddNote(false);
@@ -325,7 +328,10 @@ export function CaixaDeAreiaPage() {
                       <textarea
                         className="w-full min-h-[100px] p-4 border border-energia-normal/20 rounded-2xl resize-y focus:outline-none focus:ring-4 focus:ring-energia-normal/20 focus:border-energia-normal font-serif text-text-secondary leading-relaxed"
                         defaultValue={note.content}
-                        onBlur={(e) => updateNote(note.id, e.target.value)}
+                        onBlur={(e) => updateNote.mutateAsync({ 
+                          noteId: note.id, 
+                          updates: { content: e.target.value } 
+                        })}
                         autoFocus
                       />
                     ) : (

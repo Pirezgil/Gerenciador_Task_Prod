@@ -32,6 +32,10 @@ export interface AuthResponse {
   expiresIn: string;
 }
 
+export interface AuthResponseClean {
+  user: AuthUser;
+}
+
 export interface RefreshTokenRequest {
   refreshToken: string;
 }
@@ -42,3 +46,12 @@ export interface JWTPayload {
   iat?: number;
   exp?: number;
 }
+
+export type SecurityEventType = 
+  | 'login_success' 
+  | 'login_failed' 
+  | 'logout' 
+  | 'password_reset' 
+  | 'account_locked'
+  | 'oauth_login_success'
+  | 'oauth_login_failed';

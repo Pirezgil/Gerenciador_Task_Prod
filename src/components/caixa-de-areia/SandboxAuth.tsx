@@ -4,12 +4,14 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, Eye, EyeOff, ShieldAlert, Key } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
+import { useAuth } from '@/providers/AuthProvider';
 
 interface SandboxAuthProps {
   onUnlock: () => void;
 }
 
 export function SandboxAuth({ onUnlock }: SandboxAuthProps) {
+  const { user } = useAuth(); // Get user from AuthProvider
   const { sandboxAuth, unlockSandbox, checkSandboxPassword } = useAuthStore();
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -18,8 +20,6 @@ export function SandboxAuth({ onUnlock }: SandboxAuthProps) {
 
   const maxAttempts = 3;
   const isBlocked = sandboxAuth.failedAttempts >= maxAttempts;
-
-  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,13 +34,18 @@ export function SandboxAuth({ onUnlock }: SandboxAuthProps) {
       return;
     }
 
+    if (!user) {
+      setError('Usuário não autenticado');
+      return;
+    }
+
     setIsLoading(true);
     setError('');
 
     // Simular delay de verificação
     await new Promise(resolve => setTimeout(resolve, 800));
 
-    const success = checkSandboxPassword(password);
+    const success = checkSandboxPassword(password, user); // Pass user from AuthProvider
     
     if (success) {
       unlockSandbox();

@@ -3,8 +3,9 @@
 // ============================================================================
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAuthStore } from '@/stores/authStore';
+import { useAuth } from '@/providers/AuthProvider';
 import { queryKeys, invalidateQueries } from '@/lib/queryClient';
+import axios from 'axios';
 import type { 
   Achievement, 
   UserAchievementsResponse, 
@@ -17,12 +18,20 @@ import type {
 // API FUNCTIONS
 // ============================================================================
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+// Configuração do axios com cookies HTTP-only
+const api = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  withCredentials: true, // SEGURANÇA: Usar cookies HTTP-only
+});
 
 const achievementsApi = {
   async getAchievements(filters?: AchievementFilters): Promise<UserAchievementsResponse> {
-    const searchParams = new URLSearchParams();
-    if (filters?.type && filters.type !== 'all') searchParams.set('type', filters.type);
+    const params: any = {};
+    if (filters?.type && filters.type !== 'all') params.type = filters.type;
     if (filters?.timeRange) {
       const today = new Date();
       let startDate = '';
@@ -43,102 +52,36 @@ const achievementsApi = {
           break;
       }
       
-      if (startDate) searchParams.set('startDate', startDate);
+      if (startDate) params.startDate = startDate;
     }
 
-    const queryString = searchParams.toString();
-    const url = `${BASE_URL}/achievements${queryString ? `?${queryString}` : ''}`;
-    
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('auth-token')}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Erro ao buscar conquistas');
-    }
-
-    return response.json();
+    const response = await api.get('/achievements', { params });
+    return response.data;
   },
 
   async getRewardsPageData(): Promise<RewardsPageData> {
-    const response = await fetch(`${BASE_URL}/achievements/rewards-page`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('auth-token')}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Erro ao buscar dados da página de recompensas');
-    }
-
-    return response.json();
+    const response = await api.get('/achievements/rewards-page');
+    return response.data;
   },
 
   async getDailyProgress(date: string): Promise<DailyProgress> {
-    const response = await fetch(`${BASE_URL}/achievements/daily-progress/${date}`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('auth-token')}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Erro ao buscar progresso diário');
-    }
-
-    return response.json();
+    const response = await api.get(`/achievements/daily-progress/${date}`);
+    return response.data;
   },
 
   async getStats(): Promise<UserAchievementsResponse['stats'] & { recentAchievements: Achievement[] }> {
-    const response = await fetch(`${BASE_URL}/achievements/stats`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('auth-token')}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Erro ao buscar estatísticas');
-    }
-
-    return response.json();
+    const response = await api.get('/achievements/stats');
+    return response.data;
   },
 
   async checkDailyMastery(date?: string): Promise<{ message: string; achievement: Achievement | null }> {
-    const response = await fetch(`${BASE_URL}/achievements/check-daily-mastery`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('auth-token')}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ date }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Erro ao verificar maestria diária');
-    }
-
-    return response.json();
+    const response = await api.post('/achievements/check-daily-mastery', { date });
+    return response.data;
   },
 
   async getTodayMedalsCount(): Promise<number> {
-    const response = await fetch(`${BASE_URL}/achievements/today-count`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('auth-token')}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Erro ao buscar contagem de medalhas de hoje');
-    }
-
-    const data = await response.json();
-    return data.count || 0;
+    const response = await api.get('/achievements/today-count');
+    return response.data.count || 0;
   },
 
   async getWeeklyAchievements(date?: string): Promise<{
@@ -148,24 +91,11 @@ const achievementsApi = {
     totalCount: number;
     medalsByType: { type: string; subtype: string | null; count: number; icon: string; color: string }[];
   }> {
-    const searchParams = new URLSearchParams();
-    if (date) searchParams.set('date', date);
+    const params: any = {};
+    if (date) params.date = date;
     
-    const queryString = searchParams.toString();
-    const url = `${BASE_URL}/achievements/weekly${queryString ? `?${queryString}` : ''}`;
-    
-    const response = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('auth-token')}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Erro ao buscar medalhas da semana');
-    }
-
-    return response.json();
+    const response = await api.get('/achievements/weekly', { params });
+    return response.data;
   },
 };
 
@@ -177,7 +107,7 @@ const achievementsApi = {
  * Hook para buscar conquistas do usuário com filtros
  */
 export function useAchievements(filters?: AchievementFilters) {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated } = useAuth();
   
   return useQuery({
     queryKey: [...queryKeys.achievements.all, filters],
@@ -191,7 +121,7 @@ export function useAchievements(filters?: AchievementFilters) {
  * Hook para buscar dados completos da página de recompensas
  */
 export function useRewardsPageData() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated } = useAuth();
   
   return useQuery({
     queryKey: queryKeys.achievements.rewardsPage,
@@ -205,7 +135,7 @@ export function useRewardsPageData() {
  * Hook para buscar progresso diário específico
  */
 export function useDailyProgress(date: string) {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated } = useAuth();
   
   return useQuery({
     queryKey: queryKeys.achievements.dailyProgress(date),
@@ -219,7 +149,7 @@ export function useDailyProgress(date: string) {
  * Hook para buscar estatísticas resumidas
  */
 export function useAchievementStats() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated } = useAuth();
   
   return useQuery({
     queryKey: queryKeys.achievements.stats,
@@ -277,7 +207,7 @@ export function useTodayMastery() {
  * Hook para buscar contagem de medalhas ganhas hoje
  */
 export function useTodayMedalsCount() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated } = useAuth();
   
   return useQuery({
     queryKey: ['achievements', 'today-count'],
@@ -292,7 +222,7 @@ export function useTodayMedalsCount() {
  * Hook para buscar medalhas da semana
  */
 export function useWeeklyAchievements(date?: string) {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated } = useAuth();
   
   return useQuery({
     queryKey: ['achievements', 'weekly', date || new Date().toISOString().split('T')[0]],

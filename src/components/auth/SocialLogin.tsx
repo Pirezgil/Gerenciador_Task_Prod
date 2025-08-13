@@ -2,9 +2,9 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { useAuthStore } from '@/stores/authStore';
+import { useAuth } from '@/providers/AuthProvider';
 import { useRouter } from 'next/navigation';
-import { useStandardAlert } from '@/components/shared/StandardAlert';
+import { useAuthNotifications } from '@/hooks/useNotification';
 
 interface SocialLoginProps {
   onSuccess?: () => void;
@@ -30,9 +30,9 @@ const GoogleIcon = () => (
 
 export function SocialLogin({ onSuccess, className = '' }: SocialLoginProps) {
   const [isLoading, setIsLoading] = useState<'facebook' | 'google' | null>(null);
-  const { setUser } = useAuthStore();
+  const { refreshUser } = useAuth();
   const router = useRouter();
-  const { showAlert, AlertComponent } = useStandardAlert();
+  const authNotifications = useAuthNotifications();
 
   // Simulação de login com Facebook
   const handleFacebookLogin = async () => {
@@ -68,19 +68,14 @@ export function SocialLogin({ onSuccess, className = '' }: SocialLoginProps) {
       // Salvar token primeiro
       localStorage.setItem('auth-token', `facebook_token_${facebookUser.id}`);
       
-      // Definir usuário e marcar como autenticado
-      setUser(facebookUser);
+      // Refresh user data from the new auth provider
+      await refreshUser();
       
       // Forçar recarregamento da página para garantir estado consistente
       window.location.href = '/tarefas';
       
     } catch (error) {
-      console.error('Erro no login com Facebook:', error);
-      showAlert(
-        'Erro no Login',
-        'Erro ao fazer login com Facebook. Tente novamente.',
-        'error'
-      );
+      authNotifications.loginError('Erro ao fazer login com Facebook. Tente novamente.');
     } finally {
       setIsLoading(null);
     }
@@ -94,12 +89,7 @@ export function SocialLogin({ onSuccess, className = '' }: SocialLoginProps) {
       // Redirecionar para a rota do Google OAuth no backend
       window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/google`;
     } catch (error) {
-      console.error('Erro ao iniciar login com Google:', error);
-      showAlert(
-        'Erro no Login',
-        'Erro ao fazer login com Google. Tente novamente.',
-        'error'
-      );
+      authNotifications.loginError('Erro ao fazer login com Google. Tente novamente.');
       setIsLoading(null);
     }
   };
@@ -159,7 +149,6 @@ export function SocialLogin({ onSuccess, className = '' }: SocialLoginProps) {
           Política de Privacidade
         </a>
       </div>
-      <AlertComponent />
     </div>
   );
 }

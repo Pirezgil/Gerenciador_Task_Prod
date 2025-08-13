@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { X, Save, Trash2, Palette, Hash } from 'lucide-react';
 import { useUpdateHabit, useDeleteHabit } from '@/hooks/api/useHabits';
 import type { Habit } from '@/types/habit';
+import { useHabitNotifications, useAsyncNotification, useNotification } from '@/hooks/useNotification';
 
 interface HabitEditModalProps {
   habit: Habit;
@@ -50,6 +51,11 @@ export function HabitEditModal({ habit, isOpen, onClose }: HabitEditModalProps) 
 
   const updateHabitMutation = useUpdateHabit();
   const deleteHabitMutation = useDeleteHabit();
+  
+  // Hooks de notificação
+  const habitNotifications = useHabitNotifications();
+  const { withLoading } = useAsyncNotification();
+  const { error, warning } = useNotification();
 
   useEffect(() => {
     if (isOpen) {
@@ -84,21 +90,44 @@ export function HabitEditModal({ habit, isOpen, onClose }: HabitEditModalProps) 
         }
       });
       onClose();
-    } catch (error) {
-      console.error('Erro ao atualizar hábito:', error);
+    } catch (err) {
+      error('Erro ao atualizar hábito', {
+        description: err instanceof Error ? err.message : 'Tente novamente',
+        context: 'habit_crud'
+      });
     }
   };
 
   const handleDelete = async () => {
-    try {
-      console.log('Tentando excluir hábito:', habit.id);
-      await deleteHabitMutation.mutateAsync(habit.id);
-      console.log('Hábito excluído com sucesso');
-      onClose();
-    } catch (error: any) {
-      console.error('Erro ao excluir hábito:', error);
-      alert(`Erro ao excluir hábito: ${error?.response?.data?.error || error?.message || 'Erro desconhecido'}`);
-    }
+    // Usar notificação de confirmação antes de excluir
+    warning(`Excluir o hábito "${habit.name}"?`, {
+      description: 'Esta ação não pode ser desfeita',
+      context: 'habit_crud',
+      important: true,
+      action: {
+        label: 'Excluir',
+        onClick: async () => {
+          try {
+            await withLoading(
+              () => deleteHabitMutation.mutateAsync(habit.id),
+              {
+                loading: 'Excluindo hábito...',
+                success: 'Hábito excluído com sucesso!'
+              },
+              {
+                context: 'habit_crud'
+              }
+            );
+            onClose();
+          } catch (err: any) {
+            error('Erro ao excluir hábito', {
+              description: err?.response?.data?.error || err?.message || 'Erro desconhecido',
+              context: 'habit_crud'
+            });
+          }
+        }
+      }
+    });
   };
 
   const toggleDayOfWeek = (day: number) => {

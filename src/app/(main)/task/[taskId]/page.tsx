@@ -21,6 +21,8 @@ const TaskDetailPage = () => {
     console.log('🎯 Tarefa encontrada:', task);
     console.log('📝 Comentários:', task.comments);
     console.log('📎 Anexos:', task.attachments);
+    console.log('📎 Anexos length:', task.attachments?.length);
+    console.log('📎 Anexos detalhados:', JSON.stringify(task.attachments, null, 2));
   }
 
   // Mostrar loading enquanto carrega
@@ -47,7 +49,31 @@ const TaskDetailPage = () => {
     );
   }
 
-  return <TaskDetailClient task={task} onTaskUpdate={() => refetchTask()} />;
+  return (
+    <>
+      {/* Debug: Botão para forçar refresh durante testes */}
+      <div style={{ position: 'fixed', top: '10px', right: '10px', zIndex: 9999 }}>
+        <button 
+          onClick={() => {
+            console.log('🔄 Forçando refresh da tarefa...');
+            refetchTask();
+          }}
+          style={{
+            background: '#007acc',
+            color: 'white',
+            padding: '8px 12px',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '12px'
+          }}
+        >
+          🔄 Refresh Task
+        </button>
+      </div>
+      <TaskDetailClient task={task} onTaskUpdate={() => refetchTask()} />
+    </>
+  );
 };
 
 export default TaskDetailPage;

@@ -29,7 +29,7 @@ export const getUserHabits = async (userId: string): Promise<HabitResponse[]> =>
     const mappedHabit = {
       id: habit.id,
       name: habit.name,
-      description: habit.description,
+      description: habit.description ?? undefined,
       icon: habit.icon,
       color: habit.color,
       targetCount: habit.targetCount,
@@ -50,7 +50,7 @@ export const getUserHabits = async (userId: string): Promise<HabitResponse[]> =>
           date: c.date.toISOString().split('T')[0],
           completedAt: c.completedAt.toISOString(),
           count: c.count,
-          notes: c.notes
+          notes: c.notes ?? undefined
         };
         console.log(`  - Completion: ${completion.date}, count: ${completion.count}`);
         return completion;
@@ -93,7 +93,7 @@ export const createHabit = async (userId: string, data: CreateHabitRequest): Pro
   return {
     id: habit.id,
     name: habit.name,
-    description: habit.description,
+    description: habit.description ?? undefined,
     icon: habit.icon,
     color: habit.color,
     targetCount: habit.targetCount,
@@ -201,7 +201,7 @@ export const completeHabit = async (habitId: string, userId: string, data: Compl
   
   // Processar conquistas de hábitos (sistema de recompensas TDAH)
   try {
-    await AchievementService.processHabitCompletion(userId, habit, completion);
+    await AchievementService.processHabitCompletion(userId, habit);
     console.log('🏆 Conquistas de hábito processadas');
   } catch (achievementError) {
     console.error('❌ Erro ao processar conquistas de hábito:', achievementError);
@@ -246,7 +246,7 @@ export const getHabit = async (habitId: string, userId: string): Promise<HabitRe
   return {
     id: habit.id,
     name: habit.name,
-    description: habit.description,
+    description: habit.description ?? undefined,
     icon: habit.icon,
     color: habit.color,
     targetCount: habit.targetCount,
@@ -266,7 +266,7 @@ export const getHabit = async (habitId: string, userId: string): Promise<HabitRe
       date: c.date.toISOString().split('T')[0],
       completedAt: c.completedAt.toISOString(),
       count: c.count,
-      notes: c.notes
+      notes: c.notes ?? undefined
     }))
   };
 };
@@ -304,7 +304,7 @@ export const updateHabit = async (habitId: string, userId: string, data: UpdateH
   return {
     id: updatedHabit.id,
     name: updatedHabit.name,
-    description: updatedHabit.description,
+    description: updatedHabit.description ?? undefined,
     icon: updatedHabit.icon,
     color: updatedHabit.color,
     targetCount: updatedHabit.targetCount,

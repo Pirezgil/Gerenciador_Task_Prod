@@ -62,16 +62,17 @@ export function BombeiroPageClient() {
   } = useAllHabitsComplete();
 
   // Separar tarefas por status
-  const pendingTasks = todayTasks.filter(task => task.status === 'pending');
-  const postponedTasks = todayTasks.filter(task => task.status === 'POSTPONED');
+  const pendingTasks = todayTasks.filter(task => task.status === 'pending' || task.status === 'PENDING');
+  const postponedTasks = todayTasks.filter(task => task.status === 'postponed' || task.status === 'POSTPONED');
   
-  console.log('🔍 BombeiroPageClient - Filtros:');
-  console.log('  - Total todayTasks:', todayTasks.length);
-  console.log('  - pendingTasks:', pendingTasks.length);
-  console.log('  - postponedTasks:', postponedTasks.length);
-  todayTasks.forEach(t => console.log('    All:', t.description.substring(0,30), 'Status:', t.status));
-  pendingTasks.forEach(t => console.log('    Pending:', t.description.substring(0,30), 'Status:', t.status));
-  postponedTasks.forEach(t => console.log('    Postponed:', t.description.substring(0,30), 'Status:', t.status));
+  // PERFORMANCE: Only log in development
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔍 BombeiroPageClient - Filtros:', {
+      totalTasks: todayTasks.length,
+      pendingTasks: pendingTasks.length,
+      postponedTasks: postponedTasks.length
+    });
+  }
   
   // Verificar quais hábitos foram completados hoje
   const today = new Date().toISOString().split('T')[0];
@@ -331,6 +332,20 @@ export function BombeiroPageClient() {
               </div>
             )}
 
+            {/* Mensagem para usuários sem missões do dia */}
+            {pendingTasks.length === 0 && missedTasks.length === 0 && todayHabits.length === 0 && (
+              <div className="text-center py-16 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+                <div className="text-6xl mb-4">🎯</div>
+                <h2 className="text-2xl font-bold text-blue-800 mb-3">Nenhuma Missão Planejada</h2>
+                <p className="text-lg text-blue-600 mb-6 max-w-md mx-auto">
+                  Que tal planejar o seu dia e definir suas prioridades para ser mais produtivo?
+                </p>
+                <p className="text-sm text-blue-500 mt-4">
+                  💡 Dica: Comece definindo 2-3 tarefas importantes para focar sua energia hoje
+                </p>
+              </div>
+            )}
+
             {/* Listas de Tarefas do Dia */}
             <div className="space-y-6 lg:space-y-8">
               {/* Tarefas Não Realizadas (Atrasadas) */}
@@ -343,10 +358,14 @@ export function BombeiroPageClient() {
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="text-red-600 font-medium">⚠️ Em atraso há {task.missedDaysCount} dia(s)</span>
-                              {task.plannedDate && (
-                                <span className="text-xs text-red-500 bg-red-100 px-2 py-1 rounded">
-                                  Planejada para: {new Date(task.plannedDate).toLocaleDateString('pt-BR')}
+                              <span className="text-red-600 font-medium">⚠️ Tarefa em atraso</span>
+                              {task.missedDaysCount > 0 && (
+                                <span className={`text-xs px-2 py-1 rounded font-medium ${
+                                  task.missedDaysCount === 1 ? 'text-orange-700 bg-orange-100' :
+                                  task.missedDaysCount <= 3 ? 'text-red-700 bg-red-100' :
+                                  'text-red-800 bg-red-200'
+                                }`}>
+                                  🚨 {task.missedDaysCount} dia{task.missedDaysCount > 1 ? 's' : ''} em atraso
                                 </span>
                               )}
                             </div>
@@ -401,10 +420,28 @@ export function BombeiroPageClient() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 sm:py-10 bg-surface-secondary rounded-lg border border-border-sentinela border-dashed">
-                    <div className="text-3xl sm:text-4xl mb-3">👍</div>
-                    <h3 className="text-base sm:text-lg font-semibold text-text-primary">Tudo em ordem!</h3>
-                    <p className="mt-1 text-sm text-text-secondary px-4">Nenhuma tarefa pendente por enquanto.</p>
+                  <div className="text-center py-8 sm:py-10 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                    <div className="text-3xl sm:text-4xl mb-3">🎉</div>
+                    <h3 className="text-base sm:text-lg font-semibold text-green-800">Parabéns! Nenhuma tarefa pendente!</h3>
+                    <p className="mt-2 text-sm text-green-600 px-4 mb-4">
+                      Você está com o dia organizado. Que tal aproveitar para focar nos seus hábitos ou planejar o amanhã?
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                      <Button 
+                        onClick={() => router.push('/planejamento')}
+                        variant="outline"
+                        className="border-green-300 text-green-700 hover:bg-green-100 text-sm"
+                      >
+                        📋 Planejar Amanhã
+                      </Button>
+                      <Button 
+                        onClick={() => setShowCaptureModal(true)}
+                        variant="outline"
+                        className="border-green-300 text-green-700 hover:bg-green-100 text-sm"
+                      >
+                        ➕ Nova Tarefa
+                      </Button>
+                    </div>
                   </div>
                 )}
                 </div>

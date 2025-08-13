@@ -33,7 +33,7 @@ router.get('/', authenticate, async (req: AuthenticatedRequest, res) => {
       return res.status(404).json({ message: 'Progresso diário não encontrado' });
     }
     
-    res.json({
+    return res.json({
       id: dailyProgress.id,
       userId: dailyProgress.userId,
       date: dailyProgress.date.toISOString().split('T')[0],
@@ -49,7 +49,7 @@ router.get('/', authenticate, async (req: AuthenticatedRequest, res) => {
     });
   } catch (error) {
     console.error('Erro ao buscar progresso diário:', error);
-    res.status(500).json({ message: 'Erro interno do servidor' });
+    return res.status(500).json({ message: 'Erro interno do servidor' });
   }
 });
 

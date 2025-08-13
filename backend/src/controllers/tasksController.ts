@@ -3,26 +3,49 @@ import * as taskService from '../services/taskService';
 import DailyTaskTracker from '../services/dailyTaskTracker';
 import { AuthenticatedRequest } from '../types/api';
 import { CreateTaskRequest, UpdateTaskRequest, PostponeTaskRequest, CreateTaskCommentRequest } from '../types/task';
+import { 
+  createSingleReminder, 
+  createRecurringReminders, 
+  getEntityReminders,
+  deleteReminderAndChildren
+} from '../services/reminderService';
+import { TaskReminderConfig, RecurringTaskReminderConfig } from '../types/reminder';
 
-export const getTasks = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const getTasks = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.userId) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'Não autenticado',
         timestamp: new Date().toISOString()
       });
+      return;
     }
 
     const filters = req.query;
-    const tasks = await taskService.getUserTasks(req.userId, filters);
+    
+    // CORREÇÃO: Permitir incluir dados para visualização expandida via query parameter
+    // ?includeExpandData=true para incluir comments, attachments, history
+    const includeExpandData = req.query.includeExpandData === 'true';
+    
+    const includeOptions = {
+      project: true, // Always include project for display
+      comments: includeExpandData,
+      attachments: includeExpandData, 
+      history: includeExpandData,
+      recurrence: true, // Always include for badges
+      appointment: true // Always include for badges
+    };
+    
+    const tasks = await taskService.getUserTasks(req.userId, filters, includeOptions);
     
     res.json({
       success: true,
       data: tasks,
       meta: {
         total: tasks.length,
-        filtered: true
+        filtered: true,
+        includeExpandData: includeExpandData
       },
       timestamp: new Date().toISOString()
     });
@@ -31,25 +54,21 @@ export const getTasks = async (req: AuthenticatedRequest, res: Response, next: N
   }
 };
 
-export const getTask = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const getTask = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.userId) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'Não autenticado',
         timestamp: new Date().toISOString()
       });
+      return;
     }
 
     const { id } = req.params;
     const task = await taskService.getTaskById(id, req.userId);
     
-    console.log('🎯 Tarefa retornada pelo backend:', JSON.stringify({
-      id: task.id,
-      description: task.description,
-      comments: task.comments,
-      attachments: task.attachments
-    }, null, 2));
+    // Log seguro removido - informações de tarefa não devem ser logadas em produção
     
     res.json({
       success: true,
@@ -58,34 +77,30 @@ export const getTask = async (req: AuthenticatedRequest, res: Response, next: Ne
     });
   } catch (error: any) {
     if (error.message === 'Tarefa não encontrada') {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: 'Tarefa não encontrada',
         message: 'A tarefa solicitada não existe ou não pertence ao usuário',
         timestamp: new Date().toISOString()
       });
+      return;
     }
     next(error);
   }
 };
 
-export const createTask = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const createTask = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.userId) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'Não autenticado',
         timestamp: new Date().toISOString()
       });
+      return;
     }
 
-    console.log('🚀 === NOVA TAREFA SENDO CRIADA ===');
-    console.log('📥 Body completo:', JSON.stringify(req.body, null, 2));
-    console.log('📝 Campos específicos:');
-    console.log('  - comments:', req.body.comments, '(tipo:', typeof req.body.comments, ')');
-    console.log('  - attachments:', req.body.attachments, '(tipo:', typeof req.body.attachments, ')');
-    console.log('  - description:', req.body.description);
-    console.log('  - energyPoints:', req.body.energyPoints);
+    // Logs de debugging removidos para segurança - dados do usuário não devem ser logados
 
     // Filtrar apenas campos válidos para CreateTaskRequest
     const {
@@ -118,16 +133,7 @@ export const createTask = async (req: AuthenticatedRequest, res: Response, next:
       appointment
     };
 
-    console.log('Dados filtrados para criação:', JSON.stringify(taskData, null, 2));
-
     const task = await taskService.createTask(req.userId, taskData);
-    
-    console.log('✅ Tarefa criada no backend:', JSON.stringify({
-      id: task.id,
-      description: task.description,
-      comments: task.comments,
-      attachments: task.attachments
-    }, null, 2));
     
     res.status(201).json({
       success: true,
@@ -136,53 +142,96 @@ export const createTask = async (req: AuthenticatedRequest, res: Response, next:
       timestamp: new Date().toISOString()
     });
   } catch (error: any) {
-    console.error('Erro detalhado na criação de tarefa:', error);
     
     if (error.message === 'Projeto não encontrado') {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Projeto inválido',
         message: 'O projeto especificado não existe ou não pertence ao usuário',
         timestamp: new Date().toISOString()
       });
+      return;
     }
     
     // Log do erro para debug
     if (error.code === 'P2002') {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Dados duplicados',
         message: 'Já existe um registro com esses dados',
         timestamp: new Date().toISOString()
       });
+      return;
     }
     
     if (error.code) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Erro de validação',
         message: error.message || 'Dados inválidos fornecidos',
         details: error,
         timestamp: new Date().toISOString()
       });
+      return;
     }
     
     next(error);
   }
 };
 
-export const updateTask = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const updateTask = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.userId) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'Não autenticado',
         timestamp: new Date().toISOString()
       });
+      return;
     }
 
     const { id } = req.params;
-    const updateData: UpdateTaskRequest = req.body;
+    
+    // SECURITY: Mass Assignment Protection - Only allow safe fields
+    const {
+      description,
+      status,
+      energyPoints,
+      type,
+      projectId,
+      dueDate,
+      rescheduleDate,
+      isRecurring,
+      isAppointment,
+      plannedForToday,
+      plannedDate,
+      missedDaysCount,
+      externalLinks,
+      attachments,
+      recurrence,
+      appointment,
+      reminders
+    } = req.body;
+
+    const updateData: UpdateTaskRequest = {
+      description,
+      status,
+      energyPoints,
+      type,
+      projectId,
+      dueDate,
+      rescheduleDate,
+      isRecurring,
+      isAppointment,
+      plannedForToday,
+      plannedDate,
+      missedDaysCount,
+      externalLinks,
+      attachments,
+      recurrence,
+      appointment,
+      reminders
+    };
     
     const task = await taskService.updateTask(id, req.userId, updateData);
     
@@ -194,31 +243,34 @@ export const updateTask = async (req: AuthenticatedRequest, res: Response, next:
     });
   } catch (error: any) {
     if (error.message === 'Tarefa não encontrada') {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: 'Tarefa não encontrada',
         timestamp: new Date().toISOString()
       });
+      return;
     }
     if (error.message === 'Projeto não encontrado') {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Projeto inválido',
         timestamp: new Date().toISOString()
       });
+      return;
     }
     next(error);
   }
 };
 
-export const deleteTask = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const deleteTask = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.userId) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'Não autenticado',
         timestamp: new Date().toISOString()
       });
+      return;
     }
 
     const { id } = req.params;
@@ -231,24 +283,26 @@ export const deleteTask = async (req: AuthenticatedRequest, res: Response, next:
     });
   } catch (error: any) {
     if (error.message === 'Tarefa não encontrada') {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: 'Tarefa não encontrada',
         timestamp: new Date().toISOString()
       });
+      return;
     }
     next(error);
   }
 };
 
-export const completeTask = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const completeTask = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.userId) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'Não autenticado',
         timestamp: new Date().toISOString()
       });
+      return;
     }
 
     const { id } = req.params;
@@ -262,32 +316,35 @@ export const completeTask = async (req: AuthenticatedRequest, res: Response, nex
     });
   } catch (error: any) {
     if (error.message === 'Tarefa não encontrada') {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: 'Tarefa não encontrada',
         timestamp: new Date().toISOString()
       });
+      return;
     }
     if (error.message === 'Tarefa já está completa') {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Tarefa já completa',
         message: 'Esta tarefa já foi completada anteriormente',
         timestamp: new Date().toISOString()
       });
+      return;
     }
     next(error);
   }
 };
 
-export const postponeTask = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const postponeTask = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.userId) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'Não autenticado',
         timestamp: new Date().toISOString()
       });
+      return;
     }
 
     const { id } = req.params;
@@ -303,24 +360,26 @@ export const postponeTask = async (req: AuthenticatedRequest, res: Response, nex
     });
   } catch (error: any) {
     if (error.message === 'Tarefa não encontrada') {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: 'Tarefa não encontrada',
         timestamp: new Date().toISOString()
       });
+      return;
     }
     next(error);
   }
 };
 
-export const addComment = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const addComment = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.userId) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'Não autenticado',
         timestamp: new Date().toISOString()
       });
+      return;
     }
 
     const { id } = req.params;
@@ -336,24 +395,26 @@ export const addComment = async (req: AuthenticatedRequest, res: Response, next:
     });
   } catch (error: any) {
     if (error.message === 'Tarefa não encontrada') {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: 'Tarefa não encontrada',
         timestamp: new Date().toISOString()
       });
+      return;
     }
     next(error);
   }
 };
 
-export const getEnergyBudget = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const getEnergyBudget = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.userId) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'Não autenticado',
         timestamp: new Date().toISOString()
       });
+      return;
     }
 
     const energyBudget = await taskService.getUserEnergyBudget(req.userId);
@@ -368,14 +429,15 @@ export const getEnergyBudget = async (req: AuthenticatedRequest, res: Response, 
   }
 };
 
-export const getBombeiroTasks = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const getBombeiroTasks = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.userId) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'Não autenticado',
         timestamp: new Date().toISOString()
       });
+      return;
     }
 
     const bombeiroTasks = await DailyTaskTracker.getBombeiroTasks(req.userId);
@@ -383,6 +445,159 @@ export const getBombeiroTasks = async (req: AuthenticatedRequest, res: Response,
     res.json({
       success: true,
       data: bombeiroTasks,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ===== NOVOS ENDPOINTS PARA LEMBRETES =====
+
+export const createTaskReminder = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!req.userId) {
+      res.status(401).json({
+        success: false,
+        error: 'Não autenticado',
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
+
+    const { taskId } = req.params;
+    const config: TaskReminderConfig = req.body;
+
+    // Verificar se a tarefa pertence ao usuário
+    const task = await taskService.getTaskById(taskId, req.userId);
+    if (!task) {
+      res.status(404).json({
+        success: false,
+        error: 'Tarefa não encontrada',
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
+
+    const reminder = await createSingleReminder(req.userId, taskId, config);
+    
+    res.status(201).json({
+      success: true,
+      data: reminder,
+      message: 'Lembrete criado com sucesso',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createRecurringTaskReminders = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!req.userId) {
+      res.status(401).json({
+        success: false,
+        error: 'Não autenticado',
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
+
+    const { taskId } = req.params;
+    const config: RecurringTaskReminderConfig = req.body;
+
+    // Verificar se a tarefa pertence ao usuário e é recorrente
+    const task = await taskService.getTaskById(taskId, req.userId);
+    if (!task) {
+      res.status(404).json({
+        success: false,
+        error: 'Tarefa não encontrada',
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
+
+    if (!task.isRecurring) {
+      res.status(400).json({
+        success: false,
+        error: 'Tarefa deve ser recorrente para este tipo de lembrete',
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
+
+    const reminders = await createRecurringReminders(req.userId, taskId, 'task', config);
+    
+    res.status(201).json({
+      success: true,
+      data: reminders,
+      message: `${reminders.length} lembrete(s) criado(s) com sucesso`,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getTaskReminders = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!req.userId) {
+      res.status(401).json({
+        success: false,
+        error: 'Não autenticado',
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
+
+    const { taskId } = req.params;
+
+    // Verificar se a tarefa pertence ao usuário
+    const task = await taskService.getTaskById(taskId, req.userId);
+    if (!task) {
+      res.status(404).json({
+        success: false,
+        error: 'Tarefa não encontrada',
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
+
+    const reminders = await getEntityReminders(req.userId, taskId, 'task');
+    
+    res.json({
+      success: true,
+      data: reminders,
+      meta: {
+        total: reminders.length,
+        taskId,
+        entityType: 'task'
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteTaskReminder = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!req.userId) {
+      res.status(401).json({
+        success: false,
+        error: 'Não autenticado',
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
+
+    const { reminderId } = req.params;
+
+    await deleteReminderAndChildren(req.userId, reminderId);
+    
+    res.json({
+      success: true,
+      message: 'Lembrete removido com sucesso',
       timestamp: new Date().toISOString()
     });
   } catch (error) {

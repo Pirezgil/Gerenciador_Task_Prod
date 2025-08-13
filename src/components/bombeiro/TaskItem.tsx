@@ -21,7 +21,8 @@ import {
   ExternalLink,
   Trash2,
   Clock,
-  Circle
+  Circle,
+  Target
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Task } from '@/types';
@@ -171,6 +172,33 @@ export function TaskItem({
           {/* Second Line - Badges and Actions */}
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-3">
+              {/* Tipo de Tarefa */}
+              {(() => {
+                if (task.isAppointment) {
+                  return (
+                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-pink-100 text-pink-700 border border-pink-200">
+                      <Calendar className="w-3 h-3" />
+                      <span>Compromisso</span>
+                    </div>
+                  );
+                } else if (task.isRecurring) {
+                  return (
+                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 border border-indigo-200">
+                      <Clock className="w-3 h-3" />
+                      <span>Recorrente</span>
+                    </div>
+                  );
+                } else if (task.type === 'brick') {
+                  return (
+                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700 border border-orange-200">
+                      <Target className="w-3 h-3" />
+                      <span>Brick</span>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+
               {/* Energia */}
               <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
                 task.energyPoints === 1 ? 'bg-green-100 text-green-700 border border-green-200' :
@@ -248,7 +276,7 @@ export function TaskItem({
                       onComplete(task.id);
                     }
                   }}
-                  disabled={isCompleted || variant === 'completed'}
+                  disabled={isCompleted || (variant as string) === 'completed'}
                 className={isCompleted 
                   ? "bg-green-500 text-white" 
                   : "text-green-600 border-green-300 hover:bg-green-50"

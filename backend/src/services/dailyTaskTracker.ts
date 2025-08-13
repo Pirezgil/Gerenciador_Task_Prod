@@ -1,5 +1,4 @@
 import { prisma } from '../app';
-import { RecurringTaskService } from './recurringTaskService';
 
 export class DailyTaskTracker {
   /**
@@ -239,11 +238,13 @@ export class DailyTaskTracker {
             plannedForToday: true,
             missedDaysCount: 0,
             status: {
-              in: ['pending', 'POSTPONED']
+              in: ['pending', 'PENDING', 'postponed', 'POSTPONED']
             }
           },
           {
-            status: 'POSTPONED'
+            status: {
+              in: ['postponed', 'POSTPONED']
+            }
           }
         ],
         isDeleted: false
@@ -278,7 +279,7 @@ export class DailyTaskTracker {
           gt: 0
         },
         status: {
-          in: ['pending', 'POSTPONED']
+          in: ['pending', 'PENDING', 'postponed', 'POSTPONED']
         },
         isDeleted: false
       },

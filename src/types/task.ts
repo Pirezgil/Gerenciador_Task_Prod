@@ -90,6 +90,7 @@ export interface Project {
   deadline?: string;
   sandboxNotes?: string;
   backlog: Task[];
+  tasks?: Task[]; // Compatibilidade com possíveis variações da API
 }
 
 // Tipos auxiliares para criação

@@ -3,14 +3,15 @@ import * as projectService from '../services/projectService';
 import { AuthenticatedRequest } from '../types/api';
 import { CreateProjectRequest, UpdateProjectRequest } from '../types/project';
 
-export const getProjects = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const getProjects = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.userId) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'Não autenticado',
         timestamp: new Date().toISOString()
       });
+      return;
     }
 
     const includeStats = req.query.includeStats === 'true';
@@ -30,14 +31,15 @@ export const getProjects = async (req: AuthenticatedRequest, res: Response, next
   }
 };
 
-export const getProject = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const getProject = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.userId) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'Não autenticado',
         timestamp: new Date().toISOString()
       });
+      return;
     }
 
     const { id } = req.params;
@@ -52,25 +54,27 @@ export const getProject = async (req: AuthenticatedRequest, res: Response, next:
     });
   } catch (error: any) {
     if (error.message === 'Projeto não encontrado') {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: 'Projeto não encontrado',
         message: 'O projeto solicitado não existe ou não pertence ao usuário',
         timestamp: new Date().toISOString()
       });
+      return;
     }
     next(error);
   }
 };
 
-export const createProject = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const createProject = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.userId) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'Não autenticado',
         timestamp: new Date().toISOString()
       });
+      return;
     }
 
     const projectData: CreateProjectRequest = req.body;
@@ -87,14 +91,15 @@ export const createProject = async (req: AuthenticatedRequest, res: Response, ne
   }
 };
 
-export const updateProject = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const updateProject = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.userId) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'Não autenticado',
         timestamp: new Date().toISOString()
       });
+      return;
     }
 
     const { id } = req.params;
@@ -110,32 +115,35 @@ export const updateProject = async (req: AuthenticatedRequest, res: Response, ne
     });
   } catch (error: any) {
     if (error.message === 'Projeto não encontrado') {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: 'Projeto não encontrado',
         timestamp: new Date().toISOString()
       });
+      return;
     }
     if (error.message?.includes('Não é possível finalizar projeto com')) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Projeto contém tarefas pendentes',
         message: error.message,
         timestamp: new Date().toISOString()
       });
+      return;
     }
     next(error);
   }
 };
 
-export const deleteProject = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const deleteProject = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.userId) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'Não autenticado',
         timestamp: new Date().toISOString()
       });
+      return;
     }
 
     const { id } = req.params;
@@ -148,32 +156,35 @@ export const deleteProject = async (req: AuthenticatedRequest, res: Response, ne
     });
   } catch (error: any) {
     if (error.message === 'Projeto não encontrado') {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: 'Projeto não encontrado',
         timestamp: new Date().toISOString()
       });
+      return;
     }
     if (error.message === 'Não é possível deletar projeto com tarefas vinculadas') {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Projeto contém tarefas',
         message: 'Remova ou mova todas as tarefas antes de deletar o projeto',
         timestamp: new Date().toISOString()
       });
+      return;
     }
     next(error);
   }
 };
 
-export const getProjectStats = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const getProjectStats = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.userId) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'Não autenticado',
         timestamp: new Date().toISOString()
       });
+      return;
     }
 
     const { id } = req.params;
@@ -186,24 +197,26 @@ export const getProjectStats = async (req: AuthenticatedRequest, res: Response, 
     });
   } catch (error: any) {
     if (error.message === 'Projeto não encontrado') {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: 'Projeto não encontrado',
         timestamp: new Date().toISOString()
       });
+      return;
     }
     next(error);
   }
 };
 
-export const updateProjectTask = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const updateProjectTask = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.userId) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: 'Não autenticado',
         timestamp: new Date().toISOString()
       });
+      return;
     }
 
     const { id: projectId, taskId } = req.params;
@@ -219,11 +232,12 @@ export const updateProjectTask = async (req: AuthenticatedRequest, res: Response
     });
   } catch (error: any) {
     if (error.message === 'Projeto não encontrado' || error.message === 'Tarefa não encontrada') {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: error.message,
         timestamp: new Date().toISOString()
       });
+      return;
     }
     next(error);
   }

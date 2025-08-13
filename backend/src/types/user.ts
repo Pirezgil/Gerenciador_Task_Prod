@@ -8,6 +8,7 @@ export interface UpdateUserProfileRequest {
   email?: string;
   timezone?: string;
   dailyEnergyBudget?: number;
+  avatarUrl?: string | null;
 }
 
 export interface UserResponse {

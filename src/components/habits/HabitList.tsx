@@ -2,10 +2,12 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Minus, Calendar, Flame, Target } from 'lucide-react';
+import { Plus, Minus, Calendar, Flame, Target, Bell } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCompleteHabit } from '@/hooks/api/useHabits';
 import { HabitCompletionAnimation } from './HabitCompletionAnimation';
+import { useReminders } from '@/hooks/api/useReminders';
+import { useHabitNotifications, useNotification } from '@/hooks/useNotification';
 import type { Habit } from '@/types/habit';
 
 interface HabitListProps {
@@ -16,6 +18,9 @@ interface HabitListProps {
 export function HabitList({ habits, showDate = false }: HabitListProps) {
   const router = useRouter();
   const completeHabitMutation = useCompleteHabit();
+  const { data: allReminders = [] } = useReminders() as { data?: any[] };
+  const habitNotifications = useHabitNotifications();
+  const { error } = useNotification();
   const [showCompletionAnimation, setCompletionAnimation] = useState(false);
   const [completionAnimationData, setCompletionAnimationData] = useState<{
     habitName: string;
@@ -23,6 +28,15 @@ export function HabitList({ habits, showDate = false }: HabitListProps) {
   } | null>(null);
   
   const today = new Date().toISOString().split('T')[0];
+
+  // Helper para obter lembretes de um hábito
+  const getHabitReminders = (habitId: string) => {
+    return allReminders.filter(reminder => 
+      reminder.entityId === habitId && 
+      reminder.entityType === 'habit' && 
+      reminder.isActive
+    );
+  };
 
   const isCompletedToday = (habit: Habit) => {
     return habit.completions.some(c => c.date === today);
@@ -42,6 +56,9 @@ export function HabitList({ habits, showDate = false }: HabitListProps) {
           notes: `Completado em ${new Date().toLocaleString('pt-BR')}`
         });
         
+        // Mostrar notificação de celebração
+        habitNotifications.habitCompleted(habit.name, habit.streak + 1);
+        
         // Trigger completion animation
         setCompletionAnimationData({
           habitName: habit.name,
@@ -49,8 +66,11 @@ export function HabitList({ habits, showDate = false }: HabitListProps) {
         });
         setCompletionAnimation(true);
       }
-    } catch (error) {
-      console.error('Erro ao completar hábito:', error);
+    } catch (err) {
+      error('Erro ao completar hábito', {
+        description: err instanceof Error ? err.message : 'Tente novamente',
+        context: 'habit_crud'
+      });
     }
   };
 
@@ -65,20 +85,29 @@ export function HabitList({ habits, showDate = false }: HabitListProps) {
       // Check if target is reached and trigger animation
       const currentCount = getTodayCompletionCount(habit);
       if (currentCount + 1 >= (habit.targetCount || 1)) {
+        // Mostrar notificação de celebração
+        habitNotifications.habitCompleted(habit.name, habit.streak + 1);
+        
         setCompletionAnimationData({
           habitName: habit.name,
           streak: habit.streak + 1
         });
         setCompletionAnimation(true);
       }
-    } catch (error) {
-      console.error('Erro ao incrementar hábito:', error);
+    } catch (err) {
+      error('Erro ao incrementar hábito', {
+        description: err instanceof Error ? err.message : 'Tente novamente',
+        context: 'habit_crud'
+      });
     }
   };
 
   const handleDecrement = (habit: Habit) => {
     // Por enquanto, não implementamos decremento via API
-    console.log('Decremento não implementado na API ainda');
+    error('Funcionalidade em desenvolvimento', {
+      description: 'O decremento de hábitos ainda não está implementado',
+      context: 'habit_crud'
+    });
   };
 
   const getStreakColor = (streak: number) => {
@@ -149,6 +178,23 @@ export function HabitList({ habits, showDate = false }: HabitListProps) {
                   <div className="font-bold text-xl text-green-600">{habit.bestStreak || 0}</div>
                   <div className="text-green-500 text-sm font-medium">Recorde</div>
                 </div>
+                
+                {/* Lembretes */}
+                {(() => {
+                  const habitReminders = getHabitReminders(habit.id);
+                  return habitReminders.length > 0 ? (
+                    <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 text-center">
+                      <div className="flex items-center justify-center space-x-1">
+                        <Bell className="w-4 h-4 text-blue-600" />
+                        <span className="font-bold text-lg text-blue-600">{habitReminders.length}</span>
+                      </div>
+                      <div className="text-blue-500 text-sm font-medium">
+                        {habitReminders.length === 1 ? 'Lembrete' : 'Lembretes'}
+                      </div>
+                    </div>
+                  ) : null;
+                })()
+                }
               </div>
 
               {/* Ação principal */}

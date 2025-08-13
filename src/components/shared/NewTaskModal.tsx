@@ -14,21 +14,29 @@ import { Button } from '@/components/ui/button';
 import { useCreateTask } from '@/hooks/api/useTasks';
 import { useProjects } from '@/hooks/api/useProjects';
 import { useModalsStore } from '@/stores/modalsStore';
-import { useAuthStore } from '@/stores/authStore';
+import { useAuth } from '@/providers/AuthProvider';
+import { useRemindersStore, reminderUtils } from '@/stores/remindersStore';
+import { useTaskNotifications, useAsyncNotification } from '@/hooks/useNotification';
 import type { CreateAttachment } from '@/types/task';
+import type { ReminderFormData, CreateReminderData } from '@/types/reminder';
 
 // Componentes
 import { FileUpload } from '@/components/shared/FileUpload';
 import { AutoExpandingTextarea } from './AutoExpandingTextarea';
+import { ReminderPicker } from '@/components/reminders/ReminderPicker';
 
 export function NewTaskModal() {
   const router = useRouter();
   
   // Estado dos Stores
-  const { data: projects = [] } = useProjects();
+  const { data: projects = [], isLoading: projectsLoading, error: projectsError } = useProjects();
   const createTask = useCreateTask();
   const { showCaptureModal, setShowCaptureModal, showNewTaskModal, setShowNewTaskModal, preselectedProjectId, transformedNote, setTransformedNote, previousPath, setPreviousPath } = useModalsStore();
-  const { user } = useAuthStore();
+  const { user, isAuthenticated } = useAuth();
+  
+  // Hooks de notificação
+  const taskNotifications = useTaskNotifications();
+  const { withLoading } = useAsyncNotification();
 
   // Estado local do formulário
   const [description, setDescription] = useState('');
@@ -45,6 +53,9 @@ export function NewTaskModal() {
   const [preparationTime, setPreparationTime] = useState(30);
   const [appointmentLocation, setAppointmentLocation] = useState('');
   const [appointmentNotes, setAppointmentNotes] = useState('');
+  
+  // Estados de lembrete
+  const [taskReminders, setTaskReminders] = useState<CreateReminderData[]>([]);
   
   const [errors, setErrors] = useState<{[key: string]: string}>({});
   const [isCreating, setIsCreating] = useState(false);
@@ -108,8 +119,9 @@ export function NewTaskModal() {
       const taskData = {
         description,
         energyPoints,
+        type: 'task',
         projectId,
-        dueDate: dueDate || 'Sem vencimento',
+        dueDate: dueDate ? new Date(dueDate + 'T00:00:00.000Z').toISOString() : undefined,
         isRecurring,
         recurrence: isRecurring ? {
           frequency: recurrenceFrequency,
@@ -144,8 +156,24 @@ export function NewTaskModal() {
         commentValue: comment || 'vazio',
         attachmentValue: attachment || 'vazio'
       });
+      console.log('🌐 Estado do navegador:', {
+        userAgent: navigator.userAgent,
+        currentURL: window.location.href,
+        origin: window.location.origin
+      });
       
-      await createTask.mutateAsync(taskData);
+      // Usar o novo sistema de notificações com loading
+      const createdTask = await withLoading(
+        () => createTask.mutateAsync(taskData),
+        {
+          loading: 'Criando tarefa...',
+          success: `Tarefa "${description}" criada!`
+        },
+        {
+          context: 'task_crud',
+          description: isAppointment ? 'Compromisso agendado' : undefined
+        }
+      );
       
       // Mostrar animação de sucesso
       setShowSuccessAnimation(true);
@@ -158,6 +186,13 @@ export function NewTaskModal() {
 
     } catch (error) {
       console.error('Erro ao criar tarefa:', error);
+      console.error('Detalhes do erro:', {
+        status: error?.response?.status,
+        data: error?.response?.data,
+        headers: error?.response?.headers,
+        config: error?.config
+      });
+      console.error('🚨 RESPOSTA COMPLETA DO SERVIDOR:', JSON.stringify(error?.response?.data, null, 2));
       setErrors({ general: 'Erro ao criar tarefa. Tente novamente.' });
       setIsCreating(false);
     }
@@ -463,6 +498,17 @@ export function NewTaskModal() {
                       </div>
                     )}
                   </div>
+
+                  {/* Sistema de Lembretes Avançado */}
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <ReminderPicker
+                      entityType="task"
+                      onRemindersChange={setTaskReminders}
+                      initialReminders={taskReminders}
+                      disabled={isCreating}
+                      maxReminders={5}
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-6">
@@ -475,9 +521,14 @@ export function NewTaskModal() {
                       value={projectId || ''} 
                       onChange={(e) => setProjectId(e.target.value || undefined)} 
                       className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      disabled={!!preselectedProjectId}
+                      disabled={!!preselectedProjectId || projectsLoading}
                     >
-                      <option value="">Nenhum projeto</option>
+                      <option value="">
+                        {projectsLoading ? 'Carregando projetos...' : 
+                         projectsError ? 'Erro ao carregar projetos' :
+                         projects.length === 0 ? 'Nenhum projeto disponível' : 
+                         'Nenhum projeto'}
+                      </option>
                       {projects.map(p => <option key={p.id} value={p.id}>{p.icon} {p.name}</option>)}
                     </select>
                     {projectId && (

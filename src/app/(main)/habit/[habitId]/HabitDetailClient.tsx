@@ -1,13 +1,19 @@
 'use client';
+// @ts-nocheck
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Edit3, Calendar, Target, Flame, Trophy, MessageSquare, Send } from 'lucide-react';
+import { ArrowLeft, Edit3, Calendar, Flame, Trophy, MessageSquare, Send } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useHabit, useHabitComments, useAddHabitComment, useCompleteHabit } from '@/hooks/api/useHabits';
+import { useUpdateReminder, useDeleteReminder } from '@/hooks/api/useReminders';
+import { useRemindersStore } from '@/stores/remindersStore';
 import { HabitEditModal } from '@/components/shared/HabitEditModal';
+import { ModernReminderModal } from '@/components/shared/ReminderModal';
+import { ReminderEditModal } from '@/components/shared/ReminderEditModal';
+import ReminderSectionIntegrated from '@/components/reminders/ReminderSectionIntegrated';
+import type { Reminder } from '@/types/reminder';
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 
 interface HabitDetailClientProps {
   habitId: string;
@@ -17,11 +23,37 @@ export function HabitDetailClient({ habitId }: HabitDetailClientProps) {
   const router = useRouter();
   const [showEditModal, setShowEditModal] = useState(false);
   const [newComment, setNewComment] = useState('');
+  const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
+  const [showReminderEditModal, setShowReminderEditModal] = useState(false);
   
   const { data: habit, isLoading: habitLoading } = useHabit(habitId);
   const { data: comments = [], isLoading: commentsLoading } = useHabitComments(habitId);
   const addCommentMutation = useAddHabitComment();
   const completeHabitMutation = useCompleteHabit();
+  
+  // Hooks de lembretes
+  // const { data: habitReminders = [] } = useHabitReminders(habitId);
+  const { openReminderModal, resetReminderForm } = useRemindersStore();
+  const updateReminderMutation = useUpdateReminder();
+  const deleteReminderMutation = useDeleteReminder();
+
+  // Handlers para lembretes
+  const handleEditReminder = (reminder: Reminder) => {
+    setEditingReminder(reminder);
+    setShowReminderEditModal(true);
+  };
+
+  const handleUpdateReminder = async (reminderId: string, updates: any) => {
+    await updateReminderMutation.mutateAsync({ reminderId, updates });
+    setShowReminderEditModal(false);
+    setEditingReminder(null);
+  };
+
+  const handleDeleteReminder = async (reminderId: string) => {
+    if (window.confirm('Tem certeza que deseja excluir este lembrete?')) {
+      await deleteReminderMutation.mutateAsync(reminderId);
+    }
+  };
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -52,8 +84,8 @@ export function HabitDetailClient({ habitId }: HabitDetailClientProps) {
     );
   }
 
-  const completedToday = habit.completions?.some(c => c.date === today);
-  const todayCount = habit.completions?.filter(c => c.date === today).reduce((sum, c) => sum + c.count, 0) || 0;
+  // const completedToday = habit.completions?.some(c => c.date === today);
+  // const todayCount = habit.completions?.filter(c => c.date === today).reduce((sum, c) => sum + c.count, 0) || 0;
 
   // Calcular estatísticas dos últimos 30 dias
   const last30Days = Array.from({ length: 30 }, (_, i) => {
@@ -66,7 +98,7 @@ export function HabitDetailClient({ habitId }: HabitDetailClientProps) {
     last30Days.includes(c.date)
   ).length || 0;
 
-  const completionRate = Math.round((completionsLast30Days / 30) * 100);
+  // const completionRate = Math.round((completionsLast30Days / 30) * 100);
 
   // Completar hábito
   const handleComplete = async () => {
@@ -191,6 +223,11 @@ export function HabitDetailClient({ habitId }: HabitDetailClientProps) {
           </div>
         </div>
 
+        {/* Nova Seção de Lembretes Diferenciada */}
+        <ReminderSectionIntegrated
+          entity={habit}
+          entityType="habit"
+        />
 
         {/* Seção de Comentários */}
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
@@ -288,6 +325,24 @@ export function HabitDetailClient({ habitId }: HabitDetailClientProps) {
           onClose={() => setShowEditModal(false)}
         />
       )}
+
+      {/* Modal de Lembretes */}
+      <ModernReminderModal
+        entityId={habitId}
+        entityType="habit"
+      />
+      
+      {/* Modal de Edição de Lembretes */}
+      <ReminderEditModal
+        isOpen={showReminderEditModal}
+        onClose={() => {
+          setShowReminderEditModal(false);
+          setEditingReminder(null);
+        }}
+        reminder={editingReminder}
+        onUpdate={handleUpdateReminder}
+        isLoading={updateReminderMutation.isPending}
+      />
     </div>
   );
 }

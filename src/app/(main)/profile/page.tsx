@@ -10,11 +10,11 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { User, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAuthStore } from '@/stores/authStore';
+import { useAuth } from '@/providers/AuthProvider';
 import { UserProfile } from '@/components/profile/UserProfile';
 
 export default function ProfilePage() {
-  const { user } = useAuthStore();
+  const { user } = useAuth();
 
   return (
     <div className="max-w-4xl mx-auto p-6">

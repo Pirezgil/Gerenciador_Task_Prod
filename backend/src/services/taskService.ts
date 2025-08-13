@@ -11,7 +11,19 @@ import {
 import AchievementService from './achievementService';
 import RecurringTaskService from './recurringTaskService';
 
-export const getUserTasks = async (userId: string, filters?: any): Promise<TaskResponse[]> => {
+// PERFORMANCE: Optimized queries with selective includes
+export const getUserTasks = async (
+  userId: string, 
+  filters?: any,
+  include?: {
+    project?: boolean;
+    comments?: boolean;
+    attachments?: boolean;
+    history?: boolean;
+    recurrence?: boolean;
+    appointment?: boolean;
+  }
+): Promise<TaskResponse[]> => {
   const whereClause: any = { 
     userId,
     isDeleted: false // Filtrar tarefas excluídas
@@ -42,27 +54,45 @@ export const getUserTasks = async (userId: string, filters?: any): Promise<TaskR
     };
   }
 
+  // PERFORMANCE: Build include object dynamically
+  const includeOptions: any = {};
+  
+  if (include?.project) {
+    includeOptions.project = {
+      select: { id: true, name: true, icon: true, color: true }
+    };
+  }
+  
+  if (include?.comments) {
+    includeOptions.comments = { 
+      take: 5, // Limit to last 5 comments for list views
+      orderBy: { createdAt: 'desc' } 
+    };
+  }
+  
+  if (include?.attachments) {
+    includeOptions.attachments = true;
+  }
+  
+  if (include?.recurrence) {
+    includeOptions.recurrence = true;
+  }
+  
+  if (include?.appointment) {
+    includeOptions.appointment = true;
+  }
+  
+  if (include?.history) {
+    includeOptions.history = {
+      take: 10, // Limit history for performance
+      orderBy: { timestamp: 'desc' }
+    };
+  }
+
   const tasks = await prisma.task.findMany({
     where: whereClause,
-    include: {
-      project: {
-        select: {
-          id: true,
-          name: true,
-          icon: true,
-          color: true
-        }
-      },
-      comments: {
-        orderBy: { createdAt: 'desc' }
-      },
-      attachments: true,
-      recurrence: true,
-      appointment: true,
-      history: {
-        orderBy: { timestamp: 'desc' }
-      }
-    },
+    include: includeOptions,
+    take: 50, // PERFORMANCE: Pagination limit
     orderBy: { createdAt: 'desc' }
   });
 
@@ -77,7 +107,7 @@ export const getUserTasks = async (userId: string, filters?: any): Promise<TaskR
     dueDate: task.dueDate?.toISOString().split('T')[0] || 'Sem vencimento',
     rescheduleDate: task.rescheduleDate?.toISOString().split('T')[0],
     postponementCount: task.postponementCount,
-    postponementReason: task.postponementReason,
+    postponementReason: task.postponementReason || undefined,
     plannedForToday: task.plannedForToday,
     plannedDate: task.plannedDate?.toISOString().split('T')[0],
     missedDaysCount: task.missedDaysCount || 0,
@@ -86,22 +116,22 @@ export const getUserTasks = async (userId: string, filters?: any): Promise<TaskR
     completedAt: task.completedAt?.toISOString(),
     postponedAt: task.postponedAt?.toISOString(),
     updatedAt: task.updatedAt.toISOString(),
-    project: task.project,
-    comments: task.comments.map(comment => ({
+    project: task.project || undefined,
+    comments: task.comments?.map(comment => ({
       id: comment.id,
       author: comment.author,
       content: comment.content,
       createdAt: comment.createdAt.toISOString()
-    })),
-    attachments: task.attachments.map(attachment => ({
+    })) || [],
+    attachments: task.attachments?.map(attachment => ({
       id: attachment.id,
       name: attachment.name,
       url: attachment.url,
       type: attachment.type,
       size: attachment.size.toString(),
       uploadedAt: attachment.uploadedAt.toISOString()
-    })),
-    history: task.history.map(h => ({
+    })) || [],
+    history: task.history?.map(h => ({
       id: h.id,
       action: h.action,
       field: h.action === 'created' ? 'created' : ((h.details as any)?.field || h.action),
@@ -109,23 +139,23 @@ export const getUserTasks = async (userId: string, filters?: any): Promise<TaskR
       newValue: h.action === 'created' ? (h.details as any)?.newValue || '' : ((h.details as any)?.newValue || ''),
       timestamp: h.timestamp.toISOString(),
       details: h.details
-    })),
+    })) || [],
     recurrence: task.recurrence ? {
-      id: task.recurrence.id,
-      frequency: task.recurrence.frequency,
-      daysOfWeek: task.recurrence.daysOfWeek,
-      lastCompleted: task.recurrence.lastCompleted?.toISOString(),
-      nextDue: task.recurrence.nextDue?.toISOString()
+      id: (task.recurrence as any).id,
+      frequency: (task.recurrence as any).frequency,
+      daysOfWeek: (task.recurrence as any).daysOfWeek,
+      lastCompleted: (task.recurrence as any).lastCompleted?.toISOString(),
+      nextDue: (task.recurrence as any).nextDue?.toISOString()
     } : undefined,
     appointment: task.appointment ? {
-      id: task.appointment.id,
-      scheduledTime: task.appointment.scheduledTime,
-      preparationTime: task.appointment.preparationTime,
-      location: task.appointment.location,
-      notes: task.appointment.notes,
-      reminderTime: task.appointment.reminderTime
+      id: (task.appointment as any).id,
+      scheduledTime: (task.appointment as any).scheduledTime,
+      preparationTime: (task.appointment as any).preparationTime,
+      location: (task.appointment as any).location || undefined,
+      notes: (task.appointment as any).notes || undefined,
+      reminderTime: (task.appointment as any).reminderTime || undefined
     } : undefined
-  }));
+  })) as unknown as TaskResponse[];
 };
 
 export const getTaskById = async (taskId: string, userId: string): Promise<TaskResponse> => {
@@ -171,16 +201,17 @@ export const getTaskById = async (taskId: string, userId: string): Promise<TaskR
     dueDate: task.dueDate?.toISOString().split('T')[0] || 'Sem vencimento',
     rescheduleDate: task.rescheduleDate?.toISOString().split('T')[0],
     postponementCount: task.postponementCount,
-    postponementReason: task.postponementReason,
+    postponementReason: task.postponementReason || undefined,
     plannedForToday: task.plannedForToday,
     plannedDate: task.plannedDate?.toISOString().split('T')[0],
     missedDaysCount: task.missedDaysCount || 0,
     externalLinks: task.externalLinks,
+    projectId: task.projectId || undefined, // ✅ CORREÇÃO: Adicionar projectId à resposta
     createdAt: task.createdAt.toISOString(),
     completedAt: task.completedAt?.toISOString(),
     postponedAt: task.postponedAt?.toISOString(),
     updatedAt: task.updatedAt.toISOString(),
-    project: task.project,
+    project: task.project || undefined,
     comments: task.comments.map(comment => ({
       id: comment.id,
       author: comment.author,
@@ -205,19 +236,19 @@ export const getTaskById = async (taskId: string, userId: string): Promise<TaskR
       details: h.details
     })),
     recurrence: task.recurrence ? {
-      id: task.recurrence.id,
-      frequency: task.recurrence.frequency,
-      daysOfWeek: task.recurrence.daysOfWeek,
-      lastCompleted: task.recurrence.lastCompleted?.toISOString(),
-      nextDue: task.recurrence.nextDue?.toISOString()
+      id: (task.recurrence as any).id,
+      frequency: (task.recurrence as any).frequency,
+      daysOfWeek: (task.recurrence as any).daysOfWeek,
+      lastCompleted: (task.recurrence as any).lastCompleted?.toISOString(),
+      nextDue: (task.recurrence as any).nextDue?.toISOString()
     } : undefined,
     appointment: task.appointment ? {
-      id: task.appointment.id,
-      scheduledTime: task.appointment.scheduledTime,
-      preparationTime: task.appointment.preparationTime,
-      location: task.appointment.location,
-      notes: task.appointment.notes,
-      reminderTime: task.appointment.reminderTime
+      id: (task.appointment as any).id,
+      scheduledTime: (task.appointment as any).scheduledTime,
+      preparationTime: (task.appointment as any).preparationTime,
+      location: (task.appointment as any).location || undefined,
+      notes: (task.appointment as any).notes || undefined,
+      reminderTime: (task.appointment as any).reminderTime || undefined
     } : undefined
   };
 };
@@ -330,6 +361,27 @@ export const createTask = async (userId: string, data: CreateTaskRequest): Promi
     }
   });
 
+  // ===== CRIAR LEMBRETES AUTOMÁTICOS PARA COMPROMISSOS =====
+  if (data.appointment && data.isAppointment) {
+    try {
+      const { createAppointmentReminders } = await import('./reminderService');
+      await createAppointmentReminders(
+        userId,
+        task.id,
+        data.appointment.scheduledTime,
+        data.appointment.preparationTime || 15
+      );
+      console.log('✅ Lembretes automáticos criados para compromisso:', {
+        taskId: task.id,
+        scheduledTime: data.appointment.scheduledTime,
+        preparationTime: data.appointment.preparationTime || 15
+      });
+    } catch (error) {
+      console.warn('⚠️ Erro ao criar lembretes automáticos para compromisso:', error);
+      // Não falhar a criação da tarefa por erro nos lembretes
+    }
+  }
+
   return getTaskById(task.id, userId);
 };
 
@@ -414,6 +466,134 @@ export const updateTask = async (taskId: string, userId: string, data: UpdateTas
     updateData.projectId = data.projectId;
   }
 
+  // ===== ATUALIZAR RECORRÊNCIA =====
+  if (data.recurrence !== undefined) {
+    if (data.recurrence && data.isRecurring) {
+      // Upsert recurrence - criar ou atualizar
+      await prisma.taskRecurrence.upsert({
+        where: { taskId },
+        create: {
+          taskId,
+          frequency: data.recurrence.frequency,
+          daysOfWeek: data.recurrence.daysOfWeek || []
+        },
+        update: {
+          frequency: data.recurrence.frequency,
+          daysOfWeek: data.recurrence.daysOfWeek || []
+        }
+      });
+      
+      console.log('✅ Recorrência atualizada/criada:', {
+        frequency: data.recurrence.frequency,
+        daysOfWeek: data.recurrence.daysOfWeek
+      });
+    } else if (data.recurrence === null || !data.isRecurring) {
+      // Remover recorrência se isRecurring = false
+      await prisma.taskRecurrence.deleteMany({
+        where: { taskId }
+      });
+      
+      console.log('🗑️ Recorrência removida');
+    }
+  }
+
+  // ===== ATUALIZAR COMPROMISSO =====
+  if (data.appointment !== undefined) {
+    if (data.appointment && data.isAppointment) {
+      // Upsert appointment - criar ou atualizar
+      await prisma.taskAppointment.upsert({
+        where: { taskId },
+        create: {
+          taskId,
+          scheduledTime: data.appointment.scheduledTime,
+          preparationTime: data.appointment.preparationTime || 0,
+          location: data.appointment.location,
+          notes: data.appointment.notes,
+          reminderTime: data.appointment.reminderTime
+        },
+        update: {
+          scheduledTime: data.appointment.scheduledTime,
+          preparationTime: data.appointment.preparationTime || 0,
+          location: data.appointment.location,
+          notes: data.appointment.notes,
+          reminderTime: data.appointment.reminderTime
+        }
+      });
+      
+      console.log('✅ Compromisso atualizado/criado:', {
+        scheduledTime: data.appointment.scheduledTime,
+        location: data.appointment.location
+      });
+
+      // ===== RECRIAR LEMBRETES AUTOMÁTICOS =====
+      try {
+        const { deleteReminderAndChildren, createAppointmentReminders } = await import('./reminderService');
+        
+        // Remover lembretes automáticos existentes (prepare e urgent)
+        const existingReminders = await import('../app').then(async ({ prisma }) => {
+          return prisma.reminder.findMany({
+            where: {
+              userId,
+              entityId: taskId,
+              entityType: 'task',
+              subType: { in: ['prepare', 'urgent'] },
+              isActive: true
+            }
+          });
+        });
+        
+        for (const reminder of existingReminders) {
+          await deleteReminderAndChildren(userId, reminder.id);
+        }
+        
+        // Criar novos lembretes automáticos
+        await createAppointmentReminders(
+          userId,
+          taskId,
+          data.appointment.scheduledTime,
+          data.appointment.preparationTime || 15
+        );
+        
+        console.log('✅ Lembretes automáticos recriados para compromisso atualizado');
+      } catch (error) {
+        console.warn('⚠️ Erro ao recriar lembretes automáticos:', error);
+      }
+    } else if (!data.isAppointment) {
+      // Remover compromisso se isAppointment = false
+      await prisma.taskAppointment.deleteMany({
+        where: { taskId }
+      });
+      
+      // ===== REMOVER LEMBRETES AUTOMÁTICOS =====
+      try {
+        const { deleteReminderAndChildren } = await import('./reminderService');
+        
+        // Remover lembretes automáticos (prepare e urgent)
+        const existingReminders = await import('../app').then(async ({ prisma }) => {
+          return prisma.reminder.findMany({
+            where: {
+              userId,
+              entityId: taskId,
+              entityType: 'task',
+              subType: { in: ['prepare', 'urgent'] },
+              isActive: true
+            }
+          });
+        });
+        
+        for (const reminder of existingReminders) {
+          await deleteReminderAndChildren(userId, reminder.id);
+        }
+        
+        console.log('✅ Lembretes automáticos removidos com o compromisso');
+      } catch (error) {
+        console.warn('⚠️ Erro ao remover lembretes automáticos:', error);
+      }
+      
+      console.log('🗑️ Compromisso removido');
+    }
+  }
+
   // Criar registros de histórico para cada campo alterado
   const historyRecords = [];
   
@@ -462,6 +642,54 @@ export const updateTask = async (taskId: string, userId: string, data: UpdateTas
           newValue: newDate || ''
         }
       });
+    }
+  }
+
+  // Histórico para mudanças de tipo (recorrência/compromisso)
+  if (data.isRecurring !== undefined && data.isRecurring !== existingTask.isRecurring) {
+    historyRecords.push({
+      action: 'taskType',
+      details: {
+        editedBy: userId,
+        oldValue: existingTask.isRecurring ? 'Recorrente' : 'Normal',
+        newValue: data.isRecurring ? 'Recorrente' : 'Normal'
+      }
+    });
+  }
+
+  if (data.isAppointment !== undefined && data.isAppointment !== existingTask.isAppointment) {
+    historyRecords.push({
+      action: 'taskType',
+      details: {
+        editedBy: userId,
+        oldValue: existingTask.isAppointment ? 'Compromisso' : 'Normal',
+        newValue: data.isAppointment ? 'Compromisso' : 'Normal'
+      }
+    });
+  }
+
+  // ===== ATUALIZAR ANEXOS =====
+  if (data.attachments !== undefined) {
+    // Remover todos os anexos existentes
+    await prisma.taskAttachment.deleteMany({
+      where: { taskId }
+    });
+
+    // Criar novos anexos se houver
+    if (data.attachments && data.attachments.length > 0) {
+      await prisma.taskAttachment.createMany({
+        data: data.attachments.map(attachment => ({
+          taskId,
+          name: attachment.name,
+          url: attachment.url,
+          type: attachment.type,
+          size: BigInt(attachment.size)
+        }))
+      });
+      
+      console.log('✅ Anexos atualizados:', data.attachments.length, 'anexos');
+    } else {
+      console.log('🗑️ Todos os anexos removidos');
     }
   }
 

@@ -6,7 +6,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useAuthStore } from '@/stores/authStore';
+import { useAuth } from '@/providers/AuthProvider';
 import { useUpdateSettings } from '@/hooks/api/useAuth';
 import { 
   Shield, 
@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 
 export function SecuritySettings() {
-  const { user, updateUserSettings } = useAuthStore();
+  const { user } = useAuth();
   const updateSettings = useUpdateSettings();
   
   // Se não há usuário logado, não renderizar o componente
@@ -84,8 +84,8 @@ export function SecuritySettings() {
         sandboxEnabled: true 
       });
       
-      // Atualizar estado local também
-      updateUserSettings({ 
+      // TODO: Update user settings via new auth system
+      console.log('Sandbox settings updated:', { 
         sandboxPassword: sandboxPassword,
         sandboxEnabled: true 
       });
@@ -116,8 +116,8 @@ export function SecuritySettings() {
         sandboxPassword: undefined 
       });
       
-      // Atualizar estado local
-      updateUserSettings({ 
+      // TODO: Update user settings via new auth system
+      console.log('Sandbox settings updated:', { 
         sandboxEnabled: false, 
         sandboxPassword: undefined 
       });
@@ -492,49 +492,12 @@ export function SecuritySettings() {
         </div>
       </motion.div>
 
-      {/* Configurações de Privacidade */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="bg-white/70 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 p-8"
-      >
-        <div className="flex items-center space-x-3 mb-6">
-          <Settings className="w-6 h-6 text-purple-600" />
-          <div>
-            <h2 className="text-xl font-bold text-gray-900">Configurações de Privacidade</h2>
-            <p className="text-gray-600">Controle como seus dados são utilizados</p>
-          </div>
-        </div>
-        
-        <div className="space-y-3">
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-            <div>
-              <h4 className="font-medium text-gray-900">Dados de Uso</h4>
-              <p className="text-sm text-gray-600">Permitir coleta de dados para melhorar o serviço</p>
-            </div>
-            <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-blue-600 transition-colors">
-              <span className="inline-block h-4 w-4 transform rounded-full bg-white translate-x-6 transition-transform" />
-            </button>
-          </div>
-          
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-            <div>
-              <h4 className="font-medium text-gray-900">Analytics</h4>
-              <p className="text-sm text-gray-600">Compartilhar estatísticas anônimas de uso</p>
-            </div>
-            <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-200 transition-colors">
-              <span className="inline-block h-4 w-4 transform rounded-full bg-white translate-x-1 transition-transform" />
-            </button>
-          </div>
-        </div>
-      </motion.div>
 
       {/* Zona de Perigo */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
+        transition={{ delay: 0.4 }}
         className="border-2 border-red-200 rounded-2xl p-8 bg-red-50"
       >
         <div className="flex items-center space-x-3 mb-6">

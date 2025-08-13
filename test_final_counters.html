@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Final dos Contadores</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        .test-container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .status-counters {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .counter {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .pending {
+            background-color: #dbeafe;
+            color: #1d4ed8;
+        }
+        .completed {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        .error {
+            background-color: #fee2e2;
+            color: #dc2626;
+        }
+        .raw-data {
+            background: #f3f4f6;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Teste Final dos Contadores de Tijolos</h1>
+    
+    <div class="test-container">
+        <h2>Dados da API Real</h2>
+        <p>Fazendo requisição para: <code>http://localhost:3001/api/projects</code></p>
+        
+        <div id="api-status"></div>
+        <div id="raw-data"></div>
+        <div id="counter-test"></div>
+        <div id="test-result"></div>
+    </div>
+
+    <script>
+        async function testFinalCounters() {
+            const apiStatusDiv = document.getElementById('api-status');
+            const rawDataDiv = document.getElementById('raw-data');
+            const counterTestDiv = document.getElementById('counter-test');
+            const resultDiv = document.getElementById('test-result');
+
+            try {
+                apiStatusDiv.innerHTML = '<p>🔄 Fazendo requisição para a API...</p>';
+
+                // Fazer requisição para a API real
+                const response = await fetch('http://localhost:3001/api/projects', {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                apiStatusDiv.innerHTML = '<p>✅ Dados obtidos da API com sucesso!</p>';
+                
+                // Mostrar dados brutos
+                rawDataDiv.innerHTML = `<div class="raw-data">${JSON.stringify(data, null, 2)}</div>`;
+
+                // Analisar primeiro projeto
+                if (data.data && data.data.length > 0) {
+                    const project = data.data[0];
+                    const projectTasks = project.backlog || project.tasks || [];
+                    
+                    // Aplicar a lógica corrigida
+                    const pendingCount = projectTasks.filter(t => 
+                        t.status?.toLowerCase() === 'pending'
+                    ).length;
+                    const completedCount = projectTasks.filter(t => 
+                        t.status?.toLowerCase() === 'completed'
+                    ).length;
+                    
+                    // Informações extras para debug
+                    const postponedCount = projectTasks.filter(t => 
+                        t.status?.toLowerCase() === 'postponed'
+                    ).length;
+                    const otherCount = projectTasks.filter(t => 
+                        t.status?.toLowerCase() !== 'pending' && 
+                        t.status?.toLowerCase() !== 'completed' && 
+                        t.status?.toLowerCase() !== 'postponed'
+                    ).length;
+
+                    counterTestDiv.innerHTML = `
+                        <h3>Projeto: ${project.name}</h3>
+                        <p><strong>Total de tijolos:</strong> ${projectTasks.length}</p>
+                        
+                        <h4>Lista de tijolos:</h4>
+                        <ul>
+                            ${projectTasks.map(task => 
+                                `<li>"${task.description}" - Status: <strong>${task.status}</strong> (lowercase: ${task.status?.toLowerCase()})</li>`
+                            ).join('')}
+                        </ul>
+                        
+                        <h4>Contadores aplicando a correção:</h4>
+                        <div class="status-counters">
+                            <span class="counter pending">${pendingCount} pendentes</span>
+                            <span class="counter completed">${completedCount} concluídos</span>
+                        </div>
+                        
+                        <h4>Debug adicional:</h4>
+                        <p>🟡 Adiados: ${postponedCount}</p>
+                        <p>❓ Outros status: ${otherCount}</p>
+                    `;
+
+                    // Verificar se a correção está funcionando
+                    const isWorking = pendingCount === 0 && completedCount === 1;
+                    
+                    if (isWorking) {
+                        resultDiv.innerHTML = `
+                            <div class="result success">
+                                <h4>✅ CORREÇÃO FUNCIONANDO!</h4>
+                                <p>Os contadores estão exibindo corretamente:</p>
+                                <ul>
+                                    <li>0 tijolos pendentes ✓</li>
+                                    <li>1 tijolo concluído ✓</li>
+                                </ul>
+                                <p><strong>A correção foi implementada com sucesso!</strong></p>
+                                <p>O elemento agora mostra a quantidade real de tijolos segmentados por status.</p>
+                            </div>
+                        `;
+                    } else {
+                        resultDiv.innerHTML = `
+                            <div class="result error">
+                                <h4>❌ Problema detectado</h4>
+                                <p>Contadores encontrados:</p>
+                                <ul>
+                                    <li>Pendentes: ${pendingCount} (esperado: 0)</li>
+                                    <li>Concluídos: ${completedCount} (esperado: 1)</li>
+                                </ul>
+                                <p>Verifique a implementação da lógica no frontend.</p>
+                            </div>
+                        `;
+                    }
+                } else {
+                    throw new Error('Nenhum projeto encontrado nos dados da API');
+                }
+
+            } catch (error) {
+                apiStatusDiv.innerHTML = `<p>❌ Erro ao acessar a API: ${error.message}</p>`;
+                
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h4>❌ Erro no teste</h4>
+                        <p>Não foi possível completar o teste devido ao erro: ${error.message}</p>
+                        <p>Verifique se:</p>
+                        <ul>
+                            <li>O backend está rodando em localhost:3001</li>
+                            <li>Você está autenticado no sistema</li>
+                            <li>Não há problemas de CORS</li>
+                        </ul>
+                    </div>
+                `;
+            }
+        }
+
+        // Executar teste quando a página carregar
+        window.onload = testFinalCounters;
+    </script>
+</body>
+</html>

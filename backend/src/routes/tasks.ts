@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import * as tasksController from '../controllers/tasksController';
-import { authenticate } from '../middleware/auth';
+import { requireAuth } from '../middleware/auth';
 import { validate, validateQuery } from '../lib/validation';
 import { 
   createTaskSchema, 
@@ -9,11 +9,16 @@ import {
   createTaskCommentSchema,
   taskFilterSchema
 } from '../lib/validation';
+import { 
+  createReminderLimit, 
+  readReminderLimit,
+  generalNotificationLimit
+} from '../middleware/notificationRateLimit';
 
 const router = Router();
 
-// Aplicar autenticação a todas as rotas
-router.use(authenticate);
+// ETAPA 2: Aplicar middleware de autenticação server-side robusto
+router.use(requireAuth);
 
 // Rotas principais
 router.get('/', validateQuery(taskFilterSchema), tasksController.getTasks);
@@ -33,5 +38,15 @@ router.post('/:id/comments', validate(createTaskCommentSchema), tasksController.
 
 // Orçamento de energia
 router.get('/energy/budget', tasksController.getEnergyBudget);
+
+// ===== NOVOS ENDPOINTS DE LEMBRETES =====
+// Lembretes para tarefas normais/tijolos
+router.post('/:taskId/reminders', createReminderLimit, tasksController.createTaskReminder);
+// Lembretes para tarefas recorrentes
+router.post('/:taskId/recurring-reminders', createReminderLimit, tasksController.createRecurringTaskReminders);
+// Listar lembretes de uma tarefa
+router.get('/:taskId/reminders', readReminderLimit, tasksController.getTaskReminders);
+// Remover lembrete
+router.delete('/reminders/:reminderId', generalNotificationLimit, tasksController.deleteTaskReminder);
 
 export { router as taskRoutes };

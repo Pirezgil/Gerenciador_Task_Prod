@@ -239,7 +239,7 @@ export function PlanejamentoDiariaPage() {
         }
       });
     } catch (error) {
-      console.error('Erro ao planejar tarefa:', error);
+      console.error('❌ Erro ao planejar tarefa:', error);
     }
   };
 

@@ -17,7 +17,8 @@ import {
   ExternalLink,
   MessageSquare,
   Trash2,
-  Flame
+  Flame,
+  Bell
 } from 'lucide-react';
 import { useTasks, useTasksStats, useCompleteTask, useDeleteTask, useUpdateTask } from '@/hooks/api/useTasks';
 import { useProjects } from '@/hooks/api/useProjects';
@@ -27,9 +28,10 @@ import { NewTaskModal } from '@/components/shared/NewTaskModal';
 import Link from 'next/link';
 import { scrollToElementWithDelay } from '@/utils/scrollUtils';
 import { formatHistoryMessage } from '@/utils/historyFormatter';
-import { useStandardAlert } from '@/components/shared/StandardAlert';
+import { useTaskNotifications, useAsyncNotification, useNotification } from '@/hooks/useNotification';
 import { AchievementNotificationSystem } from '@/components/rewards/AchievementNotificationSystem';
 import { useRecentAchievements } from '@/hooks/api/useAchievements';
+import { useReminders } from '@/hooks/api/useReminders';
 
 type FilterType = 'all' | 'today' | 'week' | 'completed' | 'pending';
 type SortType = 'date' | 'energy' | 'project' | 'status';
@@ -41,6 +43,7 @@ export function TasksPageClient() {
   const { data: allTasks = [], isLoading } = useTasks();
   const { data: projects = [] } = useProjects();
   const recentAchievements = useRecentAchievements();
+  const { data: allReminders = [] } = useReminders();
   
   const completeTask = useCompleteTask();
   const deleteTask = useDeleteTask();
@@ -53,20 +56,22 @@ export function TasksPageClient() {
   const [currentView, setCurrentView] = useState<ViewMode>('today');
   const [sortBy, setSortBy] = useState<SortType>('date');
   const [searchTerm, setSearchTerm] = useState('');
-  const { showAlert, AlertComponent } = useStandardAlert();
+  const taskNotifications = useTaskNotifications();
+  const { withLoading } = useAsyncNotification();
+  const { error, warning } = useNotification();
   
   // Memos calculados sempre na mesma ordem
   const todayTasks = useMemo(() => {
     if (!Array.isArray(allTasks)) return [];
     const today = new Date().toISOString().split('T')[0];
     return allTasks.filter(task => {
-      if (!task.dueDate) return task.status === 'pending';
+      if (!task.dueDate) return task.status?.toLowerCase() === 'pending';
       return task.dueDate === today;
     });
   }, [allTasks]);
   
   const postponedTasks = useMemo(() => {
-    return Array.isArray(allTasks) ? allTasks.filter(t => t && t.status === 'postponed') : [];
+    return Array.isArray(allTasks) ? allTasks.filter(t => t && t.status?.toLowerCase() === 'postponed') : [];
   }, [allTasks]);
 
   // Combinar e filtrar tarefas baseado na view atual
@@ -78,15 +83,15 @@ export function TasksPageClient() {
         const today = new Date().toISOString().split('T')[0];
         const todayTasksList = Array.isArray(todayTasks) ? todayTasks : [];
         return [
-          ...todayTasksList.filter(t => t && t.status === 'pending'),
+          ...todayTasksList.filter(t => t && t.status?.toLowerCase() === 'pending'),
           ...postponedTasks
         ];
       case 'all':
-        return allTasks.filter(t => t && t.status !== 'completed');
+        return allTasks.filter(t => t && t.status?.toLowerCase() !== 'completed');
       case 'completed':
-        return allTasks.filter(t => t && t.status === 'completed');
+        return allTasks.filter(t => t && t.status?.toLowerCase() === 'completed');
       case 'pending':
-        return allTasks.filter(t => t && t.status === 'pending');
+        return allTasks.filter(t => t && t.status?.toLowerCase() === 'pending');
       case 'planned_today':
         return allTasks.filter(t => t && t.plannedForToday === true);
       default:
@@ -108,6 +113,15 @@ export function TasksPageClient() {
         });
       }
     }
+  };
+
+  // Helper para obter lembretes de uma tarefa
+  const getTaskReminders = (taskId: string) => {
+    return allReminders.filter(reminder => 
+      reminder.entityId === taskId && 
+      reminder.entityType === 'task' && 
+      reminder.isActive
+    );
   };
 
   // Aplicar busca e ordenação nas tarefas
@@ -161,10 +175,10 @@ export function TasksPageClient() {
     const todayTasksList = Array.isArray(todayTasks) ? todayTasks : [];
 
     return {
-      today: todayTasksList.filter(t => t && t.status === 'pending').length + postponedTasks.length,
+      today: todayTasksList.filter(t => t && t.status?.toLowerCase() === 'pending').length + postponedTasks.length,
       all: allTasks.length,
-      completed: allTasks.filter(t => t && t.status === 'completed').length,
-      pending: allTasks.filter(t => t && t.status === 'pending').length,
+      completed: allTasks.filter(t => t && t.status?.toLowerCase() === 'completed').length,
+      pending: allTasks.filter(t => t && t.status?.toLowerCase() === 'pending').length,
       planned_today: allTasks.filter(t => t && t.plannedForToday === true).length
     };
   }, [allTasks, todayTasks, postponedTasks]);
@@ -189,55 +203,86 @@ export function TasksPageClient() {
 
   const handleCompleteTask = async (taskId: string) => {
     if (!taskId) {
-      console.error('ID da tarefa é obrigatório');
+      taskNotifications.taskUpdated('Erro: ID da tarefa é obrigatório');
       return;
     }
 
     try {
-      await completeTask.mutateAsync(taskId);
-    } catch (error) {
-      console.error('Erro ao completar tarefa:', error);
+      await withLoading(
+        () => completeTask.mutateAsync(taskId),
+        {
+          loading: 'Concluindo tarefa...',
+          success: 'Tarefa concluída com sucesso!'
+        },
+        {
+          context: 'task_crud'
+        }
+      );
+    } catch (err) {
+      error('Erro ao completar tarefa', {
+        description: err instanceof Error ? err.message : 'Tente novamente',
+        context: 'task_crud'
+      });
     }
   };
 
   const handleReactivateTask = async (taskId: string) => {
     if (!taskId) {
-      console.error('ID da tarefa é obrigatório');
+      error('ID da tarefa é obrigatório');
       return;
     }
 
     try {
-      await updateTask.mutateAsync({ 
-        taskId: taskId, 
-        updates: { status: 'pending' }
+      await withLoading(
+        () => updateTask.mutateAsync({ 
+          taskId: taskId, 
+          updates: { status: 'pending' }
+        }),
+        {
+          loading: 'Reativando tarefa...',
+          success: 'Tarefa reativada!'
+        },
+        {
+          context: 'task_crud'
+        }
+      );
+    } catch (err) {
+      error('Erro ao reativar tarefa', {
+        description: err instanceof Error ? err.message : 'Tente novamente',
+        context: 'task_crud'
       });
-    } catch (error) {
-      console.error('Erro ao reativar tarefa:', error);
     }
   };
 
   const handleDeleteTask = async (taskId: string, taskDescription: string) => {
-    showAlert(
-      'Excluir Tarefa',
-      `Tem certeza que deseja excluir a tarefa "${taskDescription}"?`,
-      'danger',
-      {
-        showCancel: true,
-        confirmText: 'Excluir',
-        onConfirm: async () => {
+    // Usar notificação de aviso com ação de confirmação
+    warning(`Tem certeza que deseja excluir "${taskDescription}"?`, {
+      description: 'Esta ação não pode ser desfeita',
+      context: 'task_crud',
+      important: true,
+      action: {
+        label: 'Excluir',
+        onClick: async () => {
           try {
-            await deleteTask.mutateAsync(taskId);
-          } catch (error) {
-            console.error('Erro ao excluir tarefa:', error);
-            showAlert(
-              'Erro',
-              'Erro ao excluir tarefa. Tente novamente.',
-              'error'
+            await withLoading(
+              () => deleteTask.mutateAsync(taskId),
+              {
+                loading: 'Excluindo tarefa...',
+                success: 'Tarefa excluída com sucesso!'
+              },
+              {
+                context: 'task_crud'
+              }
             );
+          } catch (err) {
+            error('Erro ao excluir tarefa', {
+              description: err instanceof Error ? err.message : 'Tente novamente',
+              context: 'task_crud'
+            });
           }
         }
       }
-    );
+    });
   };
 
   const views = [
@@ -292,27 +337,12 @@ export function TasksPageClient() {
             </div>
           </div>
 
-          {/* Quick Stats */}
-          <div className="grid grid-cols-3 gap-4 mt-4">
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
-              <div className="text-2xl font-bold">{calculatedStats.planned_today}</div>
-              <div className="text-xs text-blue-100">Atuar hoje</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
-              <div className="text-2xl font-bold">{calculatedStats.pending}</div>
-              <div className="text-xs text-blue-100">Pendentes</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
-              <div className="text-2xl font-bold">{calculatedStats.completed}</div>
-              <div className="text-xs text-blue-100">Concluídas</div>
-            </div>
-          </div>
         </div>
       </div>
 
       {/* Navigation */}
-      <div className="bg-gradient-to-br from-white via-slate-50 to-gray-100 rounded-3xl shadow-xl border border-gray-200/60 backdrop-blur-sm p-6 mb-3">
-        <div className="flex gap-2 justify-between w-full min-w-0">
+      <div className="bg-gradient-to-br from-white via-slate-50 to-gray-100 rounded-3xl shadow-xl border border-gray-200/60 backdrop-blur-sm p-6 mb-3 h-20">
+        <div className="flex gap-2 justify-between w-full min-w-0 h-full items-center">
           {views.map((view) => {
             const Icon = view.icon;
             return (
@@ -428,7 +458,7 @@ export function TasksPageClient() {
                               className="flex-1"
                             >
                               <h3 className={`text-lg font-semibold hover:text-blue-600 transition-colors cursor-pointer ${
-                                task.status === 'completed' 
+                                task.status?.toLowerCase() === 'completed' 
                                   ? 'text-gray-500 line-through' 
                                   : 'text-gray-900'
                               }`}>
@@ -440,6 +470,33 @@ export function TasksPageClient() {
                           {/* Second Line - Badges and Actions */}
                           <div className="flex items-center justify-between w-full">
                             <div className="flex items-center gap-3">
+                              {/* Tipo de Tarefa */}
+                              {(() => {
+                                if (task.isAppointment) {
+                                  return (
+                                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-pink-100 text-pink-700 border border-pink-200">
+                                      <Calendar className="w-3 h-3" />
+                                      <span>Compromisso</span>
+                                    </div>
+                                  );
+                                } else if (task.isRecurring) {
+                                  return (
+                                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 border border-indigo-200">
+                                      <Clock className="w-3 h-3" />
+                                      <span>Recorrente</span>
+                                    </div>
+                                  );
+                                } else if (task.type === 'brick') {
+                                  return (
+                                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700 border border-orange-200">
+                                      <Target className="w-3 h-3" />
+                                      <span>Brick</span>
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              })()}
+
                               {/* Energia */}
                               <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
                                 task.energyPoints === 1 ? 'bg-green-100 text-green-700 border border-green-200' :
@@ -451,45 +508,29 @@ export function TasksPageClient() {
                               </div>
 
                               {/* Data */}
-                              {(task.dueDate && task.dueDate !== 'Sem vencimento') || task.isRecurring ? (
+                              {task.dueDate && task.dueDate !== 'Sem vencimento' ? (
                                 (() => {
-                                  // Se for recorrente e não tiver data específica, mostrar como recorrente
-                                  if (task.isRecurring && (!task.dueDate || task.dueDate === 'Sem vencimento')) {
-                                    return (
-                                      <div className="flex items-center gap-1.5 px-3 py-1 bg-blue-100 text-blue-700 border-blue-200 border rounded-full text-xs font-medium">
-                                        <Clock className="w-3 h-3" />
-                                        <span>Recorrente</span>
-                                      </div>
-                                    );
-                                  }
+                                  const today = new Date();
+                                  today.setHours(0, 0, 0, 0);
                                   
-                                  // Se tiver data de vencimento, mostrar com cores baseadas na data
-                                  if (task.dueDate && task.dueDate !== 'Sem vencimento') {
-                                    const today = new Date();
-                                    today.setHours(0, 0, 0, 0);
-                                    
-                                    // Parse da data evitando problemas de timezone
-                                    const dateStr = task.dueDate.includes('T') ? task.dueDate.split('T')[0] : task.dueDate;
-                                    const [year, month, day] = dateStr.split('-').map(Number);
-                                    const dueDate = new Date(year, month - 1, day);
-                                    
-                                    const isOverdue = dueDate < today;
-                                    const isDueToday = dueDate.getTime() === today.getTime();
-                                    const isFuture = dueDate > today;
-                                    
-                                    const colorClasses = isOverdue || isDueToday
-                                      ? 'bg-red-100 text-red-700 border-red-200'
-                                      : 'bg-green-100 text-green-700 border-green-200';
-                                    
-                                    return (
-                                      <div className={`flex items-center gap-1.5 px-3 py-1 ${colorClasses} border rounded-full text-xs font-medium`}>
-                                        <Clock className="w-3 h-3" />
-                                        <span>{dueDate.toLocaleDateString('pt-BR')}</span>
-                                      </div>
-                                    );
-                                  }
+                                  // Parse da data evitando problemas de timezone
+                                  const dateStr = task.dueDate.includes('T') ? task.dueDate.split('T')[0] : task.dueDate;
+                                  const [year, month, day] = dateStr.split('-').map(Number);
+                                  const dueDate = new Date(year, month - 1, day);
                                   
-                                  return null;
+                                  const isOverdue = dueDate < today;
+                                  const isDueToday = dueDate.getTime() === today.getTime();
+                                  
+                                  const colorClasses = isOverdue || isDueToday
+                                    ? 'bg-red-100 text-red-700 border-red-200'
+                                    : 'bg-green-100 text-green-700 border-green-200';
+                                  
+                                  return (
+                                    <div className={`flex items-center gap-1.5 px-3 py-1 ${colorClasses} border rounded-full text-xs font-medium`}>
+                                      <Clock className="w-3 h-3" />
+                                      <span>{dueDate.toLocaleDateString('pt-BR')}</span>
+                                    </div>
+                                  );
                                 })()
                               ) : null}
 
@@ -508,12 +549,24 @@ export function TasksPageClient() {
                                   <span>{project.name}</span>
                                 </div>
                               )}
+
+                              {/* Lembretes */}
+                              {(() => {
+                                const taskReminders = getTaskReminders(task.id);
+                                return taskReminders.length > 0 ? (
+                                  <div className="flex items-center gap-1.5 px-3 py-1 bg-blue-100 text-blue-700 border border-blue-200 rounded-full text-xs font-medium">
+                                    <Bell className="w-3 h-3" />
+                                    <span>{taskReminders.length} lembrete{taskReminders.length !== 1 ? 's' : ''}</span>
+                                  </div>
+                                ) : null;
+                              })()
+                            }
                             </div>
 
                             {/* Actions */}
                             <div className="flex items-center gap-3">
                               {/* Actions inline */}
-                              {task.status === 'completed' && (
+                              {task.status?.toLowerCase() === 'completed' && (
                                 <Button
                                   variant="outline"
                                   size="sm"
@@ -747,7 +800,6 @@ export function TasksPageClient() {
         }}
       />
       
-      <AlertComponent />
     </div>
   );
 }

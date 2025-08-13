@@ -18,6 +18,9 @@ export function useMe() {
     queryFn: authApi.getMe,
     retry: false, // Não tentar novamente se falhar (usuário não autenticado)
     staleTime: 5 * 60 * 1000, // 5 minutos
+    refetchOnWindowFocus: false, // OTIMIZAÇÃO: Evitar refetch desnecessário
+    refetchOnMount: true, // Sempre refetch ao montar componente
+    refetchInterval: false, // Não fazer polling automático
   });
 }
 
@@ -25,18 +28,16 @@ export function useMe() {
 // MUTATION HOOKS
 // ============================================================================
 
-// Hook para login
+// Hook para login - NOVA ARQUITETURA: Apenas cookies HTTP-only
 export function useLogin() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: authApi.login,
     onSuccess: (data) => {
-      // Salvar token no localStorage
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('auth-token', data.token);
-      }
-
+      // REMOÇÃO DE VULNERABILIDADE CRÍTICA: Não usar localStorage para tokens
+      // Token é agora gerenciado automaticamente via cookies HTTP-only pelo backend
+      
       // Atualizar cache com dados do usuário
       queryClient.setQueryData(queryKeys.auth.me, data.user);
       
@@ -49,18 +50,16 @@ export function useLogin() {
   });
 }
 
-// Hook para registro
+// Hook para registro - NOVA ARQUITETURA: Apenas cookies HTTP-only
 export function useRegister() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: authApi.register,
     onSuccess: (data) => {
-      // Salvar token no localStorage
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('auth-token', data.token);
-      }
-
+      // REMOÇÃO DE VULNERABILIDADE CRÍTICA: Não usar localStorage para tokens
+      // Token é agora gerenciado automaticamente via cookies HTTP-only pelo backend
+      
       // Atualizar cache com dados do usuário
       queryClient.setQueryData(queryKeys.auth.me, data.user);
       
@@ -73,18 +72,16 @@ export function useRegister() {
   });
 }
 
-// Hook para logout
+// Hook para logout - NOVA ARQUITETURA: Apenas cookies HTTP-only
 export function useLogout() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: authApi.logout,
     onSuccess: () => {
-      // Remover token do localStorage
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('auth-token');
-      }
-
+      // REMOÇÃO DE VULNERABILIDADE CRÍTICA: Não gerenciar tokens no frontend
+      // Cookie é limpo automaticamente pelo backend
+      
       // Limpar todo o cache
       queryClient.clear();
       
@@ -95,37 +92,18 @@ export function useLogout() {
     },
     onError: () => {
       // Mesmo se a API falhar, fazer logout local
+      // Cookie será limpo pelo backend ou expirará naturalmente
+      queryClient.clear();
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('auth-token');
         window.location.href = '/auth';
       }
-      queryClient.clear();
     },
   });
 }
 
-// Hook para refresh token
-export function useRefreshToken() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: authApi.refreshToken,
-    onSuccess: (data) => {
-      // Atualizar token no localStorage
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('auth-token', data.token);
-      }
-    },
-    onError: () => {
-      // Se refresh falhar, fazer logout
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('auth-token');
-        window.location.href = '/auth';
-      }
-      queryClient.clear();
-    },
-  });
-}
+// Hook para refresh token - REMOVIDO: Nova arquitetura não usa refresh tokens
+// Tokens JWT com duração de 7 dias em cookies HTTP-only são mais seguros
+// Em caso de expiração, usuário fará login novamente
 
 // ============================================================================
 // UTILITY HOOKS
@@ -142,28 +120,15 @@ export function useIsAuthenticated() {
   };
 }
 
-// Hook para dados do usuário com fallback para localStorage
+// Hook para dados do usuário - NOVA ARQUITETURA: Apenas servidor
 export function useUser() {
   const { data: user, isLoading, error } = useMe();
   
-  // Se não conseguir carregar do servidor, tentar localStorage
-  const fallbackUser = typeof window !== 'undefined' 
-    ? (() => {
-        try {
-          const stored = localStorage.getItem('cerebro-auth');
-          if (stored) {
-            const parsed = JSON.parse(stored);
-            return parsed.state?.user;
-          }
-        } catch {
-          return null;
-        }
-        return null;
-      })()
-    : null;
-
+  // REMOÇÃO DE VULNERABILIDADE CRÍTICA: Não usar localStorage para fallback
+  // Dados do usuário vêm exclusivamente do servidor via cookie HTTP-only
+  
   return {
-    user: user || fallbackUser,
+    user: user || null,
     isLoading,
     error,
   };
@@ -188,40 +153,6 @@ export function useUpdateSettings() {
   });
 }
 
-// Hook para logout automático quando token expira
-export function useAuthTokenExpiry() {
-  const logout = useLogout();
-  
-  // Verificar periodicamente se o token ainda é válido
-  useQuery({
-    queryKey: ['auth', 'token-check'],
-    queryFn: async () => {
-      const token = typeof window !== 'undefined' 
-        ? localStorage.getItem('auth-token') 
-        : null;
-        
-      if (!token) {
-        logout.mutate();
-        return null;
-      }
-      
-      // Verificar se token não está expirado
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        const now = Date.now() / 1000;
-        
-        if (payload.exp < now) {
-          logout.mutate();
-          return null;
-        }
-        
-        return { valid: true };
-      } catch {
-        logout.mutate();
-        return null;
-      }
-    },
-    refetchInterval: 5 * 60 * 1000, // Verificar a cada 5 minutos
-    enabled: typeof window !== 'undefined',
-  });
-}
+// Hook para validação de token - REMOVIDO: Nova arquitetura não expõe tokens
+// Validação acontece automaticamente no servidor a cada requisição
+// Tokens em cookies HTTP-only não são acessíveis ao JavaScript

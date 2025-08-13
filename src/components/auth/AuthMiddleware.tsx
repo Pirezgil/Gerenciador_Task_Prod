@@ -1,75 +1,28 @@
 'use client';
 
 // ============================================================================
-// AUTH MIDDLEWARE - Proteção de rotas com hidratação segura
+// AUTH MIDDLEWARE - Simplificado para evitar conflitos com AuthProvider
 // ============================================================================
 
-import React, { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import React from 'react';
 import { motion } from 'framer-motion';
-import { useAuthStore } from '@/stores/authStore';
+import { useAuth } from '@/providers/AuthProvider';
 
 interface AuthMiddlewareProps {
   children: React.ReactNode;
 }
 
-const publicRoutes = ['/auth', '/login', '/register'];
+const publicRoutes = ['/auth', '/login', '/register', '/auth/callback'];
 
 export function AuthMiddleware({ children }: AuthMiddlewareProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const { isAuthenticated, isLoading, user, initializeAuth } = useAuthStore();
-  const [isHydrated, setIsHydrated] = useState(false);
+  const { isLoading } = useAuth();
 
-  const isPublicRoute = publicRoutes.includes(pathname);
+  // SIMPLIFICAÇÃO: AuthProvider já gerencia toda a lógica de autenticação
+  // AuthMiddleware agora apenas mostra loading se necessário
+  // A navegação/redirecionamento é responsabilidade dos componentes individuais
 
-  useEffect(() => {
-    // Marcar como hidratado e inicializar auth
-    setIsHydrated(true);
-    initializeAuth();
-  }, [initializeAuth]);
-
-  useEffect(() => {
-    if (!isHydrated) return;
-    
-    const verifyAuth = () => {
-      // Verificar se há token no localStorage
-      const token = typeof window !== 'undefined' ? localStorage.getItem('auth-token') : null;
-      
-      // Log para debug
-      console.log('AuthMiddleware Debug:', {
-        pathname,
-        isPublicRoute,
-        isAuthenticated,
-        hasToken: !!token,
-        user
-      });
-      
-      // Se estiver na página /auth e não estiver autenticado, não redirecionar
-      if (pathname === '/auth' && !isAuthenticated) {
-        return;
-      }
-      
-      // Se estiver em rota privada sem autenticação, redirecionar para auth
-      if (!isPublicRoute && !isAuthenticated && !token) {
-        console.log('Redirecting to /auth - no auth on private route');
-        router.push('/auth');
-        return;
-      }
-      
-      // Se estiver em rota pública mas autenticado, redirecionar para bombeiro
-      if (isPublicRoute && isAuthenticated && token) {
-        console.log('Redirecting to /bombeiro - authenticated user on public route');
-        router.push('/bombeiro');
-        return;
-      }
-    };
-
-    verifyAuth();
-  }, [isAuthenticated, isPublicRoute, pathname, router, isHydrated, user]);
-
-  // Durante SSR ou carregamento, mostrar loading
-  if (!isHydrated || isLoading) {
+  // Durante carregamento inicial, mostrar loading
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/40 to-indigo-50/30 flex items-center justify-center">
         <motion.div
@@ -92,16 +45,8 @@ export function AuthMiddleware({ children }: AuthMiddlewareProps) {
     );
   }
 
-  // Se é rota pública e não está autenticado, mostrar conteúdo
-  if (isPublicRoute && !isAuthenticated) {
-    return <>{children}</>;
-  }
-
-  // Se é rota privada e está autenticado, mostrar conteúdo
-  if (!isPublicRoute && isAuthenticated) {
-    return <>{children}</>;
-  }
-
-  // Caso contrário, não renderizar nada (redirecionamento em progresso)
-  return null;
+  // CORREÇÃO: Sempre renderizar children após carregamento
+  // A lógica de redirecionamento é responsabilidade dos componentes/páginas individuais
+  // Isso evita conflitos e loops de redirecionamento
+  return <>{children}</>;
 }

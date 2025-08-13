@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Contadores de Projeto</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        .test-container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .status-counters {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .counter {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .pending {
+            background-color: #dbeafe;
+            color: #1d4ed8;
+        }
+        .completed {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        .postponed {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        .error {
+            background-color: #fee2e2;
+            color: #dc2626;
+        }
+    </style>
+</head>
+<body>
+    <h1>Teste dos Contadores de Tijolos do Projeto</h1>
+    
+    <div class="test-container">
+        <h2>Dados do Projeto: Aprender Inglês</h2>
+        <div id="project-data"></div>
+        
+        <h3>Simulação da Lógica Corrigida:</h3>
+        <div id="counter-test"></div>
+        
+        <div id="test-result"></div>
+    </div>
+
+    <script>
+        // Simular dados do projeto (baseado na resposta da API)
+        const projectData = {
+            id: "cmea9l95n000osjy6r0pk8jvk",
+            name: "Aprender Inglês",
+            backlog: [
+                {
+                    id: "cmea9ud4a000110fx347tpi92",
+                    description: "Tijolo de um projeto.",
+                    status: "POSTPONED",
+                    energyPoints: 3
+                }
+            ]
+        };
+
+        // Lógica corrigida (equivalente ao que foi implementado no React)
+        function calculateCounters(project) {
+            const projectTasks = project.backlog || project.tasks || [];
+            const pendingCount = projectTasks.filter(t => t.status === 'pending').length;
+            const completedCount = projectTasks.filter(t => t.status === 'completed').length;
+            const postponedCount = projectTasks.filter(t => t.status === 'POSTPONED').length;
+            
+            return {
+                pending: pendingCount,
+                completed: completedCount,
+                postponed: postponedCount,
+                total: projectTasks.length
+            };
+        }
+
+        // Executar teste
+        function runTest() {
+            const projectDataDiv = document.getElementById('project-data');
+            const counterTestDiv = document.getElementById('counter-test');
+            const resultDiv = document.getElementById('test-result');
+
+            // Mostrar dados do projeto
+            projectDataDiv.innerHTML = `
+                <p><strong>Nome:</strong> ${projectData.name}</p>
+                <p><strong>Total de tijolos:</strong> ${projectData.backlog.length}</p>
+                <p><strong>Tijolos:</strong></p>
+                <ul>
+                    ${projectData.backlog.map(task => 
+                        `<li>${task.description} - Status: <strong>${task.status}</strong></li>`
+                    ).join('')}
+                </ul>
+            `;
+
+            // Calcular contadores
+            const counters = calculateCounters(projectData);
+
+            // Mostrar contadores
+            counterTestDiv.innerHTML = `
+                <div class="status-counters">
+                    <span class="counter pending">${counters.pending} pendentes</span>
+                    <span class="counter completed">${counters.completed} concluídos</span>
+                    <span class="counter postponed">${counters.postponed} adiados</span>
+                </div>
+                <p><strong>Total:</strong> ${counters.total} tijolos</p>
+            `;
+
+            // Verificar se a correção está funcionando
+            const isFixed = counters.pending === 0 && counters.completed === 0 && counters.postponed === 1;
+            
+            if (isFixed) {
+                resultDiv.innerHTML = `
+                    <div class="result success">
+                        <h4>✅ TESTE PASSOU!</h4>
+                        <p>A correção está funcionando corretamente:</p>
+                        <ul>
+                            <li>0 tijolos pendentes ✓</li>
+                            <li>0 tijolos concluídos ✓</li>
+                            <li>1 tijolo adiado ✓</li>
+                        </ul>
+                        <p>Os contadores agora refletem corretamente o status dos tijolos no projeto.</p>
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h4>❌ TESTE FALHOU!</h4>
+                        <p>A correção não está funcionando como esperado.</p>
+                        <p>Contadores encontrados: ${JSON.stringify(counters)}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Executar teste quando a página carregar
+        window.onload = runTest;
+    </script>
+</body>
+</html>

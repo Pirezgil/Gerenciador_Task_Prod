@@ -5,7 +5,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { tasksApi } from '@/lib/api';
 import { queryKeys, invalidateQueries } from '@/lib/queryClient';
-import { useAuthStore } from '@/stores/authStore';
+import { useAuth } from '@/providers/AuthProvider';
 import type { Task, Comment } from '@/types/task';
 
 // ============================================================================
@@ -14,7 +14,7 @@ import type { Task, Comment } from '@/types/task';
 
 // Hook para buscar todas as tarefas do usuário
 export function useTasks() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated } = useAuth();
   
   return useQuery({
     queryKey: queryKeys.tasks.all,
@@ -26,7 +26,7 @@ export function useTasks() {
 
 // Hook para buscar uma tarefa específica
 export function useTask(taskId: string) {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated } = useAuth();
   
   return useQuery({
     queryKey: queryKeys.tasks.detail(taskId),
@@ -94,20 +94,24 @@ export function useUpdateTask() {
     mutationFn: ({ taskId, updates }: { taskId: string; updates: Partial<Task> }) =>
       tasksApi.updateTask(taskId, updates),
     onSuccess: (updatedTask, { taskId }) => {
-      // Atualizar cache com dados reais do servidor
-      const previousTasks = queryClient.getQueryData<Task[]>(queryKeys.tasks.all);
+      // PERFORMANCE: Update cache directly instead of invalidating
+      queryClient.setQueryData(
+        queryKeys.tasks.detail(taskId), 
+        updatedTask
+      );
       
-      if (previousTasks) {
-        const updatedTasks = previousTasks.map(task =>
+      // PERFORMANCE: Update tasks list locally without refetch
+      queryClient.setQueryData<Task[]>(queryKeys.tasks.all, (old) => 
+        old?.map(task => 
           task.id === taskId ? updatedTask : task
-        );
-        queryClient.setQueryData(queryKeys.tasks.all, updatedTasks);
-      }
+        ) ?? []
+      );
 
-      // Invalidar cache de energia quando plannedForToday muda
+      // PERFORMANCE: Only invalidate energy budget when necessary
       queryClient.invalidateQueries({ queryKey: ['energy', 'budget'] });
     },
     onError: () => {
+      // Only invalidate on error to refetch fresh data
       invalidateQueries.tasks();
       queryClient.invalidateQueries({ queryKey: ['energy', 'budget'] });
     },
@@ -142,32 +146,54 @@ export function useCompleteTask() {
 
       return { previousTasks };
     },
-    onSuccess: async (data, taskId) => {
+    onSuccess: async (updatedTask, taskId) => {
+      // PERFORMANCE: Update cache directly instead of invalidating
+      queryClient.setQueryData(
+        queryKeys.tasks.detail(taskId), 
+        updatedTask
+      );
+      
+      // PERFORMANCE: Update tasks list locally without refetch
+      queryClient.setQueryData<Task[]>(queryKeys.tasks.all, (old) => 
+        old?.map(task => 
+          task.id === taskId ? updatedTask : task
+        ) ?? []
+      );
+
       // MOMENTO EXATO da finalização: marcar possíveis conquistas como pendentes
-      if (data?.newAchievements && data.newAchievements.length > 0) {
+      if (updatedTask?.newAchievements && updatedTask.newAchievements.length > 0) {
         const current = JSON.parse(localStorage.getItem('pending-achievements') || '[]');
-        const newPendingIds = data.newAchievements.map((a: any) => a.id);
+        const newPendingIds = updatedTask.newAchievements.map((a: any) => a.id);
         const updated = [...current, ...newPendingIds];
         localStorage.setItem('pending-achievements', JSON.stringify(updated));
-        console.log('🎯 Conquistas marcadas como pendentes após finalização da tarefa:', newPendingIds);
+        
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🎯 Conquistas marcadas como pendentes após finalização da tarefa:', newPendingIds);
+        }
       } else {
         // Fallback: Marcar o momento da finalização para detectar novas conquistas
         const completionTimestamp = Date.now();
         localStorage.setItem('task-completion-timestamp', completionTimestamp.toString());
         localStorage.setItem('last-completed-task-id', taskId);
-        console.log('🎯 Momento de finalização marcado para detecção de novas conquistas:', completionTimestamp);
+        
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🎯 Momento de finalização marcado para detecção de novas conquistas:', completionTimestamp);
+        }
       }
+      
+      // PERFORMANCE: Only invalidate energy budget (necessary for recalculation)
+      queryClient.invalidateQueries({ queryKey: ['energy', 'budget'] });
+      
+      // Invalidate bombeiro tasks to update today's tasks sections
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'bombeiro'] });
+      
+      // Only invalidate achievements (for new achievements calculation)
+      queryClient.invalidateQueries({ queryKey: ['achievements'] });
     },
     onError: (err, taskId, context) => {
       if (context?.previousTasks) {
         queryClient.setQueryData(queryKeys.tasks.all, context.previousTasks);
       }
-    },
-    onSettled: () => {
-      invalidateQueries.tasks();
-      queryClient.invalidateQueries({ queryKey: ['energy', 'budget'] });
-      // Invalidar conquistas quando uma tarefa é completada - Sistema de Recompensas TDAH
-      queryClient.invalidateQueries({ queryKey: ['achievements'] });
     },
   });
 }
@@ -254,7 +280,7 @@ export function useAddComment() {
     mutationFn: ({ taskId, comment }: { taskId: string; comment: Omit<Comment, 'id' | 'createdAt'> }) =>
       tasksApi.addComment(taskId, comment),
     onSuccess: (newComment, { taskId }) => {
-      // Atualizar a tarefa específica no cache
+      // 1. Atualizar a lista de tarefas no cache
       const previousTasks = queryClient.getQueryData<Task[]>(queryKeys.tasks.all);
       
       if (previousTasks) {
@@ -264,6 +290,17 @@ export function useAddComment() {
             : task
         );
         queryClient.setQueryData(queryKeys.tasks.all, updatedTasks);
+      }
+
+      // 2. Atualizar a tarefa individual no cache
+      const previousTask = queryClient.getQueryData<Task>(queryKeys.tasks.detail(taskId));
+      
+      if (previousTask) {
+        const updatedTask = {
+          ...previousTask,
+          comments: [...previousTask.comments, newComment]
+        };
+        queryClient.setQueryData(queryKeys.tasks.detail(taskId), updatedTask);
       }
     },
   });
@@ -302,7 +339,7 @@ export function useTasksByProject(projectId?: string) {
 
 // Hook para tarefas de hoje - Nova versão que usa endpoint específico
 export function useTodayTasks() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated } = useAuth();
   
   const { data, isLoading, error } = useQuery({
     queryKey: ['tasks', 'bombeiro'],
@@ -363,7 +400,7 @@ export function useTodayTasksLegacy() {
 
 // Hook para buscar orçamento/status de energia do usuário
 export function useEnergyBudget() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated } = useAuth();
   
   return useQuery({
     queryKey: ['energy', 'budget'],

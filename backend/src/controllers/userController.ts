@@ -2,10 +2,11 @@ import { Response, NextFunction } from 'express';
 import * as userService from '../services/userService';
 import { AuthenticatedRequest } from '../types/api';
 
-export const getSettings = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const getSettings = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.userId) {
-      return res.status(401).json({ success: false, error: 'Não autenticado' });
+      res.status(401).json({ success: false, error: 'Não autenticado' });
+      return;
     }
 
     const settings = await userService.getUserSettings(req.userId);
@@ -15,10 +16,11 @@ export const getSettings = async (req: AuthenticatedRequest, res: Response, next
   }
 };
 
-export const updateSettings = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const updateSettings = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.userId) {
-      return res.status(401).json({ success: false, error: 'Não autenticado' });
+      res.status(401).json({ success: false, error: 'Não autenticado' });
+      return;
     }
 
     const user = await userService.updateUserSettings(req.userId, req.body);
@@ -28,10 +30,11 @@ export const updateSettings = async (req: AuthenticatedRequest, res: Response, n
   }
 };
 
-export const updateProfile = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const updateProfile = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.userId) {
-      return res.status(401).json({ success: false, error: 'Não autenticado' });
+      res.status(401).json({ success: false, error: 'Não autenticado' });
+      return;
     }
 
     const user = await userService.updateUserProfile(req.userId, req.body);
@@ -41,10 +44,11 @@ export const updateProfile = async (req: AuthenticatedRequest, res: Response, ne
   }
 };
 
-export const getStats = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const getStats = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.userId) {
-      return res.status(401).json({ success: false, error: 'Não autenticado' });
+      res.status(401).json({ success: false, error: 'Não autenticado' });
+      return;
     }
 
     const stats = await userService.getUserStats(req.userId);

@@ -10,7 +10,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEnergyBudget, useTasks } from '@/hooks/api/useTasks';
-import { useAuthStore } from '@/stores/authStore';
+import { useAuth } from '@/providers/AuthProvider';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -55,6 +55,8 @@ export function Sidebar({ className = '' }: SidebarProps) {
       window.addEventListener('energy-budget-updated', handleEnergyUpdate);
       return () => window.removeEventListener('energy-budget-updated', handleEnergyUpdate);
     }
+    
+    return undefined;
   }, [refetchEnergy]);
   
   // Debug: Verificar dados recebidos
@@ -63,7 +65,7 @@ export function Sidebar({ className = '' }: SidebarProps) {
     energyBudgetFromAPI: energyBudget,
     plannedTasks: allTasks.filter(t => t.plannedForToday === true).length
   });
-  const { user } = useAuthStore();
+  const { user } = useAuth();
 
   // Usar dados do backend diretamente
   const sidebarEnergyData = useMemo(() => {

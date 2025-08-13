@@ -43,7 +43,7 @@ export const getUserProjects = async (userId: string, includeStats = false): Pro
       color: project.color,
       status: project.status as any,
       deadline: project.deadline?.toISOString(),
-      sandboxNotes: project.sandboxNotes,
+      sandboxNotes: project.sandboxNotes ?? undefined,
       createdAt: project.createdAt.toISOString(),
       updatedAt: project.updatedAt.toISOString(),
       backlog: tasks.map((task: any) => ({
@@ -76,11 +76,11 @@ export const getUserProjects = async (userId: string, includeStats = false): Pro
 
     if (includeStats) {
       result.tasksCount = Number(tasks.length);
-      result.completedTasksCount = Number(tasks.filter(t => t.status === 'completed').length);
-      result.totalEnergyPoints = Number(tasks.reduce((sum, t) => sum + Number(t.energyPoints), 0));
+      result.completedTasksCount = Number(tasks.filter((t: any) => t.status === 'completed').length);
+      result.totalEnergyPoints = Number(tasks.reduce((sum: number, t: any) => sum + Number(t.energyPoints), 0));
       result.completedEnergyPoints = Number(tasks
-        .filter(t => t.status === 'completed')
-        .reduce((sum, t) => sum + Number(t.energyPoints), 0));
+        .filter((t: any) => t.status === 'completed')
+        .reduce((sum: number, t: any) => sum + Number(t.energyPoints), 0));
     }
 
     return result;
@@ -120,7 +120,7 @@ export const getProjectById = async (projectId: string, userId: string, includeT
     color: project.color,
     status: project.status as any,
     deadline: project.deadline?.toISOString(),
-    sandboxNotes: project.sandboxNotes,
+    sandboxNotes: project.sandboxNotes ?? undefined,
     createdAt: project.createdAt.toISOString(),
     updatedAt: project.updatedAt.toISOString(),
     tasks: []
@@ -169,7 +169,7 @@ export const createProject = async (userId: string, data: CreateProjectRequest):
     color: project.color,
     status: project.status as any,
     deadline: project.deadline?.toISOString(),
-    sandboxNotes: project.sandboxNotes,
+    sandboxNotes: project.sandboxNotes ?? undefined,
     createdAt: project.createdAt.toISOString(),
     updatedAt: project.updatedAt.toISOString()
   };
@@ -230,7 +230,7 @@ export const updateProject = async (projectId: string, userId: string, data: Upd
     color: project.color,
     status: project.status as any,
     deadline: project.deadline?.toISOString(),
-    sandboxNotes: project.sandboxNotes,
+    sandboxNotes: project.sandboxNotes ?? undefined,
     createdAt: project.createdAt.toISOString(),
     updatedAt: project.updatedAt.toISOString()
   };
@@ -324,7 +324,8 @@ export const updateProjectTask = async (projectId: string, taskId: string, userI
   const task = await prisma.task.findFirst({
     where: { 
       id: taskId, 
-      projectId: projectId
+      projectId: projectId,
+      userId
     }
   });
 
@@ -332,31 +333,11 @@ export const updateProjectTask = async (projectId: string, taskId: string, userI
     throw new Error('Tarefa não encontrada');
   }
 
-  // Preparar dados para atualização
-  const updateData: any = {};
+  // ✅ CORREÇÃO: Usar taskService.updateTask para suportar recorrência e compromissos
+  const taskService = require('./taskService');
+  console.log('🔧 updateProjectTask: Delegando para taskService.updateTask');
   
-  if (updates.description !== undefined) updateData.description = updates.description;
-  if (updates.energyPoints !== undefined) updateData.energyPoints = updates.energyPoints;
-  if (updates.dueDate !== undefined) updateData.dueDate = updates.dueDate ? new Date(updates.dueDate) : null;
-  if (updates.status !== undefined) updateData.status = updates.status;
-
-  // Atualizar a tarefa
-  const updatedTask = await prisma.task.update({
-    where: { id: taskId },
-    data: updateData
-  });
-
-  return {
-    id: updatedTask.id,
-    description: updatedTask.description,
-    energyPoints: updatedTask.energyPoints,
-    status: updatedTask.status,
-    type: updatedTask.type,
-    projectId: updatedTask.projectId,
-    dueDate: updatedTask.dueDate?.toISOString(),
-    createdAt: updatedTask.createdAt.toISOString(),
-    updatedAt: updatedTask.updatedAt.toISOString(),
-    completedAt: updatedTask.completedAt?.toISOString(),
-    postponedAt: updatedTask.postponedAt?.toISOString()
-  };
+  const updatedTask = await taskService.updateTask(taskId, userId, updates);
+  
+  return updatedTask;
 };

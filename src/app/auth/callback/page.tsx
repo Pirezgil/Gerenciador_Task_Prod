@@ -1,25 +1,23 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuthStore } from '@/stores/authStore';
+import { useAuth } from '@/providers/AuthProvider';
 import { useStandardAlert } from '@/components/shared/StandardAlert';
 
-export default function AuthCallbackPage() {
+function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { setUser } = useAuthStore();
+  const { refreshUser } = useAuth();
   const { showAlert, AlertComponent } = useStandardAlert();
 
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        const token = searchParams.get('token');
-        const userString = searchParams.get('user');
         const error = searchParams.get('error');
 
         if (error) {
-          console.error('Erro no callback:', error);
+          console.error('Erro no callback OAuth:', error);
           showAlert(
             'Erro na Autenticação',
             'Erro na autenticação. Tente novamente.',
@@ -29,31 +27,43 @@ export default function AuthCallbackPage() {
           return;
         }
 
-        if (!token || !userString) {
-          console.error('Token ou dados do usuário não encontrados');
+        // SEGURANÇA: Verificar apenas se callback foi bem-sucedido
+        // Token é gerenciado automaticamente via cookies HTTP-only pelo backend
+        const success = searchParams.get('success');
+        
+        if (success !== 'true') {
+          console.error('Callback OAuth inválido');
+          showAlert(
+            'Erro na Autenticação',
+            'Falha na autenticação. Tente novamente.',
+            'error'
+          );
           router.push('/auth');
           return;
         }
 
-        // Decodificar dados do usuário
-        const user = JSON.parse(decodeURIComponent(userString));
+        // Aguardar um pouco para cookies serem processados
+        await new Promise(resolve => setTimeout(resolve, 500));
 
-        // Salvar token no localStorage
-        localStorage.setItem('auth-token', token);
-
-        // Definir usuário no store
-        setUser(user);
+        // Refresh user data from the new auth system
+        // O cookie HTTP-only já foi definido pelo backend
+        await refreshUser();
 
         // Redirecionar para a página principal
         router.push('/tarefas');
       } catch (error) {
         console.error('Erro ao processar callback:', error);
+        showAlert(
+          'Erro na Autenticação',
+          'Falha na autenticação. Tente novamente.',
+          'error'
+        );
         router.push('/auth');
       }
     };
 
     handleCallback();
-  }, [searchParams, router, setUser]);
+  }, [searchParams, router, refreshUser, showAlert]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/40 to-indigo-50/30 flex items-center justify-center p-4">
@@ -68,5 +78,20 @@ export default function AuthCallbackPage() {
         <AlertComponent />
       </div>
     </div>
+  );
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/40 to-indigo-50/30 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Processando autenticação...</p>
+        </div>
+      </div>
+    }>
+      <AuthCallbackContent />
+    </Suspense>
   );
 }

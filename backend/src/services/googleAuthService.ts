@@ -95,6 +95,7 @@ export const findOrCreateGoogleUser = async (googleData: GoogleUserData): Promis
         }
       });
     } else {
+      // SESSION FIXATION PROTECTION: Update timestamp for existing users
       // Se existe, atualizar dados do Google (preservando senha existente)
       user = await prisma.user.update({
         where: { id: user.id },
@@ -102,13 +103,14 @@ export const findOrCreateGoogleUser = async (googleData: GoogleUserData): Promis
           googleId: googleData.id,
           avatarUrl: googleData.picture || user.avatarUrl,
           emailVerified: googleData.email_verified,
-          name: googleData.name || user.name
+          name: googleData.name || user.name,
+          updatedAt: new Date() // Forces session regeneration
           // Não alteramos o password - usuário híbrido pode usar ambos os métodos
         }
       });
     }
 
-    // Gerar token JWT
+    // SESSION FIXATION PROTECTION: Generate fresh token for OAuth login
     const token = generateToken({
       userId: user.id,
       email: user.email

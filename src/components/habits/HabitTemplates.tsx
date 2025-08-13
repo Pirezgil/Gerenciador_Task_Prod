@@ -47,6 +47,7 @@ export function HabitTemplates({ onSelectTemplate }: HabitTemplatesProps) {
       frequency: template.suggestedFrequency,
       targetCount: template.targetCount,
       daysOfWeek: template.suggestedFrequency.daysOfWeek,
+      isActive: true,
     });
   };
 

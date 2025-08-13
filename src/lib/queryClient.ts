@@ -44,6 +44,11 @@ export const queryKeys = {
     detail: (id: string) => ['tasks', id] as const,
     comments: (taskId: string) => ['tasks', taskId, 'comments'] as const,
   },
+
+  // Attachments
+  attachments: {
+    task: (taskId: string) => ['tasks', taskId, 'attachments'] as const,
+  },
   
   // Projects
   projects: {
@@ -86,13 +91,17 @@ export const queryKeys = {
 
 export const invalidateQueries = {
   // Invalidar todas as queries relacionadas a tasks
-  tasks: () => queryClient.invalidateQueries({ queryKey: queryKeys.tasks.all }),
+  tasks: () => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.tasks.all });
+    queryClient.invalidateQueries({ queryKey: ['tasks', 'bombeiro'] });
+  },
   
   // Invalidar queries de um projeto específico
   project: (projectId: string) => {
     queryClient.invalidateQueries({ queryKey: queryKeys.projects.detail(projectId) });
     queryClient.invalidateQueries({ queryKey: queryKeys.projects.tasks(projectId) });
     queryClient.invalidateQueries({ queryKey: queryKeys.tasks.all });
+    queryClient.invalidateQueries({ queryKey: ['tasks', 'bombeiro'] });
   },
   
   // Invalidar todas as queries relacionadas a notes

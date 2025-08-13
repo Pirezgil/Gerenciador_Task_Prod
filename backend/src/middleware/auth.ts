@@ -1,43 +1,63 @@
 import { Response, NextFunction } from 'express';
-import { verifyToken } from '../lib/jwt';
+import { verifyToken, clearSecureCookie } from '../lib/jwt';
 import { prisma } from '../app';
 import { AuthenticatedRequest } from '../types/api';
+import { ErrorCode, createErrorResponse } from '../lib/errors';
+import secureLogger from '../lib/secureLogger';
 
-export const authenticate = async (
+// ETAPA 2: Middleware de autenticação server-side robusto (P1)
+export const requireAuth = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const authHeader = req.headers.authorization;
-    
-    if (!authHeader) {
-      return res.status(401).json({
-        error: 'Token de autorização não fornecido',
-        message: 'Acesso negado. Token necessário.'
-      });
-    }
-
-    const token = authHeader.replace('Bearer ', '');
+    // SEGURANÇA CRÍTICA: Token APENAS via cookies HTTP-only
+    const token = req.cookies?.['auth-token'];
     
     if (!token) {
-      return res.status(401).json({
-        error: 'Token inválido',
-        message: 'Formato do token incorreto'
+      // Log de tentativa de acesso não autorizada
+      secureLogger.warn('Unauthorized access attempt', {
+        ip: req.ip,
+        userAgent: req.get('User-Agent'),
+        path: req.path,
+        method: req.method,
+        reason: 'missing_auth_cookie'
       });
+      
+      // LOOP PREVENTION: Clear any invalid cookies and add no-cache headers
+      clearSecureCookie(res);
+      
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
+      return res.status(401).json(
+        createErrorResponse(ErrorCode.AUTH_REQUIRED, 'missing_token', 'authentication_required')
+      );
     }
 
     // Verificar e decodar o token
     const decoded = verifyToken(token);
     
-    if (!decoded.userId) {
-      return res.status(401).json({
-        error: 'Token inválido',
-        message: 'Token não contém ID do usuário'
+    if (!decoded.userId || !decoded.email) {
+      secureLogger.warn('Invalid token payload', {
+        ip: req.ip,
+        path: req.path,
+        reason: 'invalid_payload'
       });
+      
+      // LOOP PREVENTION: Clear invalid token and set no-cache headers
+      clearSecureCookie(res);
+      
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      
+      return res.status(401).json(
+        createErrorResponse(ErrorCode.AUTH_REQUIRED, 'invalid_token_payload')
+      );
     }
 
-    // Buscar usuário no banco
+    // SEGURANÇA: Validar usuário existe e está ativo
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
       select: {
@@ -45,15 +65,42 @@ export const authenticate = async (
         name: true,
         email: true,
         createdAt: true,
-        updatedAt: true
+        updatedAt: true,
+        // Futuro: campos de status do usuário (ativo/bloqueado)
       }
     });
 
     if (!user) {
-      return res.status(401).json({
-        error: 'Usuário não encontrado',
-        message: 'Token válido mas usuário não existe'
+      secureLogger.warn('Token valid but user not found', {
+        userId: decoded.userId,
+        ip: req.ip,
+        path: req.path
       });
+      
+      // Limpar cookie inválido
+      clearSecureCookie(res);
+      
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      
+      return res.status(401).json(
+        createErrorResponse(ErrorCode.AUTH_USER_NOT_FOUND, 'user_not_found')
+      );
+    }
+
+    // SEGURANÇA: Verificar consistência email token vs banco
+    if (user.email !== decoded.email) {
+      secureLogger.error('Token email mismatch - potential security breach', {
+        userId: decoded.userId,
+        tokenEmail: decoded.email,
+        dbEmail: user.email,
+        ip: req.ip
+      });
+      
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      
+      return res.status(401).json(
+        createErrorResponse(ErrorCode.AUTH_REQUIRED, 'token_user_mismatch')
+      );
     }
 
     // Adicionar dados do usuário à requisição
@@ -64,37 +111,64 @@ export const authenticate = async (
       name: user.name
     };
 
-    return next();
-  } catch (error: any) {
-    console.error('Erro na autenticação:', error);
-    
-    if (error.message === 'Token inválido ou expirado') {
-      return res.status(401).json({
-        error: 'Token expirado',
-        message: 'Faça login novamente'
+    // Log de acesso bem-sucedido (apenas em desenvolvimento)
+    if (process.env.NODE_ENV === 'development') {
+      secureLogger.info('Successful authentication', {
+        userId: user.id,
+        path: req.path,
+        method: req.method
       });
     }
 
-    return res.status(401).json({
-      error: 'Falha na autenticação',
-      message: 'Token inválido'
+    return next();
+  } catch (error: any) {
+    // Log de erro de autenticação
+    secureLogger.error('Authentication error', {
+      error: error.message,
+      ip: req.ip,
+      path: req.path,
+      method: req.method
     });
+    
+    // Detectar especificamente se o erro é de token expirado
+    if (error.message === 'Token inválido ou expirado' || error.name === 'TokenExpiredError') {
+      // Limpar cookie expirado
+      clearSecureCookie(res);
+      
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      
+      return res.status(401).json(
+        createErrorResponse(ErrorCode.AUTH_TOKEN_EXPIRED, 'jwt_verification')
+      );
+    }
+
+    // Para outros erros de JWT (malformed, invalid signature, etc)
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    
+    return res.status(401).json(
+      createErrorResponse(ErrorCode.AUTH_REQUIRED, 'jwt_verification')
+    );
   }
 };
 
+// Middleware legado mantido para compatibilidade
+export const authenticate = requireAuth;
+
+// Middleware para autenticação opcional (mantido para casos específicos)
 export const optionalAuth = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ) => {
-  const authHeader = req.headers.authorization;
+  // SEGURANÇA: Verificar apenas cookies HTTP-only
+  const token = req.cookies?.['auth-token'];
   
-  if (!authHeader) {
+  if (!token) {
     return next();
   }
 
   try {
-    await authenticate(req, res, next);
+    await requireAuth(req, res, next);
   } catch (error) {
     // Em caso de erro na autenticação opcional, continua sem user
     return next();

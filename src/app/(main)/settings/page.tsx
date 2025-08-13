@@ -6,49 +6,39 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Settings, Palette, Bell, Shield, Download, Zap, Brain, Battery } from 'lucide-react';
+import { Settings, Bell, Shield, Zap, Brain, Battery } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
-import { useThemeStore } from '@/stores/themeStore';
-import { useAuthStore } from '@/stores/authStore';
-import { ThemeCustomizer } from '@/components/profile/ThemeCustomizer';
+import { useAuth } from '@/providers/AuthProvider';
 import { NotificationSettings } from '@/components/profile/NotificationSettings';
 import { SecuritySettings } from '@/components/profile/SecuritySettings';
-import { DataManagement } from '@/components/profile/DataManagement';
 
-type TabType = 'appearance' | 'notifications' | 'security' | 'data';
+type TabType = 'notifications' | 'security';
 
 export default function SettingsPage() {
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState<TabType>('appearance');
-  const { currentTheme } = useThemeStore();
-  const { user } = useAuthStore();
+  const [activeTab, setActiveTab] = useState<TabType>('notifications');
+  const { user } = useAuth();
 
   useEffect(() => {
     const tabParam = searchParams.get('tab') as TabType;
-    if (tabParam && ['appearance', 'notifications', 'security', 'data'].includes(tabParam)) {
+    if (tabParam && ['notifications', 'security'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [searchParams]);
 
   const tabs = [
-    { id: 'appearance' as TabType, label: 'Aparência', icon: Palette },
     { id: 'notifications' as TabType, label: 'Notificações', icon: Bell },
     { id: 'security' as TabType, label: 'Segurança', icon: Shield },
-    { id: 'data' as TabType, label: 'Dados', icon: Download },
   ];
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'appearance':
-        return <ThemeCustomizer />;
       case 'notifications':
         return <NotificationSettings />;
       case 'security':
         return <SecuritySettings />;
-      case 'data':
-        return <DataManagement />;
       default:
-        return <ThemeCustomizer />;
+        return <NotificationSettings />;
     }
   };
 
@@ -106,16 +96,6 @@ export default function SettingsPage() {
               })}
             </nav>
 
-            {/* Informações adicionais */}
-            <div className="mt-6 p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl border border-blue-200">
-              <h4 className="font-semibold text-blue-900 text-sm mb-2">💡 Dica do Sistema</h4>
-              <p className="text-blue-700 text-xs leading-relaxed">
-                {activeTab === 'appearance' && 'Personalize cores e estilos para uma experiência mais confortável.'}
-                {activeTab === 'notifications' && 'Configure alertas inteligentes que respeitam seu foco.'}
-                {activeTab === 'security' && 'Proteja suas informações com senhas seguras.'}
-                {activeTab === 'data' && 'Mantenha seus dados organizados e seguros.'}
-              </p>
-            </div>
           </div>
         </div>
 
@@ -137,10 +117,8 @@ export default function SettingsPage() {
                 {tabs.find(tab => tab.id === activeTab)?.label}
               </h2>
               <p className="text-gray-600 mt-1">
-                {activeTab === 'appearance' && 'Customize a aparência e temas do sistema'}
                 {activeTab === 'notifications' && 'Configure suas preferências de notificação'}
                 {activeTab === 'security' && 'Gerencie segurança e privacidade'}
-                {activeTab === 'data' && 'Importe, exporte e gerencie seus dados'}
               </p>
             </div>
 

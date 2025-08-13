@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useRegister } from '@/hooks/api/useAuth';
 import { Button } from '@/components/ui/button';
-import { SocialLogin } from '@/components/auth/SocialLogin';
 import Link from 'next/link';
 
 export default function RegisterPage() {
@@ -18,13 +17,24 @@ export default function RegisterPage() {
     confirmPassword: ''
   });
   const [error, setError] = useState('');
+  const [errorType, setErrorType] = useState<'user_exists' | 'validation' | 'password_match' | 'network' | 'rate_limit' | 'general' | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setErrorType(null);
     
     if (formData.password !== formData.confirmPassword) {
-      setError('As senhas não coincidem');
+      setErrorType('password_match');
+      setError('As senhas não coincidem. Verifique e digite novamente.');
+      return;
+    }
+
+    // Validar critérios de senha forte
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/;
+    if (formData.password.length < 8 || !passwordRegex.test(formData.password)) {
+      setErrorType('validation');
+      setError('Senha deve conter pelo menos 8 caracteres: letra minúscula, maiúscula, número e símbolo (@$!%*?&)');
       return;
     }
 
@@ -41,11 +51,40 @@ export default function RegisterPage() {
       }, 100);
     } catch (error: any) {
       console.error('Erro no registro:', error);
-      setError(error?.response?.data?.message || error.message || 'Erro ao criar conta');
+      
+      // Determinar tipo de erro para exibição específica
+      const errorMessage = error?.response?.data?.error?.message || error?.response?.data?.message || error?.message || 'Erro ao criar conta';
+      const errorCode = error?.response?.data?.error?.code;
+      
+      // Classificar tipo de erro
+      if (errorCode === 'AUTH_USER_EXISTS' || errorMessage.includes('já existe') || errorMessage.includes('cadastrado')) {
+        setErrorType('user_exists');
+        setError('Este email já está cadastrado. Tente fazer login ou use outro email.');
+      } else if (error?.response?.status === 429) {
+        setErrorType('rate_limit');
+        const retryAfter = error?.response?.headers?.['retry-after'] || error?.response?.headers?.['Retry-After'];
+        const waitTime = retryAfter ? Math.ceil(retryAfter / 60) : 5;
+        setError(`🚫 Muitas tentativas de registro. Por segurança, aguarde ${waitTime} minutos antes de tentar novamente.`);
+      } else if (error?.code === 'ERR_NETWORK') {
+        setErrorType('network');
+        setError('Erro de conexão. Verifique sua internet e tente novamente.');
+      } else if (errorMessage.includes('validação') || errorMessage.includes('inválido')) {
+        setErrorType('validation');
+        setError(errorMessage);
+      } else {
+        setErrorType('general');
+        setError(errorMessage);
+      }
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Limpar erros quando usuário começa a digitar
+    if (error) {
+      setError('');
+      setErrorType(null);
+    }
+    
     setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value
@@ -74,8 +113,37 @@ export default function RegisterPage() {
 
         {/* Error */}
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
-            {error}
+          <div className={`mb-4 p-3 border rounded-xl text-sm ${
+            errorType === 'user_exists' ? 'bg-blue-50 border-blue-200 text-blue-700' :
+            errorType === 'validation' ? 'bg-amber-50 border-amber-200 text-amber-700' :
+            errorType === 'password_match' ? 'bg-orange-50 border-orange-200 text-orange-700' :
+            errorType === 'network' ? 'bg-gray-50 border-gray-200 text-gray-700' :
+            'bg-red-50 border-red-200 text-red-700'
+          }`}>
+            <div className="flex items-start gap-2">
+              <span className="flex-shrink-0 text-base">
+                {errorType === 'user_exists' && '👤'}
+                {errorType === 'validation' && '🔒'}
+                {errorType === 'password_match' && '🔄'}
+                {errorType === 'network' && '🌐'}
+                {errorType === 'general' && '⚠️'}
+              </span>
+              <div className="flex-1">
+                <p>{error}</p>
+                
+                {errorType === 'user_exists' && (
+                  <div className="mt-2">
+                    <button
+                      type="button"
+                      onClick={() => router.push('/auth')}
+                      className="text-blue-700 hover:text-blue-800 font-medium underline text-sm"
+                    >
+                      Ir para login
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
@@ -125,12 +193,17 @@ export default function RegisterPage() {
               id="password"
               name="password"
               required
-              minLength={6}
+              minLength={8}
+              pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$"
               value={formData.password}
               onChange={handleChange}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
               placeholder="••••••••"
+              title="Senha deve conter: letra minúscula, maiúscula, número e símbolo"
             />
+            <p className="text-xs text-gray-500 mt-1">
+              Mínimo 8 caracteres: letra minúscula, maiúscula, número e símbolo (@$!%*?&)
+            </p>
           </div>
 
           {/* Confirm Password */}
@@ -143,7 +216,7 @@ export default function RegisterPage() {
               id="confirmPassword"
               name="confirmPassword"
               required
-              minLength={6}
+              minLength={8}
               value={formData.confirmPassword}
               onChange={handleChange}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
@@ -168,8 +241,6 @@ export default function RegisterPage() {
           </Button>
         </form>
 
-        {/* Social Login */}
-        <SocialLogin onSuccess={() => router.push('/tarefas')} />
 
         {/* Login Link */}
         <div className="mt-6 text-center">

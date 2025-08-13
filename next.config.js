@@ -1,11 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  typescript: {
-    ignoreBuildErrors: false,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   images: {
     domains: [],
   },
@@ -18,6 +12,10 @@ const nextConfig = {
   // Otimizações
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
+  },
+  // Desativar linting durante build para evitar falhas
+  eslint: {
+    ignoreDuringBuilds: true,
   },
   // Configuração do Webpack para resolver erros do Watchpack no Windows
   webpack: (config, { dev }) => {

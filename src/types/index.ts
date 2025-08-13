@@ -1,5 +1,7 @@
 export * from './task';
 export * from './habit';
+export * from './reminder';
+export * from './notification';
 import type { Attachment } from './task';
 import type { ReactNode } from 'react';
 

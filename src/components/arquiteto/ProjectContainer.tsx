@@ -6,8 +6,8 @@ import { ChevronDown, ChevronUp, FileText, Plus, ArrowRight, Battery, Brain, Zap
 import { Button } from '@/components/ui/button';
 import { useTasksStore } from '@/stores/tasksStore';
 import { useModalsStore } from '@/stores/modalsStore';
-import { useDeleteProject, useUpdateProject } from '@/hooks/api/useProjects';
-import { useUpdateTask } from '@/hooks/api/useTasks';
+import { useDeleteProject, useUpdateProject, useAddTaskToProject, useUpdateProjectTask } from '@/hooks/api/useProjects';
+import { useUpdateTask, useDeleteTask } from '@/hooks/api/useTasks';
 import type { Project } from '@/types';
 import { scrollToElementWithDelay } from '@/utils/scrollUtils';
 import { useStandardAlert } from '@/components/shared/StandardAlert';
@@ -27,20 +27,41 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
   const { showAlert, AlertComponent } = useStandardAlert();
   console.log('🧱 ProjectContainer - Backlog:', project.backlog);
   
+  // Função helper para determinar se uma tarefa está realmente pendente
+  const isTaskPending = (task: any) => {
+    const status = task.status?.toLowerCase();
+    
+    // Se está completada, não é pendente
+    if (status === 'completed') return false;
+    
+    // Se é pending, é pendente
+    if (status === 'pending') return true;
+    
+    // Se está planejada para hoje, é pendente
+    if (task.plannedForToday === true) return true;
+    
+    // Se foi adiada (postponed), só é pendente se NÃO foi adiada hoje
+    if (status === 'postponed') {
+      const wasPostponedToday = task.postponedAt && 
+        new Date(task.postponedAt).toDateString() === new Date().toDateString();
+      return !wasPostponedToday;
+    }
+    
+    return false;
+  };
+  
   const {
     selectedProjectId,
     setSelectedProjectId,
-    addTaskToProject,
-    editProjectTask,
-    deleteProjectTask,
     updateProjectNotes,
-    todayTasks,
-    postponedTasks,
   } = useTasksStore();
   const { openNewTaskModal } = useModalsStore();
   const deleteProjectMutation = useDeleteProject();
   const updateProjectMutation = useUpdateProject();
   const updateTaskMutation = useUpdateTask();
+  const deleteTaskMutation = useDeleteTask();
+  const addTaskToProjectMutation = useAddTaskToProject();
+  const updateProjectTaskMutation = useUpdateProjectTask();
   const taskRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   const [newTaskDescription, setNewTaskDescription] = useState('');
@@ -77,24 +98,54 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
     return <Brain className="w-4 h-4 text-blue-500" />;
   };
 
-  const handleAddTask = () => {
+  const handleAddTask = async () => {
     if (!newTaskDescription.trim()) return;
     
-    addTaskToProject(project.id, newTaskDescription.trim(), newTaskEnergy);
-    setNewTaskDescription('');
-    setNewTaskEnergy(3);
-    setShowAddForm(false);
+    try {
+      await addTaskToProjectMutation.mutateAsync({
+        projectId: project.id,
+        taskData: {
+          description: newTaskDescription.trim(),
+          energyPoints: newTaskEnergy,
+          type: 'brick',
+          comments: [],
+          attachments: [],
+          history: [],
+          externalLinks: []
+        }
+      });
+      
+      setNewTaskDescription('');
+      setNewTaskEnergy(3);
+      setShowAddForm(false);
+    } catch (error) {
+      console.error('Erro ao adicionar tarefa:', error);
+      showAlert('Erro', 'Não foi possível adicionar a tarefa. Tente novamente.', 'error');
+    }
   };
 
   const startEditing = (taskId: string, description: string, energyPoints: 1 | 3 | 5) => {
     setEditingTask({ taskId, description, energyPoints });
   };
 
-  const saveEdit = () => {
+  const saveEdit = async () => {
     if (!editingTask || !editingTask.description.trim()) return;
     
-    editProjectTask(project.id, editingTask.taskId, editingTask.description.trim(), editingTask.energyPoints);
-    setEditingTask(null);
+    try {
+      await updateProjectTaskMutation.mutateAsync({
+        projectId: project.id,
+        taskId: editingTask.taskId,
+        updates: {
+          description: editingTask.description.trim(),
+          energyPoints: editingTask.energyPoints
+        }
+      });
+      
+      setEditingTask(null);
+    } catch (error) {
+      console.error('Erro ao editar tarefa:', error);
+      showAlert('Erro', 'Não foi possível editar a tarefa. Tente novamente.', 'error');
+    }
   };
 
   const cancelEdit = () => {
@@ -109,8 +160,13 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
       {
         showCancel: true,
         confirmText: 'Excluir',
-        onConfirm: () => {
-          deleteProjectTask(project.id, taskId);
+        onConfirm: async () => {
+          try {
+            await deleteTaskMutation.mutateAsync(taskId);
+          } catch (error) {
+            console.error('Erro ao deletar tarefa:', error);
+            showAlert('Erro', 'Não foi possível deletar a tarefa. Tente novamente.', 'error');
+          }
         }
       }
     );
@@ -121,14 +177,9 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
   };
 
   const handleFinishProject = async () => {
-    // Verificar se há tarefas pendentes
-    const allTasks = [
-      ...(project.backlog || []),
-      ...todayTasks.filter(task => task.projectId === project.id),
-      ...postponedTasks.filter(task => task.projectId === project.id)
-    ];
-    
-    const pendingTasks = allTasks.filter(task => task.status === 'pending');
+    // Verificar se há tarefas pendentes usando apenas dados do backend
+    const projectTasks = project.backlog || project.tasks || [];
+    const pendingTasks = projectTasks.filter(isTaskPending);
     
     if (pendingTasks.length > 0) {
       showAlert(
@@ -180,14 +231,9 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
   };
 
   const handleDeleteProject = async () => {
-    // Verificar se há tarefas pendentes
-    const allTasks = [
-      ...(project.backlog || []),
-      ...todayTasks.filter(task => task.projectId === project.id),
-      ...postponedTasks.filter(task => task.projectId === project.id)
-    ];
-    
-    const pendingTasks = allTasks.filter(task => task.status === 'pending');
+    // Verificar se há tarefas pendentes usando apenas dados do backend
+    const projectTasks = project.backlog || project.tasks || [];
+    const pendingTasks = projectTasks.filter(isTaskPending);
     
     if (pendingTasks.length > 0) {
       setPendingTasksCount(pendingTasks.length);
@@ -216,7 +262,7 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
 
   return (
     <div className={`rounded-xl shadow-sm border overflow-hidden ${
-      project.status === 'completed' 
+      project.status?.toLowerCase() === 'completed' 
         ? 'bg-green-50 border-green-200' 
         : 'bg-white border-gray-200'
     }`}>
@@ -227,7 +273,7 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
             <div>
               <div className="flex items-center space-x-2">
                 <h3 className="text-lg font-semibold theme-text">{project.name}</h3>
-                {project.status === 'completed' && (
+                {project.status?.toLowerCase() === 'completed' && (
                   <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
                     ✅ Finalizado
                   </span>
@@ -240,18 +286,11 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
                   </p>
                 )}
                 <p className="theme-text-muted">
-                  🧱 {(() => {
-                    const allTasks = [
-                      ...(project.backlog || []),
-                      ...todayTasks.filter(task => task.projectId === project.id),
-                      ...postponedTasks.filter(task => task.projectId === project.id)
-                    ];
-                    return allTasks.length;
-                  })()} tijolos
+                  🧱 {(project.backlog || project.tasks)?.length || 0} tijolos
                 </p>
-                {(project.backlog?.filter(t => t.status === 'completed').length || 0) > 0 && (
+                {((project.backlog || project.tasks)?.filter(t => t.status?.toLowerCase() === 'completed').length || 0) > 0 && (
                   <p className="text-green-600">
-                    ✅ {project.backlog?.filter(t => t.status === 'completed').length || 0} concluídos
+                    ✅ {(project.backlog || project.tasks)?.filter(t => t.status?.toLowerCase() === 'completed').length || 0} concluídos
                   </p>
                 )}
               </div>
@@ -321,38 +360,31 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
                 <h4 className="text-md font-medium theme-text flex items-center">
                   🧱 Tijolos do projeto
                   <span className="ml-2 text-sm bg-gray-200 theme-text-secondary px-2 py-1 rounded-full">
-                    {(() => {
-                      const allTasks = [
-                        ...(project.backlog || []),
-                        ...todayTasks.filter(task => task.projectId === project.id),
-                        ...postponedTasks.filter(task => task.projectId === project.id)
-                      ];
-                      return allTasks.length;
-                    })()}
+                    {(project.backlog || project.tasks)?.length || 0}
                   </span>
                 </h4>
                 
                 <div className="flex items-center space-x-2 text-xs">
-                  <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full">
-                    {(() => {
-                      const allTasks = [
-                        ...(project.backlog || []),
-                        ...todayTasks.filter(task => task.projectId === project.id),
-                        ...postponedTasks.filter(task => task.projectId === project.id)
-                      ];
-                      return allTasks.filter(t => t.status === 'pending').length;
-                    })()} pendentes
-                  </span>
-                  <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full">
-                    {(() => {
-                      const allTasks = [
-                        ...(project.backlog || []),
-                        ...todayTasks.filter(task => task.projectId === project.id),
-                        ...postponedTasks.filter(task => task.projectId === project.id)
-                      ];
-                      return allTasks.filter(t => t.status === 'completed').length;
-                    })()} concluídos
-                  </span>
+                  {(() => {
+                    const projectTasks = project.backlog || project.tasks || [];
+                    
+                    const pendingCount = projectTasks.filter(isTaskPending).length;
+                    
+                    const completedCount = projectTasks.filter(t => 
+                      t.status?.toLowerCase() === 'completed'
+                    ).length;
+                    
+                    return (
+                      <>
+                        <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full">
+                          {pendingCount} pendentes
+                        </span>
+                        <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full">
+                          {completedCount} concluídos
+                        </span>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             </div>
@@ -454,18 +486,23 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
             {/* Lista de Tijolos em formato de lista */}
             <div className="space-y-2">
               {(() => {
-                const allTasks = [
-                  ...(project.backlog || []),
-                  ...todayTasks.filter(task => task.projectId === project.id),
-                  ...postponedTasks.filter(task => task.projectId === project.id)
-                ];
+                // CORREÇÃO: Usar apenas os dados do backend via API (project.backlog ou project.tasks)
+                // Removendo dependência do store local para evitar inconsistências
+                const projectTasks = project.backlog || project.tasks || [];
                 
-                return allTasks.length === 0 ? (
+                console.log('🧱 ProjectContainer - Tarefas do projeto:', {
+                  projectId: project.id,
+                  projectName: project.name,
+                  tasksCount: projectTasks.length,
+                  tasks: projectTasks
+                });
+                
+                return projectTasks.length === 0 ? (
                   <div className="text-center py-4 text-gray-500 text-sm">
                     Nenhum tijolo criado ainda
                   </div>
                 ) : (
-                  allTasks.map((task) => (
+                  projectTasks.map((task) => (
                 <div 
                   key={task.id}
                   ref={(el) => {
@@ -476,7 +513,7 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
                     }
                   }}
                   className={`bg-gradient-to-r from-white to-gray-50 rounded-xl shadow-md border border-gray-200 transition-all hover:shadow-lg hover:scale-[1.02] ${
-                    task.status === 'completed' 
+                    task.status?.toLowerCase() === 'completed' 
                       ? 'from-green-50 to-green-100 border-green-200' 
                       : ''
                   }`}
@@ -489,7 +526,7 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
                           onClick={() => window.location.href = `/task/${task.id}`}
                         >
                           <h3 className={`text-lg font-semibold hover:text-blue-600 transition-colors ${
-                            task.status === 'completed' 
+                            task.status?.toLowerCase() === 'completed' 
                               ? 'text-green-800 line-through' 
                               : 'text-gray-900'
                           }`}>
@@ -512,12 +549,12 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
                             </span>
                           </div>
                           
-                          {task.deadline ? (
+                          {task.dueDate ? (
                             (() => {
                               const today = new Date();
                               today.setHours(0, 0, 0, 0);
                               
-                              const dateStr = task.deadline.includes('T') ? task.deadline.split('T')[0] : task.deadline;
+                              const dateStr = task.dueDate.includes('T') ? task.dueDate.split('T')[0] : task.dueDate;
                               const [year, month, day] = dateStr.split('-').map(Number);
                               const dueDate = new Date(year, month - 1, day);
                               
@@ -660,7 +697,7 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
                                         }`}></div>
                                         <span className="font-medium text-sm text-gray-900">
                                           {entry.field === 'created' ? 
-                                            entry.newValue :
+                                            String(entry.newValue || '') :
                                             entry.action === 'completed' ?
                                               'Tarefa completada' :
                                             entry.action === 'postponed' ?

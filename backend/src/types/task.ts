@@ -1,5 +1,7 @@
-export type TaskStatus = 'pending' | 'completed' | 'postponed';
-export type TaskType = 'task' | 'brick';
+import { CreateReminderRequest, ReminderResponse } from './reminder';
+
+export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'postponed';
+export type TaskType = string;
 export type TaskAction = 'created' | 'completed' | 'postponed' | 'rescheduled' | 'edited';
 
 export interface CreateTaskRequest {
@@ -15,6 +17,7 @@ export interface CreateTaskRequest {
   attachments?: TaskAttachmentRequest[];
   recurrence?: CreateTaskRecurrenceRequest;
   appointment?: CreateTaskAppointmentRequest;
+  reminders?: CreateReminderRequest[];
 }
 
 export interface UpdateTaskRequest {
@@ -31,6 +34,10 @@ export interface UpdateTaskRequest {
   plannedDate?: string;
   missedDaysCount?: number;
   externalLinks?: string[];
+  attachments?: TaskAttachmentRequest[];
+  recurrence?: CreateTaskRecurrenceRequest | null;
+  appointment?: CreateTaskAppointmentRequest | null;
+  reminders?: CreateReminderRequest[];
 }
 
 export interface TaskResponse {
@@ -49,6 +56,7 @@ export interface TaskResponse {
   plannedDate?: string;
   missedDaysCount: number;
   externalLinks: string[];
+  projectId?: string; // ✅ Adicionar projectId ao tipo
   createdAt: string;
   completedAt?: string;
   postponedAt?: string;
@@ -64,6 +72,7 @@ export interface TaskResponse {
   history: TaskHistoryResponse[];
   recurrence?: TaskRecurrenceResponse;
   appointment?: TaskAppointmentResponse;
+  reminders?: ReminderResponse[];
   newAchievements?: Array<{
     id: string;
     type: string;

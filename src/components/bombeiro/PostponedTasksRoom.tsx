@@ -24,7 +24,7 @@ export function PostponedTasksRoom() {
   
   // Filtrar apenas tarefas adiadas hoje
   const today = new Date().toISOString().split('T')[0];
-  const postponedTasks = todayTasks.filter(task => task.status === 'POSTPONED');
+  const postponedTasks = todayTasks.filter(task => task.status === 'postponed' || task.status === 'POSTPONED');
   
   console.log('🔍 PostponedTasksRoom Debug - Tarefas POSTPONED:', postponedTasks.length);
   
@@ -118,7 +118,7 @@ export function PostponedTasksRoom() {
                       {/* Badge Adiado */}
                       <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 border border-yellow-200">
                         <span>⏳</span>
-                        <span>Adiado {postponedTask.postponedCount}x</span>
+                        <span>Adiado {postponedTask.postponementCount || 1}x</span>
                       </div>
                     </div>
 

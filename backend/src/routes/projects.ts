@@ -1,13 +1,13 @@
 import { Router } from 'express';
 import * as projectsController from '../controllers/projectsController';
-import { authenticate } from '../middleware/auth';
+import { requireAuth } from '../middleware/auth';
 import { validate } from '../lib/validation';
 import { createProjectSchema, updateProjectSchema } from '../lib/validation';
 
 const router = Router();
 
-// Aplicar autenticação a todas as rotas
-router.use(authenticate);
+// ETAPA 2: Proteção de rotas server-side robusta
+router.use(requireAuth);
 
 // Rotas principais
 router.get('/', projectsController.getProjects);

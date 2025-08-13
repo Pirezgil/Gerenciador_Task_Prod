@@ -459,3 +459,187 @@ body,
     padding: 1rem;
   }
 }
+
+/* ============================================================================ */
+/* NOTIFICAÇÕES SENTINELA - ESTILO PERSONALIZADO */
+/* ============================================================================ */
+
+/* Container principal do toast */
+.sentinela-notification {
+  background: var(--sentinela-surface) !important;
+  border: 1px solid var(--sentinela-border) !important;
+  color: var(--sentinela-text) !important;
+  border-radius: var(--sentinela-radius-sm) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12) !important;
+  backdrop-filter: blur(8px);
+  
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+  
+  /* Animação suave */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Descrição do toast */
+.toast-description {
+  color: var(--sentinela-text-secondary) !important;
+  font-size: 13px;
+  margin-top: 2px;
+  opacity: 0.9;
+}
+
+/* Toast de celebração */
+.celebration-toast {
+  background: linear-gradient(135deg, 
+    rgba(109, 213, 140, 0.1) 0%, 
+    rgba(91, 134, 229, 0.1) 100%) !important;
+  border: 1px solid var(--energia-baixa) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.celebration-toast::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  animation: celebration-shine 2s ease-in-out;
+}
+
+@keyframes celebration-shine {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* Toasts por contexto */
+.toast[data-context="authentication"] {
+  border-left: 4px solid var(--sentinela-primary);
+}
+
+.toast[data-context="task_crud"] {
+  border-left: 4px solid var(--energia-normal);
+}
+
+.toast[data-context="habit_crud"] {
+  border-left: 4px solid var(--energia-baixa);
+}
+
+.toast[data-context="energy_system"] {
+  border-left: 4px solid var(--energia-alta);
+}
+
+.toast[data-context="connectivity"] {
+  border-left: 4px solid var(--sentinela-warning);
+}
+
+.toast[data-context="celebration"] {
+  border-left: 4px solid var(--energia-baixa);
+  background: linear-gradient(135deg, 
+    rgba(109, 213, 140, 0.05) 0%, 
+    rgba(91, 134, 229, 0.05) 100%) !important;
+}
+
+/* Estados especiais */
+.toast[data-important="true"] {
+  border-width: 2px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+  animation: gentle-pulse 2s ease-in-out infinite;
+}
+
+@keyframes gentle-pulse {
+  0%, 100% { 
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); 
+  }
+  50% { 
+    box-shadow: 0 8px 30px rgba(91, 134, 229, 0.25); 
+  }
+}
+
+/* Botões de ação personalizados */
+.toast button[data-button] {
+  background: var(--sentinela-primary) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: var(--sentinela-radius-sm) !important;
+  padding: 6px 12px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+}
+
+.toast button[data-button]:hover {
+  background: var(--sentinela-primary) !important;
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.toast button[data-cancel-button] {
+  background: transparent !important;
+  color: var(--sentinela-text-secondary) !important;
+  border: 1px solid var(--sentinela-border) !important;
+}
+
+/* Responsividade para notificações */
+@media (max-width: 640px) {
+  .sentinela-notification {
+    font-size: 13px;
+    max-width: calc(100vw - 32px);
+  }
+  
+  .toast-description {
+    font-size: 12px;
+  }
+  
+  .toast button[data-button] {
+    padding: 8px 16px !important;
+    font-size: 14px !important;
+  }
+}
+
+/* Dark mode adaptations */
+.theme-dark .sentinela-notification {
+  background: var(--sentinela-surface) !important;
+  border-color: var(--sentinela-border) !important;
+  color: var(--sentinela-text) !important;
+}
+
+.theme-dark .toast-description {
+  color: var(--sentinela-text-secondary) !important;
+}
+
+.theme-dark .celebration-toast {
+  background: linear-gradient(135deg, 
+    rgba(109, 213, 140, 0.15) 0%, 
+    rgba(91, 134, 229, 0.15) 100%) !important;
+}
+
+/* Loading toast específico */
+.toast[data-type="loading"] {
+  background: linear-gradient(135deg, 
+    rgba(91, 134, 229, 0.05) 0%, 
+    rgba(91, 134, 229, 0.1) 100%) !important;
+}
+
+/* Error toast melhorado */
+.toast[data-type="error"] {
+  border-left: 4px solid #ef4444;
+}
+
+/* Warning toast melhorado */
+.toast[data-type="warning"] {
+  border-left: 4px solid var(--sentinela-warning);
+}
+
+/* Success toast melhorado */
+.toast[data-type="success"] {
+  border-left: 4px solid var(--energia-baixa);
+}
+
+/* Info toast melhorado */
+.toast[data-type="info"] {
+  border-left: 4px solid var(--sentinela-primary);
+}

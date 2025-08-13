@@ -1,10 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Target, Calendar, Hash } from 'lucide-react';
+import { Target, Hash } from 'lucide-react';
 import { useCreateHabit } from '@/hooks/api/useHabits';
+import { StandardModal, StandardModalActions, StandardButton } from '@/components/shared/StandardModal';
+import { ReminderPicker } from '@/components/reminders/ReminderPicker';
 import type { HabitFrequency } from '@/types/habit';
+import type { CreateReminderData } from '@/types/reminder';
+import { useHabitNotifications, useAsyncNotification, useNotification } from '@/hooks/useNotification';
 
 interface NewHabitModalProps {
   isOpen: boolean;
@@ -14,6 +17,12 @@ interface NewHabitModalProps {
 
 export function NewHabitModal({ isOpen, onClose, template }: NewHabitModalProps) {
   const createHabitMutation = useCreateHabit();
+  const [habitReminders, setHabitReminders] = useState<CreateReminderData[]>([]);
+  
+  // Hooks de notificação
+  const habitNotifications = useHabitNotifications();
+  const { withLoading } = useAsyncNotification();
+  const { error } = useNotification();
   
   const [formData, setFormData] = useState({
     name: template?.name || '',
@@ -37,15 +46,31 @@ export function NewHabitModal({ isOpen, onClose, template }: NewHabitModalProps)
     };
 
     try {
-      await createHabitMutation.mutateAsync({
-        ...formData,
-        frequency,
-        isActive: true,
-      });
+      await withLoading(
+        () => createHabitMutation.mutateAsync({
+          ...formData,
+          frequency,
+          isActive: true,
+          updatedAt: new Date().toISOString(),
+          streak: 0,
+          bestStreak: 0,
+          completions: [],
+        }),
+        {
+          loading: 'Criando hábito...',
+          success: `Hábito "${formData.name}" criado!`
+        },
+        {
+          context: 'habit_crud'
+        }
+      );
 
       handleClose();
-    } catch (error) {
-      console.error('Erro ao criar hábito:', error);
+    } catch (err) {
+      error('Erro ao criar hábito', {
+        description: err instanceof Error ? err.message : 'Tente novamente',
+        context: 'habit_crud'
+      });
     }
   };
 
@@ -59,6 +84,7 @@ export function NewHabitModal({ isOpen, onClose, template }: NewHabitModalProps)
       targetCount: undefined,
     });
     setSelectedDays([]);
+    setHabitReminders([]);
     onClose();
   };
 
@@ -76,44 +102,15 @@ export function NewHabitModal({ isOpen, onClose, template }: NewHabitModalProps)
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={handleClose}
-          />
-          
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
-          >
-            {/* Header */}
-            <div className="bg-gradient-to-r from-green-600 to-blue-600 px-6 py-4 text-white">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <Target className="w-6 h-6" />
-                  <h2 className="text-xl font-semibold">Novo Hábito</h2>
-                </div>
-                <button
-                  onClick={handleClose}
-                  className="p-1 hover:bg-white/20 rounded-lg transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <p className="text-green-100 text-sm mt-1">
-                Construa uma rotina saudável e consistente
-              </p>
-            </div>
-
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex-1">
+    <StandardModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="Novo Hábito"
+      subtitle="Construa uma rotina saudável e consistente"
+      icon={Target}
+      maxWidth="lg"
+    >
+      <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-6">
                 {/* Nome e Descrição */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -282,29 +279,38 @@ export function NewHabitModal({ isOpen, onClose, template }: NewHabitModalProps)
                     </div>
                   )}
                 </div>
+
+                {/* Sistema de Lembretes Padronizado */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h3 className="text-lg font-medium text-gray-900 mb-3">Lembretes</h3>
+                  <ReminderPicker
+                    entityType="habit"
+                    onRemindersChange={setHabitReminders}
+                    initialReminders={habitReminders}
+                    disabled={createHabitMutation.isPending}
+                    maxReminders={5}
+                  />
+                </div>
               </div>
 
-              {/* Actions */}
-              <div className="flex justify-end space-x-3 mt-8 pt-6 border-t border-gray-200">
-                <button
-                  type="button"
-                  onClick={handleClose}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={!formData.name.trim() || createHabitMutation.isPending}
-                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {createHabitMutation.isPending ? 'Criando...' : 'Criar Hábito'}
-                </button>
-              </div>
-            </form>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+        <StandardModalActions>
+          <StandardButton
+            type="button"
+            variant="secondary"
+            onClick={handleClose}
+          >
+            Cancelar
+          </StandardButton>
+          <StandardButton
+            type="submit"
+            variant="primary"
+            disabled={!formData.name.trim()}
+            loading={createHabitMutation.isPending}
+          >
+            Criar Hábito
+          </StandardButton>
+        </StandardModalActions>
+      </form>
+    </StandardModal>
   );
 }

@@ -13,10 +13,10 @@ router.get('/streak', authenticate, async (req: AuthenticatedRequest, res) => {
     }
 
     const streak = await HabitStreakService.getHabitStreak(userId);
-    res.json(streak);
+    return res.json(streak);
   } catch (error) {
     console.error('Erro ao buscar sequência de hábitos:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
+    return res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
 

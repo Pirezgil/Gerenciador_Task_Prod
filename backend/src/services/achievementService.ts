@@ -6,7 +6,6 @@ import {
   CreateAchievementRequest,
   UserAchievementsResponse,
   UpdateDailyProgressRequest,
-  WeeklyProgressResponse,
   DailyProgress,
   AchievementFilters,
   RewardsPageData
@@ -26,12 +25,13 @@ export class AchievementService {
         type: data.type,
         subtype: data.subtype,
         relatedId: data.relatedId,
-        metadata: data.metadata ? JSON.stringify(data.metadata) : null,
+        metadata: data.metadata ? JSON.stringify(data.metadata) : undefined,
       },
     });
 
     return {
       ...achievement,
+      relatedId: achievement.relatedId ?? undefined,
       type: achievement.type as AchievementType,
       subtype: achievement.subtype as TaskAchievementSubtype,
       earnedAt: achievement.earnedAt.toISOString(),
@@ -288,6 +288,7 @@ export class AchievementService {
     // Converter para formato adequado
     const formattedAchievements: Achievement[] = achievements.map(achievement => ({
       ...achievement,
+      relatedId: achievement.relatedId ?? undefined,
       type: achievement.type as AchievementType,
       subtype: achievement.subtype as TaskAchievementSubtype,
       earnedAt: achievement.earnedAt.toISOString(),
@@ -425,6 +426,7 @@ export class AchievementService {
     return {
       achievements: achievements.map(achievement => ({
         ...achievement,
+        relatedId: achievement.relatedId ?? undefined,
         type: achievement.type as AchievementType,
         subtype: achievement.subtype as TaskAchievementSubtype,
         earnedAt: achievement.earnedAt.toISOString(),
@@ -440,6 +442,7 @@ export class AchievementService {
       },
       recentAchievements: recentAchievements.map(achievement => ({
         ...achievement,
+        relatedId: achievement.relatedId ?? undefined,
         type: achievement.type as AchievementType,
         subtype: achievement.subtype as TaskAchievementSubtype,
         earnedAt: achievement.earnedAt.toISOString(),
@@ -549,7 +552,7 @@ export class AchievementService {
    * Processa conquistas automáticas ao completar um hábito
    * (Atualmente hábitos não geram conquistas específicas, mas podem contribuir para maestria diária)
    */
-  static async processHabitCompletion(userId: string, habit: any, completion: any): Promise<void> {
+  static async processHabitCompletion(userId: string, habit: any): Promise<void> {
     try {
       // Por enquanto, hábitos não geram conquistas diretas
       // Mas eles podem contribuir para a maestria diária
