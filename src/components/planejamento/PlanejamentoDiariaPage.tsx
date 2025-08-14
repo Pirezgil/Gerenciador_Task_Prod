@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTasks, useUpdateTask, useEnergyBudget, usePostponeTask } from '@/hooks/api/useTasks';
+import { useTasks, useTodayTasks, useUpdateTask, useEnergyBudget, usePostponeTask } from '@/hooks/api/useTasks';
 import { useProjects } from '@/hooks/api/useProjects';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -54,6 +54,7 @@ interface TaskWithProject {
 export function PlanejamentoDiariaPage() {
   const router = useRouter();
   const { data: allTasks = [], isLoading: tasksLoading } = useTasks();
+  const { data: todayTasksData = [], todayTasks = [], missedTasks = [], completedTasks: completedTasksToday = [], isLoading: todayTasksLoading } = useTodayTasks();
   const { data: projects = [], isLoading: projectsLoading } = useProjects();
   const updateTaskMutation = useUpdateTask();
   const postponeTaskMutation = usePostponeTask();
@@ -114,9 +115,7 @@ export function PlanejamentoDiariaPage() {
   const { data: energyBudget = { used: 0, remaining: 15, total: 15, completedTasks: 0 } } = useEnergyBudget();
 
   const { plannedTasks, completedTasks, availableTasks } = useMemo(() => {
-    if (tasksLoading || projectsLoading) return { plannedTasks: [], completedTasks: [], availableTasks: [] };
-    
-    
+    if (tasksLoading || projectsLoading || todayTasksLoading) return { plannedTasks: [], completedTasks: [], availableTasks: [] };
     
     const planned: TaskWithProject[] = [];
     const available: TaskWithProject[] = [];
@@ -153,7 +152,7 @@ export function PlanejamentoDiariaPage() {
           status: task.status as 'pending' | 'completed' | 'postponed'
         };
 
-        // Separar entre planejadas e disponíveis
+        // Separar entre planejadas e disponíveis (tarefas atrasadas agora vêm do hook useTodayTasks)
         if (task.plannedForToday === true) {
           // Tarefas completed ficam na seção planejadas mas serão visualmente diferenciadas
           planned.push(taskWithProject);
@@ -208,14 +207,29 @@ export function PlanejamentoDiariaPage() {
 
     // Separar tarefas planejadas entre pending e completed
     const plannedPending = planned.filter(task => task.status === 'pending' || task.status === 'postponed');
-    const plannedCompleted = planned.filter(task => task.status === 'completed');
+    
+    // Filtrar tarefas completadas: apenas as completadas HOJE
+    const plannedCompleted = planned.filter(task => {
+      if (task.status === 'completed') {
+        // Buscar a tarefa completa com completedAt do backend
+        const fullTask = allTasks.find(t => t.id === task.id);
+        if (fullTask && fullTask.completedAt) {
+          const completedDate = new Date(fullTask.completedAt);
+          const todayDate = new Date();
+          
+          // Comparar apenas a data (ignorar horário)
+          return completedDate.toDateString() === todayDate.toDateString();
+        }
+      }
+      return false;
+    });
 
     return {
       plannedTasks: sortByDeadline(plannedPending), // Apenas pending/postponed para interação
       completedTasks: sortByDeadline(plannedCompleted), // Completed para visualização
       availableTasks: sortByDeadline(available)
     };
-  }, [allTasks, projects, tasksLoading, projectsLoading]);
+  }, [allTasks, projects, tasksLoading, projectsLoading, todayTasksLoading]);
 
 
   // Usar dados de energia direto do backend (sem cálculos no frontend)
@@ -263,6 +277,29 @@ export function PlanejamentoDiariaPage() {
       taskId: task.id,
       taskDescription: task.description,
       postponementCount: allTasks.find(t => t.id === taskId)?.postponementCount ?? 0
+    });
+  };
+
+  const removeFromMissed = async (taskId: string) => {
+    const task = missedTasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    // Verificar limite máximo de adiamentos
+    if ((task.postponementCount || 0) >= 3) {
+      showAlert(
+        'Limite Atingido',
+        'Esta tarefa atingiu o limite máximo de adiamentos e deve ser realizada hoje.',
+        'warning'
+      );
+      return;
+    }
+
+    // Abrir modal de confirmação para adiamento com justificativa
+    setPostponeModal({
+      isOpen: true,
+      taskId: task.id,
+      taskDescription: task.description,
+      postponementCount: task.postponementCount || 0
     });
   };
 
@@ -332,6 +369,14 @@ export function PlanejamentoDiariaPage() {
     }
   };
 
+  const getOverdueDays = (dueDate: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const due = new Date(dueDate);
+    due.setHours(0, 0, 0, 0);
+    return Math.floor((today.getTime() - due.getTime()) / (1000 * 60 * 60 * 24));
+  };
+
   const handleTaskClick = (taskId: string) => {
     router.push(`/task/${taskId}`);
   };
@@ -343,7 +388,7 @@ export function PlanejamentoDiariaPage() {
   const isOverBudget = energyBudget.used > energyBudget.total;
 
   // Mostrar loading se ainda carregando
-  if (tasksLoading || projectsLoading) {
+  if (tasksLoading || projectsLoading || todayTasksLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6 flex items-center justify-center">
         <div className="text-center">
@@ -707,6 +752,295 @@ export function PlanejamentoDiariaPage() {
                       </div>
                     </div>
                   </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Seção de Tarefas Não Executadas - usando missedTasks do hook */}
+      {missedTasks.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            ⚠️ Tarefas não executadas ({missedTasks.length})
+          </h2>
+          
+          <div className="bg-red-50 rounded-xl shadow-sm border border-red-200 p-6">
+            <div className="space-y-3">
+              {missedTasks.map((task) => {
+                const isExpanded = expandedTasks.has(task.id);
+                const energyConfig = getEnergyConfig(task.energyPoints);
+                const canPlan = (energyBudget.used + task.energyPoints) <= energyBudget.total;
+                const overdueDays = task.deadline ? getOverdueDays(task.deadline) : (task.missedDaysCount || 0);
+
+                return (
+                  <motion.div
+                    key={task.id}
+                    className="bg-gradient-to-r from-red-100 to-pink-100 rounded-xl shadow-md border border-red-300 transition-all hover:shadow-lg hover:scale-[1.02]"
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <div className="p-3">
+                      <div className="flex flex-col gap-2">
+                        {/* Badge de Não Execução */}
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              {task.missedDaysCount > 0 && (
+                                <span className={`text-xs px-2 py-1 rounded font-medium ${
+                                  task.missedDaysCount === 1 ? 'text-orange-700 bg-orange-100' :
+                                  task.missedDaysCount <= 3 ? 'text-red-700 bg-red-100' :
+                                  'text-red-800 bg-red-200'
+                                }`}>
+                                  Não executada a {task.missedDaysCount} dia{task.missedDaysCount > 1 ? 's' : ''}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* First Line - Task Description */}
+                        <div className="flex items-center justify-between w-full">
+                          <Link 
+                            href={`/task/${task.id}`}
+                            className="flex-1"
+                          >
+                            <h3 className="text-lg font-semibold text-red-800 hover:text-red-900 transition-colors cursor-pointer">
+                              {task.description}
+                            </h3>
+                          </Link>
+                        </div>
+                        
+                        {/* Second Line - Badges and Actions */}
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex items-center gap-3">
+                            {/* Energia */}
+                            <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
+                              task.energyPoints === 1 ? 'bg-red-200 text-red-800 border border-red-300' :
+                              task.energyPoints === 3 ? 'bg-red-200 text-red-800 border border-red-300' :
+                              'bg-red-200 text-red-800 border border-red-300'
+                            }`}>
+                              {energyConfig.icon}
+                              <span>{energyConfig.label}</span>
+                            </div>
+
+                            {/* Data de vencimento e não execução */}
+                            {task.dueDate && (
+                              <div className="flex items-center gap-1.5 px-3 py-1 bg-red-200 text-red-800 border-red-300 border rounded-full text-xs font-medium">
+                                <Clock className="w-3 h-3" />
+                                <span>{new Date(task.dueDate + 'T00:00:00').toLocaleDateString('pt-BR')} (há {overdueDays} dia{overdueDays > 1 ? 's' : ''})</span>
+                              </div>
+                            )}
+
+                            {/* Projeto badge */}
+                            {task.project && (
+                              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-red-200 text-red-800 border border-red-300">
+                                <span>{task.project.icon}</span>
+                                <span>{task.project.name}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex items-center gap-3">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeFromMissed(task.id);
+                              }}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                            >
+                              Remover
+                            </Button>
+                            
+                            <Button
+                              onClick={() => toggleTaskExpansion(task.id)}
+                              variant="ghost"
+                              size="icon"
+                              className="border bg-background border-transparent w-9 h-9 p-2 text-red-600 hover:text-red-700 hover:bg-red-100 rounded-lg transition-colors"
+                            >
+                              <ChevronDown className={`w-4 h-4 transition-transform ${
+                                isExpanded ? 'rotate-180' : ''
+                              }`} />
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Expanded content - Informações completas como nas outras seções */}
+                        <AnimatePresence>
+                          {isExpanded && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              className="mt-4 pt-4 border-t border-red-300"
+                            >
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Comentários */}
+                                <div className="bg-gradient-to-br from-red-50 to-pink-100 rounded-xl p-5 border border-red-200 shadow-sm">
+                                  <div className="flex items-center gap-2 mb-4">
+                                    <div className="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center">
+                                      <span className="text-white text-sm font-semibold">💬</span>
+                                    </div>
+                                    <h4 className="font-semibold text-red-800">Comentários ({task.comments?.length || 0})</h4>
+                                  </div>
+                                  {task.comments?.length ? (
+                                    <div className="space-y-3 max-h-40 overflow-y-auto">
+                                      {task.comments.map((comment) => (
+                                        <div key={comment.id} className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-red-200/50 shadow-sm">
+                                          <div className="flex items-center gap-2 mb-2">
+                                            <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
+                                              <span className="text-xs font-semibold text-red-700">{comment.author.charAt(0).toUpperCase()}</span>
+                                            </div>
+                                            <span className="font-medium text-sm text-red-700">{comment.author}</span>
+                                            <span className="text-xs text-red-500 ml-auto">{new Date(comment.createdAt).toLocaleDateString()} {new Date(comment.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                          </div>
+                                          <p className="text-sm text-red-600 leading-relaxed">{comment.content}</p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <div className="text-center py-6">
+                                      <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                        <span className="text-red-500 text-xl">💬</span>
+                                      </div>
+                                      <p className="text-sm text-red-500">Nenhum comentário ainda</p>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {/* Histórico */}
+                                <div className="bg-gradient-to-br from-red-50 to-pink-100 rounded-xl p-5 border border-red-200 shadow-sm">
+                                  <div className="flex items-center gap-2 mb-4">
+                                    <div className="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center">
+                                      <span className="text-white text-sm font-semibold">📋</span>
+                                    </div>
+                                    <h4 className="font-semibold text-red-800">Histórico ({task.history?.length || 0})</h4>
+                                  </div>
+                                  {task.history?.length ? (
+                                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                                      {task.history.map((entry) => (
+                                        <div key={entry.id} className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-red-200/50 shadow-sm">
+                                          <div className="flex items-center justify-between mb-1">
+                                            <div className="flex items-center gap-2">
+                                              <div className={`w-2 h-2 rounded-full ${
+                                                entry.action === 'created' ? 'bg-green-400' :
+                                                entry.action === 'completed' ? 'bg-blue-400' :
+                                                entry.action === 'postponed' ? 'bg-yellow-400' :
+                                                entry.action === 'edited' ? 'bg-purple-400' : 'bg-gray-400'
+                                              }`}></div>
+                                              <span className="font-medium text-sm text-red-900">
+                                                {formatHistoryMessage(entry, projects)}
+                                              </span>
+                                            </div>
+                                            <span className="text-xs text-red-500">{new Date(entry.timestamp).toLocaleDateString('pt-BR')} {new Date(entry.timestamp).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</span>
+                                          </div>
+                                          {entry.details?.reason && (
+                                            <p className="text-xs text-red-600 ml-4 mt-1 italic">&quot;{entry.details.reason}&quot;</p>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <div className="text-center py-6">
+                                      <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                        <span className="text-red-500 text-xl">📋</span>
+                                      </div>
+                                      <p className="text-sm text-red-500">Nenhuma edição registrada</p>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {/* Links Externos */}
+                                <div className="bg-gradient-to-br from-red-50 to-pink-100 rounded-xl p-5 border border-red-200 shadow-sm">
+                                  <div className="flex items-center gap-2 mb-4">
+                                    <div className="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center">
+                                      <span className="text-white text-sm font-semibold">🔗</span>
+                                    </div>
+                                    <h4 className="font-semibold text-red-800">Links Úteis ({task.externalLinks?.length || 0})</h4>
+                                  </div>
+                                  {task.externalLinks?.length ? (
+                                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                                      {task.externalLinks.map((link, index) => (
+                                        <div key={index} className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-red-200/50 shadow-sm hover:shadow-md transition-shadow">
+                                          <a 
+                                            href={link} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-2 text-red-600 hover:text-red-800 text-sm transition-colors"
+                                          >
+                                            <ExternalLink className="w-4 h-4 flex-shrink-0" />
+                                            <span className="truncate">{link.length > 40 ? link.substring(0, 40) + '...' : link}</span>
+                                          </a>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <div className="text-center py-6">
+                                      <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                        <span className="text-red-500 text-xl">🔗</span>
+                                      </div>
+                                      <p className="text-sm text-red-500">Nenhum link cadastrado</p>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {/* Anexos */}
+                                <div className="bg-gradient-to-br from-red-50 to-pink-100 rounded-xl p-5 border border-red-200 shadow-sm">
+                                  <div className="flex items-center gap-2 mb-4">
+                                    <div className="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center">
+                                      <span className="text-white text-sm font-semibold">📁</span>
+                                    </div>
+                                    <h4 className="font-semibold text-red-800">Anexos ({task.attachments?.length || 0})</h4>
+                                  </div>
+                                  {task.attachments?.length ? (
+                                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                                      {task.attachments.map((attachment) => (
+                                        <div key={attachment.id} className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-red-200/50 shadow-sm hover:shadow-md transition-shadow">
+                                          <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                                              <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                <span className="text-red-600 text-xs font-semibold">
+                                                  {attachment.type.includes('image') ? '🖼️' :
+                                                   attachment.type.includes('pdf') ? '📄' :
+                                                   attachment.type.includes('doc') ? '📝' : '📁'}
+                                                </span>
+                                              </div>
+                                              <div className="min-w-0 flex-1">
+                                                <p className="font-medium text-sm text-red-700 truncate">{attachment.name}</p>
+                                                <p className="text-xs text-red-500">{(attachment.size / 1024).toFixed(1)} KB</p>
+                                              </div>
+                                            </div>
+                                            <a 
+                                              href={attachment.url} 
+                                              target="_blank" 
+                                              rel="noopener noreferrer"
+                                              className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-xs font-medium transition-colors flex-shrink-0"
+                                            >
+                                              Baixar
+                                            </a>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <div className="text-center py-6">
+                                      <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                        <span className="text-red-500 text-xl">📁</span>
+                                      </div>
+                                      <p className="text-sm text-red-500">Nenhum anexo disponível</p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </div>
+                  </motion.div>
                 );
               })}
             </div>

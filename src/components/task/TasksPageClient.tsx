@@ -32,6 +32,7 @@ import { useTaskNotifications, useAsyncNotification, useNotification } from '@/h
 import { AchievementNotificationSystem } from '@/components/rewards/AchievementNotificationSystem';
 import { useRecentAchievements } from '@/hooks/api/useAchievements';
 import { useReminders } from '@/hooks/api/useReminders';
+import ReminderSectionIntegrated from '@/components/reminders/ReminderSectionIntegrated';
 
 type FilterType = 'all' | 'today' | 'week' | 'completed' | 'pending';
 type SortType = 'date' | 'energy' | 'project' | 'status';
@@ -56,6 +57,7 @@ export function TasksPageClient() {
   const [currentView, setCurrentView] = useState<ViewMode>('today');
   const [sortBy, setSortBy] = useState<SortType>('date');
   const [searchTerm, setSearchTerm] = useState('');
+  const [reminderModalTask, setReminderModalTask] = useState<string | null>(null);
   const taskNotifications = useTaskNotifications();
   const { withLoading } = useAsyncNotification();
   const { error, warning } = useNotification();
@@ -580,6 +582,20 @@ export function TasksPageClient() {
                                 </Button>
                               )}
 
+                              {/* Botão de Lembrete */}
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setReminderModalTask(task.id);
+                                }}
+                                className="border bg-background border-transparent w-9 h-9 p-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors"
+                                title="Configurar lembretes"
+                              >
+                                <Bell className="w-4 h-4" />
+                              </Button>
+
                               {/* Botão de exclusão */}
                               <Button
                                 variant="ghost"
@@ -788,6 +804,34 @@ export function TasksPageClient() {
           </div>
         </div>
       </motion.div>
+
+      {/* Modal de Lembrete */}
+      {reminderModalTask && (() => {
+        const task = filteredAndSortedTasks.find(t => t.id === reminderModalTask);
+        return task ? (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Lembretes - {task.description}
+                </h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setReminderModalTask(null)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </Button>
+              </div>
+              <ReminderSectionIntegrated
+                entity={task}
+                entityType="task"
+              />
+            </div>
+          </div>
+        ) : null;
+      })()}
 
       {/* Modal de nova tarefa */}
       {showNewTaskModal && <NewTaskModal />}

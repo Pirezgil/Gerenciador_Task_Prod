@@ -1,4 +1,5 @@
 import { prisma } from '../app';
+import { addMissedDaysCountToTasks } from '../utils/taskUtils';
 
 export class DailyTaskTracker {
   /**
@@ -45,14 +46,12 @@ export class DailyTaskTracker {
     const today = new Date();
     const daysDiff = Math.floor((today.getTime() - plannedDate.getTime()) / (1000 * 60 * 60 * 24));
 
-    // Incrementar contador de dias perdidos
-    const newMissedDaysCount = (task.missedDaysCount || 0) + daysDiff;
+    // missedDaysCount agora é calculado dinamicamente - não precisamos mais atualizar
 
     // Atualizar tarefa
     await prisma.task.update({
       where: { id: task.id },
       data: {
-        missedDaysCount: newMissedDaysCount,
         // Manter plannedForToday = true para aparecer na página bombeiro
         plannedForToday: true,
       }
@@ -67,13 +66,12 @@ export class DailyTaskTracker {
         timestamp: new Date(),
         details: {
           missedDate: formattedDate,
-          consecutiveDays: newMissedDaysCount,
           message: `Tarefa deixou de ser realizada no dia ${formattedDate}`
         }
       }
     });
 
-    console.log(`📝 Tarefa ${task.description.substring(0, 30)}... marcada como perdida (${newMissedDaysCount} dias)`);
+    console.log(`📝 Tarefa ${task.description.substring(0, 30)}... será calculada dinamicamente`);
   }
 
   /**
@@ -270,13 +268,15 @@ export class DailyTaskTracker {
     });
 
 
-    // Tarefas atrasadas (com missedDaysCount > 0)
+    // Tarefas atrasadas (plannedDate anterior a hoje)
+    // Usar a variável today já definida acima
+    
     const missedTasks = await prisma.task.findMany({
       where: {
         userId,
         plannedForToday: true,
-        missedDaysCount: {
-          gt: 0
+        plannedDate: {
+          lt: today
         },
         status: {
           in: ['pending', 'PENDING', 'postponed', 'POSTPONED']
@@ -298,7 +298,7 @@ export class DailyTaskTracker {
         }
       },
       orderBy: [
-        { missedDaysCount: 'desc' }, // Mais atrasadas primeiro
+        { plannedDate: 'asc' }, // Mais antigas primeiro (mais atrasadas)
         { energyPoints: 'desc' }
       ]
     });
@@ -336,7 +336,7 @@ export class DailyTaskTracker {
 
     return {
       todayTasks: todayTasks.map(this.formatTaskResponse),
-      missedTasks: missedTasks.map(this.formatTaskResponse),
+      missedTasks: addMissedDaysCountToTasks(missedTasks).map(this.formatTaskResponse),
       completedTasks: completedTasks.map(this.formatTaskResponse)
     };
   }

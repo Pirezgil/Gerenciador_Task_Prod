@@ -60,6 +60,7 @@ export interface Task {
   rescheduleDate?: string;
   dueDate?: string;
   plannedForToday?: boolean;
+  missedDaysCount?: number; // Número de dias não executadas para tarefas não executadas
   comments: Comment[];
   attachments: Attachment[];
   history: HistoryEntry[];

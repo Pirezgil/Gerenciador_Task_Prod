@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { useCreateProject } from '@/hooks/api/useProjects';
 import { useModalsStore } from '@/stores/modalsStore';
 import { useNotification, useAsyncNotification } from '@/hooks/useNotification';
+import { useNoteTransformation } from '@/hooks/useNoteTransformation';
 
 interface InitialTask {
   id: string;
@@ -44,6 +45,9 @@ export function NewProjectModal() {
   // Hooks de notificação
   const { success, error } = useNotification();
   const { withLoading } = useAsyncNotification();
+  
+  // Hook para arquivamento automático de notas
+  const { archiveTransformedNote } = useNoteTransformation();
 
   // Effect para pré-popular com nota transformada
   useEffect(() => {
@@ -137,6 +141,11 @@ export function NewProjectModal() {
           description: initialTasks.length > 0 ? `Com ${initialTasks.length} tarefa${initialTasks.length !== 1 ? 's' : ''} inicial${initialTasks.length !== 1 ? 's' : ''}` : undefined
         }
       );
+
+      // Arquivar nota transformada se existir
+      if (transformedNote) {
+        await archiveTransformedNote(transformedNote);
+      }
 
       // Limpar formulário
       setFormData({

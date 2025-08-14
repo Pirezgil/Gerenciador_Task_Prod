@@ -5,7 +5,7 @@
 // ============================================================================
 
 import React, { useState, useEffect } from 'react';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Bell } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 // Stores e Hooks
@@ -33,6 +33,7 @@ import { WeeklyMedalsCounter } from './DailyMedalsCounter';
 import { AllHabitsCompleteCelebration } from '@/components/rewards/AllHabitsCompleteCelebration';
 import { useAllHabitsComplete } from '@/hooks/useAllHabitsComplete';
 import { CelebrationTester } from '@/components/debug/CelebrationTester';
+import ReminderSectionIntegrated from '@/components/reminders/ReminderSectionIntegrated';
 
 export function BombeiroPageClient() {
   const isHydrated = useHydration();
@@ -52,6 +53,7 @@ export function BombeiroPageClient() {
   const [postponeModal, setPostponeModal] = useState<{isOpen: boolean; taskId: string; taskDescription: string; postponementCount: number} | null>(null);
   const [celebratingHabit, setCelebratingHabit] = useState<string | null>(null);
   const [completionEffect, setCompletionEffect] = useState<{id: string; x: number; y: number} | null>(null);
+  const [reminderModalHabit, setReminderModalHabit] = useState<string | null>(null);
   
   // Hook para celebração de todos os hábitos
   const { 
@@ -62,8 +64,8 @@ export function BombeiroPageClient() {
   } = useAllHabitsComplete();
 
   // Separar tarefas por status
-  const pendingTasks = todayTasks.filter(task => task.status === 'pending' || task.status === 'PENDING');
-  const postponedTasks = todayTasks.filter(task => task.status === 'postponed' || task.status === 'POSTPONED');
+  const pendingTasks = todayTasks.filter(task => task.status === 'pending');
+  const postponedTasks = todayTasks.filter(task => task.status === 'postponed');
   
   // PERFORMANCE: Only log in development
   if (process.env.NODE_ENV === 'development') {
@@ -177,7 +179,7 @@ export function BombeiroPageClient() {
               <div className="mb-8">
                 <h2 className="text-base sm:text-lg font-semibold text-text-primary mb-3">🎯 Hábitos de Hoje</h2>
                 <div className="bg-gradient-to-r from-teal-50 to-cyan-50 rounded-xl p-4 border border-teal-200">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
                     {todayHabits.map(habit => {
                       const isCompleted = habit.completions.some(c => c.date === today);
                       const count = habit.completions.filter(c => c.date === today).reduce((sum, c) => sum + c.count, 0);
@@ -194,7 +196,7 @@ export function BombeiroPageClient() {
                       return (
                         <div
                           key={habit.id}
-                          className={`p-3 rounded-lg transition-all cursor-pointer hover:shadow-md relative overflow-hidden ${
+                          className={`p-5 rounded-lg transition-all cursor-pointer hover:shadow-md relative overflow-hidden min-w-0 ${
                             isCelebrating 
                               ? 'bg-gradient-to-r from-green-200 to-emerald-200 border-2 border-green-400 animate-pulse shadow-lg' 
                               : isCompleted 
@@ -216,7 +218,7 @@ export function BombeiroPageClient() {
                             </div>
                           )}
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2 flex-1 min-w-0">
+                            <div className="flex items-center space-x-3 flex-1 min-w-0">
                               <div 
                                 className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold"
                                 style={{ backgroundColor: habit.color }}
@@ -236,7 +238,7 @@ export function BombeiroPageClient() {
                                 )}
                               </div>
                               {habit.streak > 0 && (
-                                <div className="relative flex items-center justify-center w-8 h-8 ml-2">
+                                <div className="relative flex items-center justify-center w-8 h-8 ml-4">
                                   <div className={`text-orange-500 text-3xl animate-pulse ${habit.streak >= 7 ? 'animate-bounce' : ''}`}>
                                     🔥
                                   </div>
@@ -251,7 +253,23 @@ export function BombeiroPageClient() {
                               )}
                             </div>
                             
-                            <Button
+                            <div className="flex items-center gap-3">
+                              {/* Botão de Lembrete */}
+                              <Button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setReminderModalHabit(habit.id);
+                                }}
+                                variant="ghost"
+                                size="icon"
+                                className="w-8 h-8 rounded-lg flex items-center justify-center transition-all text-purple-600 hover:text-purple-700 hover:bg-purple-50 border border-transparent hover:border-purple-200"
+                                title="Configurar lembretes"
+                              >
+                                <Bell className="w-4 h-4" />
+                              </Button>
+
+                              {/* Botão de Conclusão */}
+                              <Button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 e.preventDefault();
@@ -318,6 +336,7 @@ export function BombeiroPageClient() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                               </svg>
                             </Button>
+                            </div>
                           </div>
                         </div>
                       );
@@ -348,24 +367,23 @@ export function BombeiroPageClient() {
 
             {/* Listas de Tarefas do Dia */}
             <div className="space-y-6 lg:space-y-8">
-              {/* Tarefas Não Realizadas (Atrasadas) */}
+              {/* Tarefas Não Executadas */}
               {missedTasks.length > 0 && (
                 <div>
-                  <h2 className="text-base sm:text-lg font-semibold text-red-600 mb-3">🚨 Tarefas em Atraso</h2>
+                  <h2 className="text-base sm:text-lg font-semibold text-red-600 mb-3">⚠️ Tarefas não executadas</h2>
                   <div className="space-y-3 sm:space-y-4">
                     {missedTasks.map(task => (
                       <div key={task.id} className="bg-red-50 border-l-4 border-red-400 rounded-lg p-4">
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="text-red-600 font-medium">⚠️ Tarefa em atraso</span>
                               {task.missedDaysCount > 0 && (
                                 <span className={`text-xs px-2 py-1 rounded font-medium ${
                                   task.missedDaysCount === 1 ? 'text-orange-700 bg-orange-100' :
                                   task.missedDaysCount <= 3 ? 'text-red-700 bg-red-100' :
                                   'text-red-800 bg-red-200'
                                 }`}>
-                                  🚨 {task.missedDaysCount} dia{task.missedDaysCount > 1 ? 's' : ''} em atraso
+                                  Não executada a {task.missedDaysCount} dia{task.missedDaysCount > 1 ? 's' : ''}
                                 </span>
                               )}
                             </div>
@@ -374,7 +392,7 @@ export function BombeiroPageClient() {
                         <TaskItem 
                           task={task} 
                           onComplete={(taskId) => {
-                            console.log('🎯 CLIQUE NO BOTÃO - Iniciando finalização da tarefa atrasada:', taskId);
+                            console.log('🎯 CLIQUE NO BOTÃO - Iniciando finalização da tarefa não executada:', taskId);
                             // Marcar momento exato do clique para detectar novas conquistas
                             const clickTimestamp = Date.now();
                             localStorage.setItem('task-completion-timestamp', clickTimestamp.toString());
@@ -506,6 +524,34 @@ export function BombeiroPageClient() {
       />
       
       <AlertComponent />
+      
+      {/* Modal de Lembrete para Hábitos */}
+      {reminderModalHabit && (() => {
+        const habit = todayHabits.find(h => h.id === reminderModalHabit);
+        return habit ? (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Lembretes - {habit.name}
+                </h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setReminderModalHabit(null)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </Button>
+              </div>
+              <ReminderSectionIntegrated
+                entity={habit}
+                entityType="habit"
+              />
+            </div>
+          </div>
+        ) : null;
+      })()}
       
       {/* Celebração de todos os hábitos completos */}
       <AllHabitsCompleteCelebration

@@ -107,7 +107,6 @@ model Task {
   plannedForToday    Boolean             @default(false) @map("planned_for_today")
   deletedAt          DateTime?           @map("deleted_at")
   isDeleted          Boolean             @default(false) @map("is_deleted")
-  missedDaysCount    Int                 @default(0) @map("missed_days_count")
   plannedDate        DateTime?           @map("planned_date") @db.Date
   dopamineRefs       DopamineAnimation[]
   appointment        TaskAppointment?

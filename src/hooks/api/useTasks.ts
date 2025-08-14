@@ -348,7 +348,7 @@ export function useTodayTasks() {
     enabled: isAuthenticated,
   });
 
-  // Combinar tarefas de hoje com tarefas atrasadas
+  // Combinar tarefas de hoje com tarefas não executadas
   const todayTasks = data ? [...data.todayTasks, ...data.missedTasks] : [];
 
   console.log('🔍 useTodayTasks (Bombeiro) Debug:', {

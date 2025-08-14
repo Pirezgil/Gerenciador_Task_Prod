@@ -148,7 +148,7 @@ export function NotificationCenter({ isOpen, onClose }: NotificationCenterProps)
                 count={overdueCount}
                 variant="danger"
               >
-                Atrasados
+                Não executados
               </FilterButton>
               
               <FilterButton
@@ -181,7 +181,7 @@ export function NotificationCenter({ isOpen, onClose }: NotificationCenterProps)
                 <div className="font-semibold text-red-700 dark:text-red-400">
                   {overdueCount}
                 </div>
-                <div className="text-red-600 dark:text-red-500">Atrasados</div>
+                <div className="text-red-600 dark:text-red-500">Não executados</div>
               </div>
             </div>
           </div>
@@ -201,7 +201,7 @@ export function NotificationCenter({ isOpen, onClose }: NotificationCenterProps)
                 <Bell className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                 <p className="text-text-secondary">
                   {filter === 'all' ? 'Nenhum lembrete encontrado' : 
-                   filter === 'overdue' ? 'Nenhum lembrete atrasado' :
+                   filter === 'overdue' ? 'Nenhum lembrete não executado' :
                    filter === 'upcoming' ? 'Nenhum lembrete próximo' :
                    'Nenhum lembrete ativo'}
                 </p>
@@ -261,7 +261,7 @@ export function NotificationCenter({ isOpen, onClose }: NotificationCenterProps)
                               <Clock className="w-3 h-3" />
                               {isOverdue ? (
                                 <span className="text-red-600">
-                                  Atrasado {formatTimeAgo(reminder.nextScheduledAt)}
+                                  Não executado {formatTimeAgo(reminder.nextScheduledAt)}
                                 </span>
                               ) : (
                                 <span>

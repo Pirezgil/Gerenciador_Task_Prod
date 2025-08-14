@@ -8,6 +8,7 @@ import {
   TaskCommentResponse,
   EnergyBudgetResponse
 } from '../types/task';
+import { calculateMissedDays } from '../utils/taskUtils';
 import AchievementService from './achievementService';
 import RecurringTaskService from './recurringTaskService';
 
@@ -110,7 +111,7 @@ export const getUserTasks = async (
     postponementReason: task.postponementReason || undefined,
     plannedForToday: task.plannedForToday,
     plannedDate: task.plannedDate?.toISOString().split('T')[0],
-    missedDaysCount: task.missedDaysCount || 0,
+    missedDaysCount: calculateMissedDays(task.plannedDate),
     externalLinks: task.externalLinks,
     createdAt: task.createdAt.toISOString(),
     completedAt: task.completedAt?.toISOString(),
@@ -204,7 +205,7 @@ export const getTaskById = async (taskId: string, userId: string): Promise<TaskR
     postponementReason: task.postponementReason || undefined,
     plannedForToday: task.plannedForToday,
     plannedDate: task.plannedDate?.toISOString().split('T')[0],
-    missedDaysCount: task.missedDaysCount || 0,
+    missedDaysCount: calculateMissedDays(task.plannedDate),
     externalLinks: task.externalLinks,
     projectId: task.projectId || undefined, // ✅ CORREÇÃO: Adicionar projectId à resposta
     createdAt: task.createdAt.toISOString(),
@@ -449,9 +450,7 @@ export const updateTask = async (taskId: string, userId: string, data: UpdateTas
   if (data.plannedDate !== undefined) {
     updateData.plannedDate = data.plannedDate ? new Date(data.plannedDate) : null;
   }
-  if (data.missedDaysCount !== undefined) {
-    updateData.missedDaysCount = data.missedDaysCount;
-  }
+  // missedDaysCount agora é calculado dinamicamente, não precisa ser atualizado
 
   if (data.projectId !== undefined) {
     if (data.projectId) {
@@ -1039,13 +1038,31 @@ export const getUserEnergyBudget = async (userId: string): Promise<EnergyBudgetR
       id: true,
       energyPoints: true,
       description: true,
-      status: true
+      status: true,
+      completedAt: true
     }
   });
 
-  const usedEnergy = plannedTasks.reduce((sum, task) => sum + (task.energyPoints || 0), 0);
+  // Data de hoje (início do dia)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Filtrar tarefas: excluir as que foram completadas ANTES de hoje
+  const tasksForEnergyCalculation = plannedTasks.filter(task => {
+    if (task.status === 'completed' && task.completedAt) {
+      const completedDate = new Date(task.completedAt);
+      completedDate.setHours(0, 0, 0, 0);
+      
+      // Excluir se foi completada antes de hoje
+      return completedDate.getTime() >= today.getTime();
+    }
+    // Incluir todas as tarefas não completadas (pending, postponed, etc.)
+    return true;
+  });
+
+  const usedEnergy = tasksForEnergyCalculation.reduce((sum, task) => sum + (task.energyPoints || 0), 0);
   const remaining = Math.max(0, dailyBudget - usedEnergy);
-  const completedCount = plannedTasks.filter(task => task.status === 'completed').length;
+  const completedCount = tasksForEnergyCalculation.filter(task => task.status === 'completed').length;
 
   return {
     used: usedEnergy,

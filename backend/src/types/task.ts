@@ -32,7 +32,6 @@ export interface UpdateTaskRequest {
   isAppointment?: boolean;
   plannedForToday?: boolean;
   plannedDate?: string;
-  missedDaysCount?: number;
   externalLinks?: string[];
   attachments?: TaskAttachmentRequest[];
   recurrence?: CreateTaskRecurrenceRequest | null;
@@ -54,7 +53,7 @@ export interface TaskResponse {
   postponementReason?: string;
   plannedForToday: boolean;
   plannedDate?: string;
-  missedDaysCount: number;
+  missedDaysCount?: number; // Campo calculado dinamicamente
   externalLinks: string[];
   projectId?: string; // ✅ Adicionar projectId ao tipo
   createdAt: string;

@@ -22,7 +22,8 @@ import {
   Trash2,
   Clock,
   Circle,
-  Target
+  Target,
+  Bell
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Task } from '@/types';
@@ -86,6 +87,7 @@ const getEnergyLabel = (points: number) => {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { formatHistoryMessage } from '@/utils/historyFormatter';
+import ReminderSectionIntegrated from '@/components/reminders/ReminderSectionIntegrated';
 
 export function TaskItem({ 
   task, 
@@ -98,6 +100,7 @@ export function TaskItem({
   isCompleting = false
 }: TaskItemProps) {
   const [localExpanded, setLocalExpanded] = useState(false);
+  const [showReminderModal, setShowReminderModal] = useState(false);
   const taskRef = useRef<HTMLDivElement>(null);
   const isExpanded = controlledExpanded !== undefined ? controlledExpanded : localExpanded;
   const { projects } = useTasksStore();
@@ -287,6 +290,19 @@ export function TaskItem({
                 </Button>
               )}
 
+              {/* Botão de Lembrete */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowReminderModal(true);
+                }}
+                className="text-purple-600 border-purple-300 hover:bg-purple-50"
+                title="Configurar lembretes"
+              >
+                <Bell className="w-4 h-4" />
+              </Button>
               
               <Button
                 onClick={handleToggleExpansion}
@@ -493,6 +509,31 @@ export function TaskItem({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Modal de Lembrete */}
+      {showReminderModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Lembretes - {task.description}
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowReminderModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </Button>
+            </div>
+            <ReminderSectionIntegrated
+              entity={task}
+              entityType="task"
+            />
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }

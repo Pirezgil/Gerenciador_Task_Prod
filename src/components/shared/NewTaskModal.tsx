@@ -17,6 +17,7 @@ import { useModalsStore } from '@/stores/modalsStore';
 import { useAuth } from '@/providers/AuthProvider';
 import { useRemindersStore, reminderUtils } from '@/stores/remindersStore';
 import { useTaskNotifications, useAsyncNotification } from '@/hooks/useNotification';
+import { useNoteTransformation } from '@/hooks/useNoteTransformation';
 import type { CreateAttachment } from '@/types/task';
 import type { ReminderFormData, CreateReminderData } from '@/types/reminder';
 
@@ -37,6 +38,9 @@ export function NewTaskModal() {
   // Hooks de notificação
   const taskNotifications = useTaskNotifications();
   const { withLoading } = useAsyncNotification();
+  
+  // Hook para arquivamento automático de notas
+  const { archiveTransformedNote } = useNoteTransformation();
 
   // Estado local do formulário
   const [description, setDescription] = useState('');
@@ -79,9 +83,23 @@ export function NewTaskModal() {
     const newErrors: {[key: string]: string} = {};
     if (!description.trim()) newErrors.description = 'Descrição é obrigatória';
     if (description.trim().length < 3) newErrors.description = 'Descrição deve ter no mínimo 3 caracteres';
+    
+    // Validação obrigatória de data de vencimento para todas as tarefas
+    if (!dueDate) {
+      newErrors.dueDate = 'Data de vencimento é obrigatória';
+    } else {
+      // Validação de data mínima - não pode ser no passado
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Zerar horário para comparar apenas a data
+      const selectedDate = new Date(dueDate + 'T00:00:00.000');
+      
+      if (selectedDate < today) {
+        newErrors.dueDate = 'Data de vencimento não pode ser no passado';
+      }
+    }
+    
     // Validação de energia removida por enquanto - implementar lógica no backend
     if (isAppointment && !appointmentTime) newErrors.appointmentTime = 'Horário é obrigatório para compromissos';
-    if (isAppointment && !dueDate) newErrors.dueDate = 'Data é obrigatória para compromissos';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -174,6 +192,11 @@ export function NewTaskModal() {
           description: isAppointment ? 'Compromisso agendado' : undefined
         }
       );
+      
+      // Arquivar nota transformada se existir
+      if (transformedNote) {
+        await archiveTransformedNote(transformedNote);
+      }
       
       // Mostrar animação de sucesso
       setShowSuccessAnimation(true);
@@ -312,13 +335,14 @@ export function NewTaskModal() {
                   {!isRecurring && (
                     <div>
                       <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 mb-2">
-                        Data de Vencimento{isAppointment && ' *'}
+                        Data de Vencimento *
                       </label>
                       <input
                         type="date"
                         id="dueDate"
                         value={dueDate}
                         onChange={(e) => setDueDate(e.target.value)}
+                        min={new Date().toISOString().split('T')[0]} // Data mínima = hoje
                         className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                       {errors.dueDate && <p className="text-red-500 text-xs mt-1">{errors.dueDate}</p>}

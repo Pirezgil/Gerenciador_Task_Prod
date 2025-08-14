@@ -147,7 +147,7 @@ export default function LembretesPage() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-2xl font-bold text-red-600">{stats.overdue}</p>
-            <p className="text-sm text-red-500">Em Atraso</p>
+            <p className="text-sm text-red-500">Não executado</p>
           </div>
           <AlertTriangle className="w-8 h-8 text-red-400" />
         </div>

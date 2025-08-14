@@ -118,7 +118,7 @@ export default function ReminderSectionIntegrated({
           
           {/* Botões de ação */}
           <div className="flex items-center space-x-2">
-            {canHaveSingleReminder && !analysis.hasMainReminder && (
+            {canHaveSingleReminder && analysis.total < 5 && (
               <Button
                 onClick={() => setActiveModal('single')}
                 size="sm"
@@ -130,7 +130,7 @@ export default function ReminderSectionIntegrated({
               </Button>
             )}
             
-            {canHaveRecurringReminders && !analysis.hasMainReminder && (
+            {canHaveRecurringReminders && analysis.total < 5 && (
               <Button
                 onClick={() => setActiveModal('recurring')}
                 size="sm"
@@ -140,6 +140,12 @@ export default function ReminderSectionIntegrated({
                 <Repeat className="w-4 h-4 mr-2" />
                 lembrete recorrente
               </Button>
+            )}
+            
+            {analysis.total >= 5 && (
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                Limite máximo atingido (5/5)
+              </span>
             )}
           </div>
         </div>
