@@ -1,6 +1,12 @@
 // ============================================================================
-// TASK ITEM - Versão simplificada e estável
-// CORREÇÃO: Removida complexidade excessiva, extraída lógica para hooks
+// TASK ITEM - REDESENHADO COM MELHORES PRÁTICAS DE UX/UI
+// ============================================================================
+// Implementa:
+// - Design System consistente com cores e tipografia padronizadas
+// - Hierarquia visual clara e acessível
+// - Layout responsivo e otimizado para diferentes dispositivos
+// - Micro-interações e feedback visual aprimorado
+// - Redução de ruído visual e melhoria na legibilidade
 // ============================================================================
 
 'use client';
@@ -144,24 +150,24 @@ export function TaskItem({
   return (
     <motion.div
       ref={taskRef}
-      className={`rounded-xl shadow-md transition-all hover:scale-[1.02] ${getVariantClasses()}`}
-      whileHover={{ scale: 1.02 }}
+      className={`rounded-xl shadow-md transition-all hover:scale-[1.01] sm:hover:scale-[1.02] ${getVariantClasses()}`}
+      whileHover={{ scale: [1.01, 1.02] }}
     >
-      <div className="p-3">
-        <div className="flex flex-col gap-2">
-          {/* First Line - Task Description */}
-          <div className="flex items-center justify-between w-full">
+      <div className="p-3 sm:p-4">
+        <div className="flex flex-col gap-3 sm:gap-2">
+          {/* First Line - Task Description Mobile-First */}
+          <div className="flex items-start sm:items-center justify-between w-full">
             <Link 
               href={`/task/${task.id}`}
-              className="flex-1"
+              className="flex-1 min-w-0 mr-2"
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-start sm:items-center gap-2 sm:gap-3">
                 {variant === 'completed' && (
-                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 sm:mt-0">
                     <CheckCircle2 className="w-4 h-4 text-white" />
                   </div>
                 )}
-                <h3 className={`text-lg font-semibold hover:text-blue-600 transition-colors cursor-pointer ${
+                <h3 className={`text-base sm:text-lg font-semibold hover:text-blue-600 transition-colors cursor-pointer leading-tight ${
                   task.status === 'completed' 
                     ? 'text-gray-500 line-through' 
                     : 'text-gray-900'
@@ -172,9 +178,9 @@ export function TaskItem({
             </Link>
           </div>
           
-          {/* Second Line - Badges and Actions */}
-          <div className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-3">
+          {/* Second Line - Badges and Actions Mobile-First */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full gap-3 sm:gap-2">
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
               {/* Tipo de Tarefa */}
               {(() => {
                 if (task.isAppointment) {
@@ -202,23 +208,24 @@ export function TaskItem({
                 return null;
               })()}
 
-              {/* Energia */}
-              <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
+              {/* Energia - Mobile Friendly Badge */}
+              <div className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 rounded-full text-xs font-medium ${
                 task.energyPoints === 1 ? 'bg-green-100 text-green-700 border border-green-200' :
                 task.energyPoints === 3 ? 'bg-blue-100 text-blue-700 border border-blue-200' :
                 'bg-purple-100 text-purple-700 border border-purple-200'
               }`}>
-                {task.energyPoints === 1 ? <Battery className="w-4 h-4 text-green-500" /> :
-                 task.energyPoints === 3 ? <Brain className="w-4 h-4 text-blue-500" /> :
-                 <Zap className="w-4 h-4 text-purple-500" />}
-                <span>{task.energyPoints === 1 ? 'Baixa' : task.energyPoints === 3 ? 'Normal' : 'Alta'}</span>
+                {task.energyPoints === 1 ? <Battery className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 flex-shrink-0" /> :
+                 task.energyPoints === 3 ? <Brain className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500 flex-shrink-0" /> :
+                 <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-purple-500 flex-shrink-0" />}
+                <span className="hidden sm:inline">{task.energyPoints === 1 ? 'Baixa' : task.energyPoints === 3 ? 'Normal' : 'Alta'}</span>
+                <span className="sm:hidden">{task.energyPoints}</span>
               </div>
 
-              {/* Data de vencimento */}
+              {/* Data de vencimento - Mobile Friendly */}
               {task.dueDate && (
-                <div className="flex items-center gap-1.5 px-3 py-1 bg-red-100 text-red-700 border-red-200 border rounded-full text-xs font-medium">
-                  <Clock className="w-3 h-3" />
-                  <span>{new Date(task.dueDate + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
+                <div className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 bg-red-100 text-red-700 border-red-200 border rounded-full text-xs font-medium">
+                  <Clock className="w-3 h-3 flex-shrink-0" />
+                  <span className="truncate">{new Date(task.dueDate + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
                 </div>
               )}
 
@@ -250,8 +257,8 @@ export function TaskItem({
               )}
             </div>
 
-            {/* Actions - mantendo os originais */}
-            <div className="flex items-center gap-3">
+            {/* Actions - Mobile-First Design */}
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
               {!isCompleted && variant !== 'completed' && (
                 <Button
                   variant="outline"
@@ -260,7 +267,7 @@ export function TaskItem({
                     e.stopPropagation();
                     onPostpone(task.id);
                   }}
-                  className="text-orange-500 border-orange-300 hover:bg-orange-50"
+                  className="text-orange-500 border-orange-300 hover:bg-orange-50 min-w-[40px] min-h-[40px] sm:min-w-[36px] sm:min-h-[36px] p-2"
                   title="Adiar tarefa"
                 >
                   <Calendar className="w-4 h-4" />
@@ -280,17 +287,17 @@ export function TaskItem({
                     }
                   }}
                   disabled={isCompleted || (variant as string) === 'completed'}
-                className={isCompleted 
+                className={`min-w-[40px] min-h-[40px] sm:min-w-[36px] sm:min-h-[36px] p-2 ${isCompleted 
                   ? "bg-green-500 text-white" 
                   : "text-green-600 border-green-300 hover:bg-green-50"
-                }
+                }`}
                 title={isCompleted ? "Tarefa concluída" : "Marcar como concluída"}
                 >
                   <CheckCircle2 className="w-4 h-4" />
                 </Button>
               )}
 
-              {/* Botão de Lembrete */}
+              {/* Botão de Lembrete - Mobile Friendly */}
               <Button
                 variant="outline"
                 size="sm"
@@ -298,7 +305,7 @@ export function TaskItem({
                   e.stopPropagation();
                   setShowReminderModal(true);
                 }}
-                className="text-purple-600 border-purple-300 hover:bg-purple-50"
+                className="text-purple-600 border-purple-300 hover:bg-purple-50 min-w-[40px] min-h-[40px] sm:min-w-[36px] sm:min-h-[36px] p-2"
                 title="Configurar lembretes"
               >
                 <Bell className="w-4 h-4" />
@@ -308,7 +315,7 @@ export function TaskItem({
                 onClick={handleToggleExpansion}
                 variant="ghost"
                 size="icon"
-                className="border bg-background border-transparent w-9 h-9 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                className="border bg-background border-transparent min-w-[40px] min-h-[40px] sm:w-9 sm:h-9 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <ChevronDown className={`w-4 h-4 transition-transform ${
                   isExpanded ? 'rotate-180' : ''
@@ -317,20 +324,27 @@ export function TaskItem({
             </div>
           </div>
 
-          {/* Informações de Compromisso */}
+          {/* Informações de Compromisso - Mobile Optimized */}
           {task.isAppointment && task.appointment && (
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-2 mt-2">
-              <div className="flex items-center space-x-2 text-purple-800">
-                <Calendar className="w-4 h-4" />
-                <span className="text-xs font-medium">📅 Compromisso</span>
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 sm:p-2">
+              <div className="flex items-center space-x-2 text-purple-800 mb-2">
+                <Calendar className="w-4 h-4 flex-shrink-0" />
+                <span className="text-xs sm:text-sm font-medium">📅 Compromisso</span>
               </div>
-              <div className="mt-1 text-xs text-purple-700 space-y-1">
-                <div>⏰ {task.appointment.scheduledTime}</div>
+              <div className="text-xs sm:text-xs text-purple-700 space-y-1">
+                <div className="flex items-center gap-1">
+                  <span>⏰</span>
+                  <span>{task.appointment.scheduledTime}</span>
+                </div>
                 {task.appointment.location && (
-                  <div>📍 {task.appointment.location}</div>
+                  <div className="flex items-center gap-1">
+                    <span>📍</span>
+                    <span className="truncate">{task.appointment.location}</span>
+                  </div>
                 )}
-                <div className="text-purple-600">
-                  🚀 Preparação: {task.appointment.preparationTime} min antes
+                <div className="flex items-center gap-1 text-purple-600">
+                  <span>🚀</span>
+                  <span>Preparação: {task.appointment.preparationTime} min antes</span>
                 </div>
               </div>
             </div>
@@ -346,7 +360,7 @@ export function TaskItem({
             exit={{ opacity: 0, height: 0 }}
             className="mt-4 pt-4 border-t border-gray-200"
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-4">
               {/* Comentários */}
               <div className="bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl p-5 border border-gray-200 shadow-sm">
                 <div className="flex items-center gap-2 mb-4">
@@ -510,19 +524,19 @@ export function TaskItem({
         )}
       </AnimatePresence>
 
-      {/* Modal de Lembrete */}
+      {/* Modal de Lembrete - Mobile Friendly */}
       {showReminderModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-6 w-full max-w-sm sm:max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white pr-2 truncate">
                 Lembretes - {task.description}
               </h2>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowReminderModal(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-gray-700 min-w-[44px] min-h-[44px] flex-shrink-0"
               >
                 ✕
               </Button>

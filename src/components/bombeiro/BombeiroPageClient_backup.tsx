@@ -1,7 +1,14 @@
 'use client';
 
 // ============================================================================
-// CLIENTE DA PÁGINA BOMBEIRO - VERSÃO COMPLETA E INTEGRADA
+// CLIENTE DA PÁGINA BOMBEIRO - VERSÃO REDESENHADA COM MELHORES PRÁTICAS DE UX/UI
+// ============================================================================
+// Implementa:
+// - Hierarquia visual clara com sistema de grid 8px
+// - Paleta de cores acessível seguindo WCAG
+// - Layout responsivo e mobile-first
+// - Redução de carga cognitiva
+// - Tipografia otimizada e consistente
 // ============================================================================
 
 import React, { useState, useEffect } from 'react';
@@ -149,37 +156,73 @@ export function BombeiroPageClient() {
 
   return (
     <>
-      <div className="container mx-auto p-2 sm:p-4 lg:p-6">
-        <div className="space-y-6">
+      {/* Container Principal com Grid System */}
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 py-8 max-w-7xl">
           
-          {/* Contador de Medalhas Semanais */}
-          <WeeklyMedalsCounter />
-
-          {/* Seção Principal de Tarefas */}
-          <main className="w-full">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
-              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-text-primary ml-16 lg:ml-0">🔥 Missões de Hoje</h1>
-              <div className="flex gap-2 w-full sm:w-auto">
-                <Button onClick={() => setShowCaptureModal(true)} className="flex-1 sm:flex-none min-h-[44px]">
-                  <span className="mr-2 text-lg font-bold">+</span>
-                  <span className="sm:inline">Adicionar Tarefa</span>
+          {/* Header Mobile-First Otimizado */}
+          <header className="mb-8 lg:mb-12">
+            <div className="flex flex-col gap-4 lg:gap-6">
+              <div className="space-y-2">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-gray-900 tracking-tight leading-tight">
+                  Modo Bombeiro
+                </h1>
+                <p className="text-sm sm:text-base lg:text-lg text-gray-600 font-medium">
+                  Foque na execução. Gerencie sua energia. Conquiste seus objetivos.
+                </p>
+              </div>
+              
+              {/* Actions no Header - Mobile First */}
+              <div className="flex flex-col sm:flex-row gap-3 w-full">
+                <Button 
+                  onClick={() => setShowCaptureModal(true)} 
+                  size="lg"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 sm:px-6 py-3 sm:py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 text-sm sm:text-base flex-1 sm:flex-none min-h-[44px]"
+                >
+                  <span className="mr-2 text-lg sm:text-xl">+</span>
+                  Nova Tarefa
                 </Button>
                 <Button 
                   onClick={() => router.push('/planejamento')}
                   variant="outline"
-                  className="flex-1 sm:flex-none min-h-[44px]"
+                  size="lg"
+                  className="border-2 border-gray-300 text-gray-700 font-semibold px-4 sm:px-6 py-3 sm:py-4 rounded-xl hover:bg-gray-50 transition-all duration-200 text-sm sm:text-base flex-1 sm:flex-none min-h-[44px]"
                 >
                   📋 Planejamento
                 </Button>
               </div>
             </div>
+          </header>
 
-            {/* Hábitos do Dia */}
-            {todayHabits.length > 0 && (
-              <div className="mb-8">
-                <h2 className="text-base sm:text-lg font-semibold text-text-primary mb-3">🎯 Hábitos de Hoje</h2>
-                <div className="bg-gradient-to-r from-teal-50 to-cyan-50 rounded-xl p-4 border border-teal-200">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+          {/* Contador de Medalhas com Design Melhorado */}
+          <section className="mb-8">
+            <WeeklyMedalsCounter />
+          </section>
+
+          {/* Grid Principal - Mobile-First Layout */}
+          <div className="space-y-6 lg:space-y-8">
+            {/* Em mobile: stack vertical. Em desktop: mantém o grid complexo quando necessário */}
+            <div className="lg:grid lg:grid-cols-1 xl:grid-cols-3 lg:gap-8 space-y-6 lg:space-y-0">
+              
+              {/* Coluna Principal - Tarefas e Hábitos */}
+              <div className="xl:col-span-2 space-y-6 lg:space-y-8">
+
+              {/* Seção de Hábitos Mobile-First */}
+              {todayHabits.length > 0 && (
+                <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+                    <div>
+                      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">Hábitos Diários</h2>
+                      <p className="text-sm sm:text-base text-gray-600">Construa sua rotina ideal</p>
+                    </div>
+                    <div className="bg-blue-50 px-3 sm:px-4 py-2 rounded-xl border border-blue-200 self-start sm:self-auto">
+                      <span className="text-blue-700 font-semibold text-xs sm:text-sm">
+                        {completedHabits.length}/{todayHabits.length} concluídos
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     {todayHabits.map(habit => {
                       const isCompleted = habit.completions.some(c => c.date === today);
                       const count = habit.completions.filter(c => c.date === today).reduce((sum, c) => sum + c.count, 0);
@@ -196,7 +239,7 @@ export function BombeiroPageClient() {
                       return (
                         <div
                           key={habit.id}
-                          className={`p-5 rounded-lg transition-all cursor-pointer hover:shadow-md relative overflow-hidden min-w-0 ${
+                          className={`p-4 sm:p-5 rounded-lg transition-all cursor-pointer hover:shadow-md relative overflow-hidden min-w-0 ${
                             isCelebrating 
                               ? 'bg-gradient-to-r from-green-200 to-emerald-200 border-2 border-green-400 animate-pulse shadow-lg' 
                               : isCompleted 
@@ -218,15 +261,15 @@ export function BombeiroPageClient() {
                             </div>
                           )}
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3 flex-1 min-w-0">
+                            <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
                               <div 
-                                className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold"
+                                className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
                                 style={{ backgroundColor: habit.color }}
                               >
                                 {habit.icon}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <h4 className={`font-medium text-sm truncate ${
+                                <h4 className={`font-medium text-sm sm:text-base truncate ${
                                   isCompleted ? 'text-green-800' : 'text-gray-900'
                                 }`}>
                                   {habit.name}
@@ -238,13 +281,13 @@ export function BombeiroPageClient() {
                                 )}
                               </div>
                               {habit.streak > 0 && (
-                                <div className="relative flex items-center justify-center w-8 h-8 ml-4">
-                                  <div className={`text-orange-500 text-3xl animate-pulse ${habit.streak >= 7 ? 'animate-bounce' : ''}`}>
+                                <div className="relative flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0">
+                                  <div className={`text-orange-500 text-2xl sm:text-3xl animate-pulse ${habit.streak >= 7 ? 'animate-bounce' : ''}`}>
                                     🔥
                                   </div>
                                   <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="bg-orange-600 rounded-full w-4 h-4 flex items-center justify-center shadow-lg border border-orange-700">
-                                      <span className="text-[14px] font-black text-white leading-none">
+                                    <div className="bg-orange-600 rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center shadow-lg border border-orange-700">
+                                      <span className="text-[10px] sm:text-[12px] font-black text-white leading-none">
                                         {habit.streak}
                                       </span>
                                     </div>
@@ -253,8 +296,8 @@ export function BombeiroPageClient() {
                               )}
                             </div>
                             
-                            <div className="flex items-center gap-3">
-                              {/* Botão de Lembrete */}
+                            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                              {/* Botão de Lembrete - Mobile Friendly */}
                               <Button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -262,13 +305,13 @@ export function BombeiroPageClient() {
                                 }}
                                 variant="ghost"
                                 size="icon"
-                                className="w-10 h-10 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center transition-all text-purple-600 hover:text-purple-700 hover:bg-purple-50 border border-transparent hover:border-purple-200"
+                                className="w-10 h-10 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center transition-all text-purple-600 hover:text-purple-700 hover:bg-purple-50 border border-transparent hover:border-purple-200 flex-shrink-0"
                                 title="Configurar lembretes"
                               >
                                 <Bell className="w-4 h-4" />
                               </Button>
 
-                              {/* Botão de Conclusão */}
+                              {/* Botão de Conclusão - Mobile Friendly */}
                               <Button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -324,7 +367,7 @@ export function BombeiroPageClient() {
                               }}
                               variant="ghost"
                               size="icon"
-                              className={`w-10 h-10 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center transition-all transform ${
+                              className={`w-10 h-10 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center transition-all transform flex-shrink-0 ${
                                 celebratingHabit === habit.id ? 'scale-110 celebration-bounce shadow-lg ring-2 ring-green-300' : ''
                               } ${
                                 isCompleted
@@ -343,34 +386,44 @@ export function BombeiroPageClient() {
                     })}
                   </div>
                   
-                  <div className="mt-3 text-xs text-teal-700 flex items-center justify-between">
-                    <span>💡 Hábitos não consomem energia</span>
-                    <span>{completedHabits.length}/{todayHabits.length} concluídos</span>
+                  
+                  <div className="mt-6 p-3 sm:p-4 bg-blue-50 rounded-xl border border-blue-200">
+                    <div className="flex items-center justify-center gap-2 text-blue-700">
+                      <span className="text-lg">💡</span>
+                      <span className="font-medium text-sm sm:text-base text-center">Hábitos não consomem energia do dia</span>
+                    </div>
                   </div>
-                </div>
-              </div>
-            )}
+                </section>
+              )}
 
-            {/* Mensagem para usuários sem missões do dia */}
-            {pendingTasks.length === 0 && missedTasks.length === 0 && todayHabits.length === 0 && (
-              <div className="text-center py-16 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
-                <div className="text-6xl mb-4">🎯</div>
-                <h2 className="text-2xl font-bold text-blue-800 mb-3">Nenhuma Missão Planejada</h2>
-                <p className="text-lg text-blue-600 mb-6 max-w-md mx-auto">
-                  Que tal planejar o seu dia e definir suas prioridades para ser mais produtivo?
-                </p>
-                <p className="text-sm text-blue-500 mt-4">
-                  💡 Dica: Comece definindo 2-3 tarefas importantes para focar sua energia hoje
-                </p>
-              </div>
-            )}
+              {/* Estado Vazio - Mobile Friendly */}
+              {pendingTasks.length === 0 && missedTasks.length === 0 && todayHabits.length === 0 && (
+                <section className="text-center py-12 sm:py-20 bg-white rounded-2xl shadow-sm border border-gray-200 mx-auto">
+                  <div className="max-w-sm sm:max-w-md mx-auto space-y-4 sm:space-y-6 px-4">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
+                      <span className="text-3xl sm:text-4xl">🎯</span>
+                    </div>
+                    <div className="space-y-2 sm:space-y-3">
+                      <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Nenhuma Missão Planejada</h2>
+                      <p className="text-base sm:text-lg text-gray-600">
+                        Que tal planejar o seu dia e definir suas prioridades?
+                      </p>
+                    </div>
+                    <div className="bg-blue-50 p-3 sm:p-4 rounded-xl border border-blue-200">
+                      <p className="text-xs sm:text-sm text-blue-700 font-medium">
+                        💡 Dica: Comece definindo 2-3 tarefas importantes para focar sua energia hoje
+                      </p>
+                    </div>
+                  </div>
+                </section>
+              )}
 
-            {/* Listas de Tarefas do Dia */}
-            <div className="space-y-6 lg:space-y-8">
+              {/* Seções de Tarefas Mobile-First */}
+              <div className="space-y-6 sm:space-y-8">
               {/* Tarefas Não Executadas */}
               {missedTasks.length > 0 && (
                 <div>
-                  <h2 className="text-base sm:text-lg font-semibold text-red-600 mb-3">⚠️ Tarefas não executadas</h2>
+                  <h2 className="text-base sm:text-lg font-semibold text-red-600 mb-3 px-1">⚠️ Tarefas não executadas</h2>
                   <div className="space-y-3 sm:space-y-4">
                     {missedTasks.map(task => (
                       <div key={task.id} className="bg-red-50 border-l-4 border-red-400 rounded-lg p-4">
@@ -414,7 +467,7 @@ export function BombeiroPageClient() {
               {/* Tarefas Pendentes (Planejadas para Hoje) */}
               {pendingTasks.length > 0 && (
                 <div>
-                  <h2 className="text-base sm:text-lg font-semibold text-text-primary mb-3">⚡ Tarefas de Hoje</h2>
+                  <h2 className="text-base sm:text-lg font-semibold text-text-primary mb-3 px-1">⚡ Tarefas de Hoje</h2>
                   {pendingTasks.length > 0 ? (
                   <div className="space-y-3 sm:space-y-4">
                     {pendingTasks.map(task => (
@@ -465,39 +518,74 @@ export function BombeiroPageClient() {
                 </div>
               )}
 
+              </div>
             </div>
+            
+            {/* Coluna Lateral - Mobile: sempre visible, Desktop: sidebar */}
+            <div className="space-y-6 xl:max-w-sm">
+              
+              {/* Tarefas Completadas Hoje - Mobile Friendly */}
+              {completedTasksToday.length > 0 && (
+                <section className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                  <div className="bg-green-50 border-b border-green-200 px-4 sm:px-6 py-3 sm:py-4">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-green-600 font-bold text-sm">✅</span>
+                      </div>
+                      <div className="min-w-0">
+                        <h2 className="text-lg sm:text-xl font-bold text-green-800">Concluídas Hoje</h2>
+                        <p className="text-xs sm:text-sm text-green-600">{completedTasksToday.length} tarefa{completedTasksToday.length > 1 ? 's' : ''} finalizada{completedTasksToday.length > 1 ? 's' : ''}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 sm:p-6">
+                    <div className="space-y-3 sm:space-y-4 max-h-80 sm:max-h-96 overflow-y-auto">
+                      {completedTasksToday.map(task => (
+                        <TaskItem 
+                          key={task.id}
+                          task={task} 
+                          onComplete={() => {}}
+                          onPostpone={() => {}}
+                          variant="completed"
+                          isCompleting={false}
+                        />
+                      ))}
+                    </div>
+                    
+                    <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-green-50 rounded-xl border border-green-200">
+                      <div className="flex items-center justify-center gap-2 text-green-700">
+                        <span className="text-lg">🎉</span>
+                        <span className="font-semibold text-sm sm:text-base text-center">Excelente progresso hoje!</span>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              )}
 
-            {/* Tarefas Completadas Hoje */}
-            {completedTasksToday.length > 0 && (
-              <div>
-                <h2 className="text-base sm:text-lg font-semibold text-green-600 mb-3 mt-8">✅ Concluídas Hoje</h2>
-                <div className="space-y-3 sm:space-y-4">
-                  {completedTasksToday.map(task => (
-                    <TaskItem 
-                      key={task.id}
-                      task={task} 
-                      onComplete={() => {}} // Não precisa de ação, já está concluída
-                      onPostpone={() => {}} // Não precisa de ação, já está concluída
-                      variant="completed"
-                      isCompleting={false}
-                    />
-                  ))}
-                </div>
-                <div className="mt-3 text-xs text-green-700 flex items-center justify-between bg-green-50 p-2 rounded-lg">
-                  <span>🎉 Parabéns pelo progresso!</span>
-                  <span>{completedTasksToday.length} tarefa(s) concluída(s)</span>
-                </div>
-              </div>
-            )}
-
-            {/* Sala de Tarefas Adiadas */}
-            {postponedTasks.length > 0 && (
-              <div className="mt-12">
-                 <PostponedTasksRoom />
-              </div>
-            )}
-          </main>
-
+              {/* Sala de Tarefas Adiadas - Mobile Friendly */}
+              {postponedTasks.length > 0 && (
+                <section className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                  <div className="bg-gray-50 border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-gray-600 font-bold text-sm">🗓️</span>
+                      </div>
+                      <div className="min-w-0">
+                        <h2 className="text-lg sm:text-xl font-bold text-gray-800">Tarefas Adiadas</h2>
+                        <p className="text-xs sm:text-sm text-gray-600">Reorganize quando possível</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 sm:p-6">
+                    <PostponedTasksRoom />
+                  </div>
+                </section>
+              )}
+              
+            </div>
+          </div>
         </div>
       </div>
 
@@ -525,7 +613,7 @@ export function BombeiroPageClient() {
       
       <AlertComponent />
       
-      {/* Modal de Lembrete para Hábitos */}
+      {/* Modal de Lembrete para Hábitos - Mobile Optimized */}
       {reminderModalHabit && (() => {
         const habit = todayHabits.find(h => h.id === reminderModalHabit);
         return habit ? (

@@ -90,7 +90,7 @@ export function CaptureModal() {
                 onClick={() => handleTriageChoice('sandbox')}
                 className="w-full p-4 bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 rounded-2xl hover:from-amber-100 hover:to-orange-100 transition-all duration-300 font-medium border border-amber-200 text-left"
               >
-                🧠 Salvar na Caixa de Areia
+                🧠 Salvar no Pátio das Ideias
                 <p className="text-xs text-amber-600 mt-1">Para processar depois, sem pressão</p>
               </motion.button>
               <motion.button 

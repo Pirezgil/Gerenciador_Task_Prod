@@ -17,7 +17,7 @@ export function Navigation() {
     { key: 'arquiteto', label: '🏗️ Arquiteto', color: 'purple', path: '/arquiteto' },
     { key: 'tarefas', label: '📋 Tarefas', color: 'green', path: '/tarefas' },
     { key: 'recompensas', label: '🏆 Recompensas', color: 'amber', path: '/recompensas' },
-    { key: 'caixa-de-areia', label: '🏖️ Caixa de Areia', color: 'indigo', path: '/caixa-de-areia' }
+    { key: 'caixa-de-areia', label: '🏖️ Pátio das Ideias', color: 'indigo', path: '/caixa-de-areia' }
   ] as const;
 
   const getPageColors = (pageKey: string, isActive: boolean) => {

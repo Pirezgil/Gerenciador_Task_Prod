@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/providers/AuthProvider';
 import { queryKeys, invalidateQueries } from '@/lib/queryClient';
 import axios from 'axios';
+import { getApiUrl } from '@/lib/apiUrl';
 import type { 
   Achievement, 
   UserAchievementsResponse, 
@@ -20,7 +21,7 @@ import type {
 
 // Configuração do axios com cookies HTTP-only
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',
+  baseURL: getApiUrl(),
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

@@ -2,7 +2,24 @@
 const nextConfig = {
   images: {
     domains: [],
+    unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '3004',
+        pathname: '/uploads/**',
+      },
+      {
+        protocol: 'http',
+        hostname: '192.168.0.252',
+        port: '3004',
+        pathname: '/uploads/**',
+      }
+    ],
   },
+  // Configuração para permitir origens de desenvolvimento específicas
+  allowedDevOrigins: ['192.168.0.252'],
   // Configurações para MCP Server
   env: {
     MCP_SERVER_URL: process.env.MCP_SERVER_URL || 'http://localhost:8000',

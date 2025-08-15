@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronUp, FileText, Plus, ArrowRight, Battery, Brain, Zap, Edit3, Trash2, Save, X, MessageSquare, Paperclip, Link2, AlertTriangle, CheckCircle, XCircle, Clock, ExternalLink } from 'lucide-react';
+import { ChevronDown, ChevronUp, FileText, Plus, ArrowRight, Battery, Brain, Zap, Edit3, Trash2, Save, X, MessageSquare, Paperclip, Link2, AlertTriangle, CheckCircle, XCircle, Clock, ExternalLink, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTasksStore } from '@/stores/tasksStore';
 import { useModalsStore } from '@/stores/modalsStore';
@@ -11,6 +11,7 @@ import { useUpdateTask, useDeleteTask } from '@/hooks/api/useTasks';
 import type { Project } from '@/types';
 import { scrollToElementWithDelay } from '@/utils/scrollUtils';
 import { useStandardAlert } from '@/components/shared/StandardAlert';
+import { formatHistoryMessage } from '@/utils/historyFormatter';
 
 interface ProjectContainerProps {
   project: Project;
@@ -397,7 +398,7 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
               >
                 <div className="flex items-center">
                   <FileText className="w-4 h-4 mr-1" />
-                  Caixa de Areia do Projeto
+                  Pátio das Ideias do Projeto
                 </div>
                 <motion.div animate={{ rotate: sandboxExpanded ? 180 : 0 }}>
                   <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -632,182 +633,158 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
                     </div>
                   </div>
                   
-                  {/* Detalhes expandidos */}
+                  {/* Conteúdo Expandido Simplificado */}
                   <AnimatePresence>
                     {expandedTask === task.id && (
                       <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="mt-4 pt-4 border-t border-gray-200"
+                        className="mt-6 pt-6 border-t border-gray-200 bg-gray-50/50 rounded-b-lg mx-3 mb-3"
                       >
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {/* Comentários */}
-                          <div className="bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl p-5 border border-gray-200 shadow-sm">
-                            <div className="flex items-center gap-2 mb-4">
-                              <div className="w-8 h-8 bg-gray-500 rounded-lg flex items-center justify-center">
-                                <span className="text-white text-sm font-semibold">💬</span>
-                              </div>
-                              <h4 className="font-semibold text-gray-800">Comentários ({task.comments?.length || 0})</h4>
-                            </div>
-                            {task.comments?.length ? (
-                              <div className="space-y-3 max-h-40 overflow-y-auto">
-                                {task.comments.map((comment) => (
-                                  <div key={comment.id} className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-gray-200/50 shadow-sm">
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
-                                        <span className="text-xs font-semibold text-gray-700">{comment.author.charAt(0).toUpperCase()}</span>
-                                      </div>
-                                      <span className="font-medium text-sm text-gray-700">{comment.author}</span>
-                                      <span className="text-xs text-gray-500 ml-auto">{new Date(comment.createdAt).toLocaleDateString()} {new Date(comment.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                                    </div>
-                                    <p className="text-sm text-gray-600 leading-relaxed">{comment.content}</p>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <div className="text-center py-6">
-                                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                  <span className="text-gray-500 text-xl">💬</span>
-                                </div>
-                                <p className="text-sm text-gray-500">Nenhum comentário ainda</p>
-                              </div>
-                            )}
-                          </div>
-                          
-                          {/* Histórico */}
-                          <div className="bg-gradient-to-br from-slate-50 to-gray-100 rounded-xl p-5 border border-slate-200 shadow-sm">
-                            <div className="flex items-center gap-2 mb-4">
-                              <div className="w-8 h-8 bg-slate-500 rounded-lg flex items-center justify-center">
-                                <span className="text-white text-sm font-semibold">📋</span>
-                              </div>
-                              <h4 className="font-semibold text-gray-800">Histórico ({task.history?.length || 0})</h4>
-                            </div>
-                            {task.history?.length ? (
-                              <div className="space-y-2 max-h-40 overflow-y-auto">
-                                {task.history.map((entry) => (
-                                  <div key={entry.id} className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-slate-200/50 shadow-sm">
-                                    <div className="flex items-center justify-between mb-1">
-                                      <div className="flex items-center gap-2">
-                                        <div className={`w-2 h-2 rounded-full ${
-                                          entry.action === 'created' ? 'bg-green-400' :
-                                          entry.action === 'completed' ? 'bg-blue-400' :
-                                          entry.action === 'postponed' ? 'bg-yellow-400' :
-                                          entry.action === 'edited' ? 'bg-purple-400' : 'bg-gray-400'
-                                        }`}></div>
-                                        <span className="font-medium text-sm text-gray-900">
-                                          {entry.field === 'created' ? 
-                                            String(entry.newValue || '') :
-                                            entry.action === 'completed' ?
-                                              'Tarefa completada' :
-                                            entry.action === 'postponed' ?
-                                              'Tarefa adiada' :
-                                            entry.field ? 
-                                              `${entry.field} alterado` :
-                                              (entry.action || 'Alteração')
-                                          }
+                        <div className="px-4 pb-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            {/* Comentários */}
+                            <div className="bg-white rounded-lg border border-gray-200 p-4">
+                              <h4 className="font-semibold text-gray-900 flex items-center space-x-2 mb-4 pb-2 border-b border-gray-100">
+                                <MessageSquare className="w-4 h-4 text-blue-600" />
+                                <span>Comentários ({task.comments?.length || 0})</span>
+                              </h4>
+                              {task.comments?.length ? (
+                                <div className="space-y-3 max-h-40 overflow-y-auto">
+                                  {task.comments.map((comment) => (
+                                    <div key={comment.id} className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                                      <div className="flex items-center space-x-2 mb-2">
+                                        <span className="font-medium text-sm text-gray-900">{comment.author}</span>
+                                        <span className="text-xs text-gray-500">
+                                          {new Date(comment.createdAt).toLocaleDateString('pt-BR')}
                                         </span>
                                       </div>
-                                      <span className="text-xs text-gray-500">{new Date(entry.timestamp).toLocaleDateString()} {new Date(entry.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                      <p className="text-sm text-gray-700 leading-relaxed">{comment.content}</p>
                                     </div>
-                                    {entry.details?.reason && (
-                                      <p className="text-xs text-gray-600 ml-4 mt-1">{entry.details.reason}</p>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <div className="text-center py-6">
-                                <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                  <span className="text-slate-500 text-xl">📋</span>
+                                  ))}
                                 </div>
-                                <p className="text-sm text-gray-500">Nenhuma edição registrada</p>
-                              </div>
-                            )}
-                          </div>
-                          
-                          {/* Links Externos */}
-                          <div className="bg-gradient-to-br from-indigo-50 to-blue-100 rounded-xl p-5 border border-indigo-200 shadow-sm">
-                            <div className="flex items-center gap-2 mb-4">
-                              <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">
-                                <span className="text-white text-sm font-semibold">🔗</span>
-                              </div>
-                              <h4 className="font-semibold text-gray-800">Links Externos ({task.externalLinks?.length || 0})</h4>
-                            </div>
-                            {task.externalLinks?.length ? (
-                              <div className="space-y-2 max-h-40 overflow-y-auto">
-                                {task.externalLinks.map((link, index) => (
-                                  <div key={index} className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-indigo-200/50 shadow-sm hover:shadow-md transition-shadow">
-                                    <a 
-                                      href={link} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer"
-                                      className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 text-sm transition-colors"
-                                    >
-                                      <ExternalLink className="w-4 h-4 flex-shrink-0" />
-                                      <span className="truncate">{link.length > 40 ? link.substring(0, 40) + '...' : link}</span>
-                                    </a>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <div className="text-center py-6">
-                                <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                  <span className="text-indigo-500 text-xl">🔗</span>
+                              ) : (
+                                <div className="text-center py-8">
+                                  <MessageSquare className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                                  <p className="text-sm text-gray-500">Nenhum comentário</p>
                                 </div>
-                                <p className="text-sm text-gray-500">Nenhum link cadastrado</p>
-                              </div>
-                            )}
-                          </div>
-                          
-                          {/* Anexos */}
-                          <div className="bg-gradient-to-br from-orange-50 to-amber-100 rounded-xl p-5 border border-orange-200 shadow-sm">
-                            <div className="flex items-center gap-2 mb-4">
-                              <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
-                                <span className="text-white text-sm font-semibold">📁</span>
-                              </div>
-                              <h4 className="font-semibold text-gray-800">Anexos ({task.attachments?.length || 0})</h4>
+                              )}
                             </div>
-                            {task.attachments?.length ? (
-                              <div className="space-y-2 max-h-40 overflow-y-auto">
-                                {task.attachments.map((attachment) => (
-                                  <div key={attachment.id} className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-orange-200/50 shadow-sm hover:shadow-md transition-shadow">
-                                    <div className="flex items-center justify-between">
-                                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                                        <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                          <span className="text-orange-600 text-xs font-semibold">
-                                            {attachment.type && attachment.type.includes('image') ? '🖼️' :
-                                             attachment.type && attachment.type.includes('pdf') ? '📄' :
-                                             attachment.type && attachment.type.includes('doc') ? '📝' : '📁'}
-                                          </span>
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                          <p className="font-medium text-sm text-gray-700 truncate">{attachment.name}</p>
-                                          {attachment.size && (
-                                            <p className="text-xs text-gray-500">{(attachment.size / 1024).toFixed(1)} KB</p>
-                                          )}
-                                        </div>
+                            
+                            {/* Histórico */}
+                            <div className="bg-white rounded-lg border border-gray-200 p-4">
+                              <h4 className="font-semibold text-gray-900 flex items-center space-x-2 mb-4 pb-2 border-b border-gray-100">
+                                <BarChart3 className="w-4 h-4 text-green-600" />
+                                <span>Histórico ({task.history?.length || 0})</span>
+                              </h4>
+                              {task.history?.length ? (
+                                <div className="space-y-3 max-h-40 overflow-y-auto">
+                                  {task.history.map((entry) => (
+                                    <div key={entry.id} className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                                      <div className="flex items-start justify-between mb-1">
+                                        <span className="font-medium text-sm text-gray-900 flex-1 pr-2">
+                                          {formatHistoryMessage(entry, [])}
+                                        </span>
+                                        <span className="text-xs text-gray-500 flex-shrink-0">
+                                          {new Date(entry.timestamp).toLocaleDateString('pt-BR')}
+                                        </span>
                                       </div>
+                                      {entry.details?.reason && (
+                                        <p className="text-xs text-gray-600 italic mt-1 bg-gray-100 p-2 rounded">"{entry.details.reason}"</p>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="text-center py-8">
+                                  <BarChart3 className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                                  <p className="text-sm text-gray-500">Nenhuma edição registrada</p>
+                                </div>
+                              )}
+                            </div>
+                            
+                            {/* Links Externos */}
+                            <div className="bg-white rounded-lg border border-gray-200 p-4">
+                              <h4 className="font-semibold text-gray-900 flex items-center space-x-2 mb-4 pb-2 border-b border-gray-100">
+                                <ExternalLink className="w-4 h-4 text-purple-600" />
+                                <span>Links Úteis ({task.externalLinks?.length || 0})</span>
+                              </h4>
+                              {task.externalLinks?.length ? (
+                                <div className="space-y-3 max-h-40 overflow-y-auto">
+                                  {task.externalLinks.map((link, index) => (
+                                    <div key={index} className="bg-gray-50 rounded-lg p-3 border border-gray-100 hover:bg-gray-100 transition-colors">
                                       <a 
-                                        href={attachment.url} 
+                                        href={link} 
                                         target="_blank" 
                                         rel="noopener noreferrer"
-                                        className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded-lg text-xs font-medium transition-colors flex-shrink-0"
+                                        className="flex items-center gap-3 text-blue-600 hover:text-blue-800 text-sm transition-colors"
                                       >
-                                        Baixar
+                                        <ExternalLink className="w-4 h-4 flex-shrink-0" />
+                                        <span className="truncate font-medium">{link.length > 50 ? link.substring(0, 50) + '...' : link}</span>
                                       </a>
                                     </div>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <div className="text-center py-6">
-                                <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                  <span className="text-orange-500 text-xl">📁</span>
+                                  ))}
                                 </div>
-                                <p className="text-sm text-gray-500">Nenhum anexo disponível</p>
-                              </div>
-                            )}
+                              ) : (
+                                <div className="text-center py-8">
+                                  <ExternalLink className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                                  <p className="text-sm text-gray-500">Nenhum link cadastrado</p>
+                                </div>
+                              )}
+                            </div>
+                            
+                            {/* Anexos */}
+                            <div className="bg-white rounded-lg border border-gray-200 p-4">
+                              <h4 className="font-semibold text-gray-900 flex items-center space-x-2 mb-4 pb-2 border-b border-gray-100">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-orange-600">
+                                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                                  <polyline points="14,2 14,8 20,8"/>
+                                </svg>
+                                <span>Anexos ({task.attachments?.length || 0})</span>
+                              </h4>
+                              {task.attachments?.length ? (
+                                <div className="space-y-3 max-h-40 overflow-y-auto">
+                                  {task.attachments.map((attachment) => (
+                                    <div key={attachment.id} className="bg-gray-50 rounded-lg p-3 border border-gray-100 hover:bg-gray-100 transition-colors">
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                                          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                            <span className="text-blue-600 text-sm font-semibold">
+                                              {attachment.type && attachment.type.includes('image') ? '🖼️' :
+                                               attachment.type && attachment.type.includes('pdf') ? '📄' :
+                                               attachment.type && attachment.type.includes('doc') ? '📝' : '📁'}
+                                            </span>
+                                          </div>
+                                          <div className="min-w-0 flex-1">
+                                            <p className="font-medium text-sm text-gray-900 truncate">{attachment.name}</p>
+                                            {attachment.size && (
+                                              <p className="text-xs text-gray-500">{(attachment.size / 1024).toFixed(1)} KB</p>
+                                            )}
+                                          </div>
+                                        </div>
+                                        <a 
+                                          href={attachment.url} 
+                                          target="_blank" 
+                                          rel="noopener noreferrer"
+                                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors flex-shrink-0 ml-3"
+                                        >
+                                          Baixar
+                                        </a>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="text-center py-8">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8 text-gray-300 mx-auto mb-2">
+                                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                                    <polyline points="14,2 14,8 20,8"/>
+                                  </svg>
+                                  <p className="text-sm text-gray-500">Nenhum anexo disponível</p>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </motion.div>

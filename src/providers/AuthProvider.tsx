@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import type { User } from '@/types';
+import { getApiUrl } from '@/lib/apiUrl';
 
 // ============================================================================
 // TIPOS E INTERFACES
@@ -75,11 +76,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     error: null
   });
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-
   // Função para fazer requisições com cookies
   const fetchWithCredentials = async (url: string, options: RequestInit = {}) => {
-    const response = await fetch(`${API_URL}${url}`, {
+    const apiUrl = getApiUrl(); // Recalcular a URL a cada requisição
+    const response = await fetch(`${apiUrl}${url}`, {
       ...options,
       credentials: 'include', // Importante: inclui cookies HTTP-only
       headers: {

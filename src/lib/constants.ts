@@ -85,7 +85,7 @@ export const MESSAGES = {
     TASK_MOVED: '✅ Tijolo movido para hoje!',
     TASK_COMPLETED: '✅ Tarefa concluída!',
     PROJECT_CREATED: '✅ Projeto criado com sucesso!',
-    NOTE_SAVED: '✅ Pensamento salvo na Caixa de Areia!',
+    NOTE_SAVED: '✅ Pensamento salvo no Pátio das Ideias!',
     TASK_SCHEDULED: '✅ Tarefa agendada com sucesso!',
   },
   INFO: {

@@ -21,27 +21,84 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 // CENTRALIZED COOKIE CONFIGURATION for consistency across all auth endpoints
 export const COOKIE_OPTIONS = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-  sameSite: 'lax' as const, // lax works for localhost
+  httpOnly: true, // Cookie HTTP-only para segurança - apenas acessível via servidor
+  secure: false, // HTTP para desenvolvimento (deve ser true em produção)
+  sameSite: 'lax' as const, // lax é mais compatível para desenvolvimento (funciona com localhost)
   maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-  domain: undefined, // no domain for localhost compatibility
+  domain: undefined, // Sem domínio específico - funciona para localhost e IP da rede
   path: '/'
 };
 
-// CENTRALIZED SECURE COOKIE SETTER
-export const setSecureCookie = (res: Response, token: string): void => {
-  res.cookie('auth-token', token, COOKIE_OPTIONS);
+// DYNAMIC COOKIE CONFIGURATION - adapts to request context
+export const getDynamicCookieOptions = (req?: any) => {
+  // Para desenvolvimento, usar configurações mais permissivas
+  if (process.env.NODE_ENV === 'development') {
+    const origin = req?.get('origin') || req?.get('referer');
+    const host = req?.get('host') || req?.headers.host;
+    
+    // Configuração específica para cada tipo de acesso
+    let cookieConfig;
+    
+    if (origin?.includes('localhost') || host?.includes('localhost')) {
+      // Acesso via localhost - usar sameSite: 'lax'
+      cookieConfig = {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'lax' as const,
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        domain: undefined,
+        path: '/'
+      };
+    } else if (origin?.includes('192.168.0.252') || host?.includes('192.168.0.252')) {
+      // Acesso via IP da rede - usar sameSite: 'lax' (funciona sem HTTPS)
+      cookieConfig = {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'lax' as const,
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        domain: undefined,
+        path: '/'
+      };
+    } else {
+      // Fallback seguro
+      cookieConfig = {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'lax' as const,
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        domain: undefined,
+        path: '/'
+      };
+    }
+    
+    // Log para debug
+    console.log('🍪 Cookie config for origin:', origin, 'host:', host, {
+      domain: cookieConfig.domain,
+      sameSite: cookieConfig.sameSite,
+      secure: cookieConfig.secure
+    });
+    
+    return cookieConfig;
+  }
+  
+  return { ...COOKIE_OPTIONS };
 };
 
-// CENTRALIZED SECURE COOKIE CLEARER  
-export const clearSecureCookie = (res: Response): void => {
+// CENTRALIZED SECURE COOKIE SETTER - now supports dynamic configuration
+export const setSecureCookie = (res: Response, token: string, req?: any): void => {
+  const cookieOptions = getDynamicCookieOptions(req);
+  res.cookie('auth-token', token, cookieOptions);
+};
+
+// CENTRALIZED SECURE COOKIE CLEARER - now supports dynamic configuration
+export const clearSecureCookie = (res: Response, req?: any): void => {
+  const cookieOptions = getDynamicCookieOptions(req);
   res.clearCookie('auth-token', {
-    httpOnly: COOKIE_OPTIONS.httpOnly,
-    secure: COOKIE_OPTIONS.secure,
-    sameSite: COOKIE_OPTIONS.sameSite,
-    domain: COOKIE_OPTIONS.domain,
-    path: COOKIE_OPTIONS.path
+    httpOnly: cookieOptions.httpOnly,
+    secure: cookieOptions.secure,
+    sameSite: cookieOptions.sameSite,
+    domain: cookieOptions.domain,
+    path: cookieOptions.path
   });
 };
 

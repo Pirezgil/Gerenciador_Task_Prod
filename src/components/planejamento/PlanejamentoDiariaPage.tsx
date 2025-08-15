@@ -22,7 +22,10 @@ import {
   Plus,
   ExternalLink,
   MessageSquare,
-  Trash2
+  Trash2,
+  BarChart3,
+  ListTodo,
+  AlertTriangle
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -344,19 +347,19 @@ export function PlanejamentoDiariaPage() {
 
   const getEnergyConfig = (energyPoints: number) => {
     if (energyPoints === 1) return {
-      icon: <Battery className="w-4 h-4" />,
+      icon: <Battery className="w-3 h-3" />,
       label: 'Baixa',
-      color: 'bg-yellow-100 text-yellow-800'
+      color: 'text-emerald-700 bg-emerald-50 border-emerald-200'
     };
     if (energyPoints === 3) return {
-      icon: <Brain className="w-4 h-4" />,
+      icon: <Brain className="w-3 h-3" />,
       label: 'Normal',
-      color: 'bg-blue-100 text-blue-800'
+      color: 'text-blue-700 bg-blue-50 border-blue-200'
     };
     return {
-      icon: <Zap className="w-4 h-4" />,
+      icon: <Zap className="w-3 h-3" />,
       label: 'Alta',
-      color: 'bg-red-100 text-red-800'
+      color: 'text-amber-700 bg-amber-50 border-amber-200'
     };
   };
 
@@ -381,7 +384,6 @@ export function PlanejamentoDiariaPage() {
     router.push(`/task/${taskId}`);
   };
 
-
   // Métricas de energia diretas do backend
   const energyRemaining = energyBudget.remaining;
   const energyPercentage = (energyBudget.used / energyBudget.total) * 100;
@@ -390,331 +392,292 @@ export function PlanejamentoDiariaPage() {
   // Mostrar loading se ainda carregando
   if (tasksLoading || projectsLoading || todayTasksLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Carregando tarefas...</p>
+          <p className="text-gray-600 text-sm">Carregando tarefas...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 text-white">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-              <span className="text-4xl">📋</span>
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">Planejamento Diário</h1>
-              <p className="text-blue-100 mt-1">Organize suas atividades para o dia</p>
-            </div>
-          </div>
-
-          {/* Quick Stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
-              <div className="text-2xl font-bold">{plannedTasks.length + completedTasks.length}</div>
-              <div className="text-sm text-blue-100">Planejadas</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
-              <div className="text-2xl font-bold">{availableTasks.length}</div>
-              <div className="text-sm text-blue-100">Disponíveis</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
-              <div className="text-2xl font-bold">{energyBudget.used}</div>
-              <div className="text-sm text-blue-100">Energia Usada</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
-              <div className="text-2xl font-bold">{energyBudget.remaining}</div>
-              <div className="text-sm text-blue-100">Disponível</div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header Simplificado */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="py-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Planejamento Diário</h1>
+                <p className="text-gray-600 mt-1">Organize suas atividades para o dia</p>
+              </div>
+              
+              {/* Métricas Simplificadas */}
+              <div className="flex items-center space-x-6">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-gray-900">{plannedTasks.length + completedTasks.length}</div>
+                  <div className="text-sm text-gray-500">Planejadas</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-gray-900">{completedTasks.length}</div>
+                  <div className="text-sm text-gray-500">Concluídas</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-gray-900">{energyBudget.remaining}</div>
+                  <div className="text-sm text-gray-500">Energia Restante</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Seção de Tarefas Planejadas */}
-      {plannedTasks.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            ✅ Tarefas Planejadas para Hoje ({plannedTasks.length})
-          </h2>
-          
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Seção de Tarefas Planejadas */}
+        {plannedTasks.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                <ListTodo className="w-4 h-4 text-blue-600" />
+              </div>
+              <h2 className="text-xl font-semibold text-gray-900">
+                Tarefas Planejadas ({plannedTasks.length})
+              </h2>
+            </div>
+            
             <div className="space-y-3">
               {plannedTasks.map((task) => {
                 const isExpanded = expandedTasks.has(task.id);
                 const energyConfig = getEnergyConfig(task.energyPoints);
 
                 return (
-                  <motion.div
+                  <div
                     key={task.id}
-                    className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl shadow-md border border-green-200 transition-all hover:shadow-lg hover:scale-[1.02]"
-                    whileHover={{ scale: 1.02 }}
+                    className="bg-white rounded-lg border border-gray-200 hover:border-gray-300 transition-colors"
                   >
-                    <div className="p-3">
-                      <div className="flex flex-col gap-2">
-                        {/* First Line - Task Description */}
-                        <div className="flex items-center justify-between w-full">
+                    <div className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
                           <Link 
                             href={`/task/${task.id}`}
-                            className="flex-1"
+                            className="block"
                           >
-                            <h3 className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors cursor-pointer">
+                            <h3 className="text-lg font-medium text-gray-900 hover:text-blue-600 transition-colors">
                               {task.description}
                             </h3>
                           </Link>
-                        </div>
-                        
-                        {/* Second Line - Badges and Actions */}
-                        <div className="flex items-center justify-between w-full">
-                          <div className="flex items-center gap-3">
-                            {/* Energia */}
-                            <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
-                              task.energyPoints === 1 ? 'bg-green-100 text-green-700 border border-green-200' :
-                              task.energyPoints === 3 ? 'bg-blue-100 text-blue-700 border border-blue-200' :
-                              'bg-purple-100 text-purple-700 border border-purple-200'
-                            }`}>
+                          
+                          <div className="flex items-center space-x-3 mt-2">
+                            {/* Badge de Energia */}
+                            <span className={`inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium border ${energyConfig.color}`}>
                               {energyConfig.icon}
                               <span>{energyConfig.label}</span>
-                            </div>
+                            </span>
 
-                            {/* Data */}
+                            {/* Data de Vencimento */}
                             {task.deadline && task.deadline !== 'Sem vencimento' && (
-                              <div className="flex items-center gap-1.5 px-3 py-1 bg-red-100 text-red-700 border-red-200 border rounded-full text-xs font-medium">
+                              <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium text-red-700 bg-red-50 border border-red-200">
                                 <Clock className="w-3 h-3" />
                                 <span>{task.deadline.split('T')[0].split('-').reverse().join('/')}</span>
-                              </div>
+                              </span>
                             )}
 
-                            {/* Projeto badge */}
+                            {/* Projeto */}
                             {task.project && (
-                              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700 border border-purple-200">
+                              <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200">
                                 <span>{task.project.icon}</span>
                                 <span>{task.project.name}</span>
-                              </div>
+                              </span>
                             )}
-                          </div>
-
-                          {/* Actions */}
-                          <div className="flex items-center gap-3">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                removeFromPlanned(task.id);
-                              }}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                            >
-                              Remover
-                            </Button>
-                            
-                            <Button
-                              onClick={() => toggleTaskExpansion(task.id)}
-                              variant="ghost"
-                              size="icon"
-                              className="border bg-background border-transparent w-9 h-9 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                            >
-                              <ChevronDown className={`w-4 h-4 transition-transform ${
-                                isExpanded ? 'rotate-180' : ''
-                              }`} />
-                            </Button>
                           </div>
                         </div>
 
-                        {/* Expanded content */}
-                        <AnimatePresence>
-                          {isExpanded && (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: 'auto' }}
-                              exit={{ opacity: 0, height: 0 }}
-                              className="mt-4 pt-4 border-t border-gray-200"
-                            >
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* Comentários */}
-                                <div className="bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl p-5 border border-gray-200 shadow-sm">
-                                  <div className="flex items-center gap-2 mb-4">
-                                    <div className="w-8 h-8 bg-gray-500 rounded-lg flex items-center justify-center">
-                                      <span className="text-white text-sm font-semibold">💬</span>
-                                    </div>
-                                    <h4 className="font-semibold text-gray-800">Comentários ({allTasks.find(t => t.id === task.id)?.comments?.length || 0})</h4>
-                                  </div>
-                                  {allTasks.find(t => t.id === task.id)?.comments?.length ? (
-                                    <div className="space-y-3 max-h-40 overflow-y-auto">
-                                      {allTasks.find(t => t.id === task.id)?.comments?.map((comment: any) => (
-                                        <div key={comment.id} className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-gray-200/50 shadow-sm">
-                                          <div className="flex items-center gap-2 mb-2">
-                                            <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
-                                              <span className="text-xs font-semibold text-gray-700">{comment.author.charAt(0).toUpperCase()}</span>
-                                            </div>
-                                            <span className="font-medium text-sm text-gray-700">{comment.author}</span>
-                                            <span className="text-xs text-gray-500 ml-auto">{new Date(comment.createdAt).toLocaleDateString()} {new Date(comment.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                                          </div>
-                                          <p className="text-sm text-gray-600 leading-relaxed">{comment.content}</p>
+                        {/* Ações */}
+                        <div className="flex items-center space-x-2 ml-4">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeFromPlanned(task.id);
+                            }}
+                            className="text-red-600 hover:text-red-700 border-red-200 hover:bg-red-50"
+                          >
+                            Remover
+                          </Button>
+                          
+                          <Button
+                            onClick={() => toggleTaskExpansion(task.id)}
+                            variant="ghost"
+                            size="sm"
+                            className="text-gray-400 hover:text-gray-600"
+                          >
+                            <ChevronDown className={`w-4 h-4 transition-transform ${
+                              isExpanded ? 'rotate-180' : ''
+                            }`} />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Conteúdo Expandido Completo */}
+                      <AnimatePresence>
+                        {isExpanded && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="mt-4 pt-4 border-t border-gray-100"
+                          >
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              {/* Comentários */}
+                              <div className="space-y-3">
+                                <h4 className="font-medium text-gray-900 flex items-center space-x-2">
+                                  <MessageSquare className="w-4 h-4" />
+                                  <span>Comentários ({allTasks.find(t => t.id === task.id)?.comments?.length || 0})</span>
+                                </h4>
+                                {allTasks.find(t => t.id === task.id)?.comments?.length ? (
+                                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                                    {allTasks.find(t => t.id === task.id)?.comments?.map((comment: any) => (
+                                      <div key={comment.id} className="bg-gray-50 rounded-lg p-3">
+                                        <div className="flex items-center space-x-2 mb-1">
+                                          <span className="font-medium text-sm text-gray-900">{comment.author}</span>
+                                          <span className="text-xs text-gray-500">
+                                            {new Date(comment.createdAt).toLocaleDateString()}
+                                          </span>
                                         </div>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <div className="text-center py-6">
-                                      <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                        <span className="text-gray-500 text-xl">💬</span>
+                                        <p className="text-sm text-gray-700">{comment.content}</p>
                                       </div>
-                                      <p className="text-sm text-gray-500">Nenhum comentário ainda</p>
-                                    </div>
-                                  )}
-                                </div>
-                                
-                                {/* Histórico */}
-                                <div className="bg-gradient-to-br from-slate-50 to-gray-100 rounded-xl p-5 border border-slate-200 shadow-sm">
-                                  <div className="flex items-center gap-2 mb-4">
-                                    <div className="w-8 h-8 bg-slate-500 rounded-lg flex items-center justify-center">
-                                      <span className="text-white text-sm font-semibold">📋</span>
-                                    </div>
-                                    <h4 className="font-semibold text-gray-800">Histórico ({allTasks.find(t => t.id === task.id)?.history?.length || 0})</h4>
+                                    ))}
                                   </div>
-                                  {allTasks.find(t => t.id === task.id)?.history?.length ? (
-                                    <div className="space-y-2 max-h-40 overflow-y-auto">
-                                      {allTasks.find(t => t.id === task.id)?.history?.map((entry: any) => (
-                                        <div key={entry.id} className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-slate-200/50 shadow-sm">
-                                          <div className="flex items-center justify-between mb-1">
-                                            <div className="flex items-center gap-2">
-                                              <div className={`w-2 h-2 rounded-full ${
-                                                entry.action === 'created' ? 'bg-green-400' :
-                                                entry.action === 'completed' ? 'bg-blue-400' :
-                                                entry.action === 'postponed' ? 'bg-yellow-400' :
-                                                entry.action === 'edited' ? 'bg-purple-400' : 'bg-gray-400'
-                                              }`}></div>
-                                              <span className="font-medium text-sm text-gray-900">
-                                                {formatHistoryMessage(entry, projects)}
+                                ) : (
+                                  <p className="text-sm text-gray-500">Nenhum comentário</p>
+                                )}
+                              </div>
+                              
+                              {/* Histórico */}
+                              <div className="space-y-3">
+                                <h4 className="font-medium text-gray-900 flex items-center space-x-2">
+                                  <BarChart3 className="w-4 h-4" />
+                                  <span>Histórico ({allTasks.find(t => t.id === task.id)?.history?.length || 0})</span>
+                                </h4>
+                                {allTasks.find(t => t.id === task.id)?.history?.length ? (
+                                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                                    {allTasks.find(t => t.id === task.id)?.history?.map((entry: any) => (
+                                      <div key={entry.id} className="bg-gray-50 rounded-lg p-3">
+                                        <div className="flex items-center justify-between mb-1">
+                                          <span className="font-medium text-sm text-gray-900">
+                                            {formatHistoryMessage(entry, projects)}
+                                          </span>
+                                          <span className="text-xs text-gray-500">
+                                            {new Date(entry.timestamp).toLocaleDateString('pt-BR')}
+                                          </span>
+                                        </div>
+                                        {entry.details?.reason && (
+                                          <p className="text-xs text-gray-600 italic">"{entry.details.reason}"</p>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-gray-500">Nenhuma edição registrada</p>
+                                )}
+                              </div>
+                              
+                              {/* Links Externos */}
+                              <div className="space-y-3">
+                                <h4 className="font-medium text-gray-900 flex items-center space-x-2">
+                                  <ExternalLink className="w-4 h-4" />
+                                  <span>Links Úteis ({allTasks.find(t => t.id === task.id)?.externalLinks?.length || 0})</span>
+                                </h4>
+                                {allTasks.find(t => t.id === task.id)?.externalLinks?.length ? (
+                                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                                    {allTasks.find(t => t.id === task.id)?.externalLinks?.map((link: string, index: number) => (
+                                      <div key={index} className="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors">
+                                        <a 
+                                          href={link} 
+                                          target="_blank" 
+                                          rel="noopener noreferrer"
+                                          className="flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm transition-colors"
+                                        >
+                                          <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                                          <span className="truncate">{link.length > 40 ? link.substring(0, 40) + '...' : link}</span>
+                                        </a>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-gray-500">Nenhum link cadastrado</p>
+                                )}
+                              </div>
+                              
+                              {/* Anexos */}
+                              <div className="space-y-3">
+                                <h4 className="font-medium text-gray-900 flex items-center space-x-2">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                                    <polyline points="14,2 14,8 20,8"/>
+                                  </svg>
+                                  <span>Anexos ({allTasks.find(t => t.id === task.id)?.attachments?.length || 0})</span>
+                                </h4>
+                                {allTasks.find(t => t.id === task.id)?.attachments?.length ? (
+                                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                                    {allTasks.find(t => t.id === task.id)?.attachments?.map((attachment: any) => (
+                                      <div key={attachment.id} className="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors">
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                                            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                              <span className="text-blue-600 text-xs font-semibold">
+                                                {attachment.type.includes('image') ? '🖼️' :
+                                                 attachment.type.includes('pdf') ? '📄' :
+                                                 attachment.type.includes('doc') ? '📝' : '📁'}
                                               </span>
                                             </div>
-                                            <span className="text-xs text-gray-500">{new Date(entry.timestamp).toLocaleDateString('pt-BR')} {new Date(entry.timestamp).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</span>
+                                            <div className="min-w-0 flex-1">
+                                              <p className="font-medium text-sm text-gray-900 truncate">{attachment.name}</p>
+                                              <p className="text-xs text-gray-500">{(attachment.size / 1024).toFixed(1)} KB</p>
+                                            </div>
                                           </div>
-                                          {entry.details?.reason && (
-                                            <p className="text-xs text-gray-600 ml-4 mt-1 italic">&quot;{entry.details.reason}&quot;</p>
-                                          )}
-                                        </div>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <div className="text-center py-6">
-                                      <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                        <span className="text-slate-500 text-xl">📋</span>
-                                      </div>
-                                      <p className="text-sm text-gray-500">Nenhuma edição registrada</p>
-                                    </div>
-                                  )}
-                                </div>
-                                
-                                {/* Links Externos */}
-                                <div className="bg-gradient-to-br from-indigo-50 to-blue-100 rounded-xl p-5 border border-indigo-200 shadow-sm">
-                                  <div className="flex items-center gap-2 mb-4">
-                                    <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">
-                                      <span className="text-white text-sm font-semibold">🔗</span>
-                                    </div>
-                                    <h4 className="font-semibold text-gray-800">Links Úteis ({allTasks.find(t => t.id === task.id)?.externalLinks?.length || 0})</h4>
-                                  </div>
-                                  {allTasks.find(t => t.id === task.id)?.externalLinks?.length ? (
-                                    <div className="space-y-2 max-h-40 overflow-y-auto">
-                                      {allTasks.find(t => t.id === task.id)?.externalLinks?.map((link: string, index: number) => (
-                                        <div key={index} className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-indigo-200/50 shadow-sm hover:shadow-md transition-shadow">
                                           <a 
-                                            href={link} 
+                                            href={attachment.url} 
                                             target="_blank" 
                                             rel="noopener noreferrer"
-                                            className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 text-sm transition-colors"
+                                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-xs font-medium transition-colors flex-shrink-0"
                                           >
-                                            <ExternalLink className="w-4 h-4 flex-shrink-0" />
-                                            <span className="truncate">{link.length > 40 ? link.substring(0, 40) + '...' : link}</span>
+                                            Baixar
                                           </a>
                                         </div>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <div className="text-center py-6">
-                                      <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                        <span className="text-indigo-500 text-xl">🔗</span>
                                       </div>
-                                      <p className="text-sm text-gray-500">Nenhum link cadastrado</p>
-                                    </div>
-                                  )}
-                                </div>
-                                
-                                {/* Anexos */}
-                                <div className="bg-gradient-to-br from-orange-50 to-amber-100 rounded-xl p-5 border border-orange-200 shadow-sm">
-                                  <div className="flex items-center gap-2 mb-4">
-                                    <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
-                                      <span className="text-white text-sm font-semibold">📁</span>
-                                    </div>
-                                    <h4 className="font-semibold text-gray-800">Anexos ({allTasks.find(t => t.id === task.id)?.attachments?.length || 0})</h4>
+                                    ))}
                                   </div>
-                                  {allTasks.find(t => t.id === task.id)?.attachments?.length ? (
-                                    <div className="space-y-2 max-h-40 overflow-y-auto">
-                                      {allTasks.find(t => t.id === task.id)?.attachments?.map((attachment: any) => (
-                                        <div key={attachment.id} className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-orange-200/50 shadow-sm hover:shadow-md transition-shadow">
-                                          <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                                              <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                                <span className="text-orange-600 text-xs font-semibold">
-                                                  {attachment.type.includes('image') ? '🖼️' :
-                                                   attachment.type.includes('pdf') ? '📄' :
-                                                   attachment.type.includes('doc') ? '📝' : '📁'}
-                                                </span>
-                                              </div>
-                                              <div className="min-w-0 flex-1">
-                                                <p className="font-medium text-sm text-gray-700 truncate">{attachment.name}</p>
-                                                <p className="text-xs text-gray-500">{(attachment.size / 1024).toFixed(1)} KB</p>
-                                              </div>
-                                            </div>
-                                            <a 
-                                              href={attachment.url} 
-                                              target="_blank" 
-                                              rel="noopener noreferrer"
-                                              className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded-lg text-xs font-medium transition-colors flex-shrink-0"
-                                            >
-                                              Baixar
-                                            </a>
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <div className="text-center py-6">
-                                      <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                        <span className="text-orange-500 text-xl">📁</span>
-                                      </div>
-                                      <p className="text-sm text-gray-500">Nenhum anexo disponível</p>
-                                    </div>
-                                  )}
-                                </div>
+                                ) : (
+                                  <p className="text-sm text-gray-500">Nenhum anexo disponível</p>
+                                )}
                               </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
-                  </motion.div>
+                  </div>
                 );
               })}
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Seção de Tarefas Completadas */}
-      {completedTasks.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            🎉 Tarefas Completadas ({completedTasks.length})
-          </h2>
-          
-          <div className="bg-green-50 rounded-xl shadow-sm border border-green-200 p-6">
+        {/* Seção de Tarefas Completadas */}
+        {completedTasks.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                <CheckCircle2 className="w-4 h-4 text-green-600" />
+              </div>
+              <h2 className="text-xl font-semibold text-gray-900">
+                Tarefas Completadas ({completedTasks.length})
+              </h2>
+            </div>
+            
             <div className="space-y-3">
               {completedTasks.map((task) => {
                 const energyConfig = getEnergyConfig(task.energyPoints);
@@ -722,32 +685,33 @@ export function PlanejamentoDiariaPage() {
                 return (
                   <div
                     key={task.id}
-                    className="bg-gradient-to-r from-green-100 to-emerald-100 rounded-xl shadow-sm border border-green-300 p-3 opacity-75"
+                    className="bg-green-50 rounded-lg border border-green-200"
                   >
-                    <div className="flex items-center justify-between w-full">
-                      <Link 
-                        href={`/task/${task.id}`}
-                        className="flex-1"
-                      >
-                        <h3 className="text-lg font-semibold text-green-800 hover:text-green-900 transition-colors cursor-pointer line-through">
-                          {task.description}
-                        </h3>
-                      </Link>
-                      <div className="flex items-center gap-3">
-                        {/* Energia */}
-                        <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
-                          task.energyPoints === 1 ? 'bg-green-200 text-green-800 border border-green-300' :
-                          task.energyPoints === 3 ? 'bg-blue-200 text-blue-800 border border-blue-300' :
-                          'bg-purple-200 text-purple-800 border border-purple-300'
-                        }`}>
-                          {energyConfig.icon}
-                          <span>{energyConfig.label}</span>
-                        </div>
-                        
-                        {/* Status completed */}
-                        <div className="flex items-center gap-1.5 px-3 py-1 bg-green-200 text-green-800 border border-green-300 rounded-full text-xs font-medium">
-                          <CheckSquare className="w-3 h-3" />
-                          <span>Concluída</span>
+                    <div className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <Link 
+                            href={`/task/${task.id}`}
+                            className="block"
+                          >
+                            <h3 className="text-lg font-medium text-green-800 hover:text-green-900 transition-colors line-through">
+                              {task.description}
+                            </h3>
+                          </Link>
+                          
+                          <div className="flex items-center space-x-3 mt-2">
+                            {/* Badge de Energia */}
+                            <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium text-green-700 bg-green-100 border border-green-300">
+                              {energyConfig.icon}
+                              <span>{energyConfig.label}</span>
+                            </span>
+
+                            {/* Status */}
+                            <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium text-green-700 bg-green-100 border border-green-300">
+                              <CheckSquare className="w-3 h-3" />
+                              <span>Concluída</span>
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -756,308 +720,268 @@ export function PlanejamentoDiariaPage() {
               })}
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Seção de Tarefas Não Executadas - usando missedTasks do hook */}
-      {missedTasks.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            ⚠️ Tarefas não executadas ({missedTasks.length})
-          </h2>
-          
-          <div className="bg-red-50 rounded-xl shadow-sm border border-red-200 p-6">
+        {/* Seção de Tarefas Não Executadas */}
+        {missedTasks.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                <AlertTriangle className="w-4 h-4 text-red-600" />
+              </div>
+              <h2 className="text-xl font-semibold text-gray-900">
+                Tarefas não executadas ({missedTasks.length})
+              </h2>
+            </div>
+            
             <div className="space-y-3">
               {missedTasks.map((task) => {
                 const isExpanded = expandedTasks.has(task.id);
                 const energyConfig = getEnergyConfig(task.energyPoints);
-                const canPlan = (energyBudget.used + task.energyPoints) <= energyBudget.total;
                 const overdueDays = task.deadline ? getOverdueDays(task.deadline) : (task.missedDaysCount || 0);
 
                 return (
-                  <motion.div
+                  <div
                     key={task.id}
-                    className="bg-gradient-to-r from-red-100 to-pink-100 rounded-xl shadow-md border border-red-300 transition-all hover:shadow-lg hover:scale-[1.02]"
-                    whileHover={{ scale: 1.02 }}
+                    className="bg-red-50 rounded-lg border border-red-200"
                   >
-                    <div className="p-3">
-                      <div className="flex flex-col gap-2">
-                        {/* Badge de Não Execução */}
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              {task.missedDaysCount > 0 && (
-                                <span className={`text-xs px-2 py-1 rounded font-medium ${
-                                  task.missedDaysCount === 1 ? 'text-orange-700 bg-orange-100' :
-                                  task.missedDaysCount <= 3 ? 'text-red-700 bg-red-100' :
-                                  'text-red-800 bg-red-200'
-                                }`}>
-                                  Não executada a {task.missedDaysCount} dia{task.missedDaysCount > 1 ? 's' : ''}
-                                </span>
-                              )}
+                    <div className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          {/* Badge de Não Execução */}
+                          {task.missedDaysCount > 0 && (
+                            <div className="mb-2">
+                              <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
+                                task.missedDaysCount === 1 ? 'text-orange-700 bg-orange-100 border border-orange-200' :
+                                task.missedDaysCount <= 3 ? 'text-red-700 bg-red-100 border border-red-200' :
+                                'text-red-800 bg-red-200 border border-red-300'
+                              }`}>
+                                Não executada a {task.missedDaysCount} dia{task.missedDaysCount > 1 ? 's' : ''}
+                              </span>
                             </div>
-                          </div>
-                        </div>
+                          )}
 
-                        {/* First Line - Task Description */}
-                        <div className="flex items-center justify-between w-full">
                           <Link 
                             href={`/task/${task.id}`}
-                            className="flex-1"
+                            className="block"
                           >
-                            <h3 className="text-lg font-semibold text-red-800 hover:text-red-900 transition-colors cursor-pointer">
+                            <h3 className="text-lg font-medium text-red-800 hover:text-red-900 transition-colors">
                               {task.description}
                             </h3>
                           </Link>
-                        </div>
-                        
-                        {/* Second Line - Badges and Actions */}
-                        <div className="flex items-center justify-between w-full">
-                          <div className="flex items-center gap-3">
-                            {/* Energia */}
-                            <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
-                              task.energyPoints === 1 ? 'bg-red-200 text-red-800 border border-red-300' :
-                              task.energyPoints === 3 ? 'bg-red-200 text-red-800 border border-red-300' :
-                              'bg-red-200 text-red-800 border border-red-300'
-                            }`}>
+                          
+                          <div className="flex items-center space-x-3 mt-2">
+                            {/* Badge de Energia */}
+                            <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium text-red-700 bg-red-100 border border-red-300">
                               {energyConfig.icon}
                               <span>{energyConfig.label}</span>
-                            </div>
+                            </span>
 
-                            {/* Data de vencimento e não execução */}
+                            {/* Data de vencimento */}
                             {task.dueDate && (
-                              <div className="flex items-center gap-1.5 px-3 py-1 bg-red-200 text-red-800 border-red-300 border rounded-full text-xs font-medium">
+                              <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium text-red-700 bg-red-100 border border-red-300">
                                 <Clock className="w-3 h-3" />
                                 <span>{new Date(task.dueDate + 'T00:00:00').toLocaleDateString('pt-BR')} (há {overdueDays} dia{overdueDays > 1 ? 's' : ''})</span>
-                              </div>
+                              </span>
                             )}
 
-                            {/* Projeto badge */}
+                            {/* Projeto */}
                             {task.project && (
-                              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-red-200 text-red-800 border border-red-300">
+                              <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium text-red-700 bg-red-100 border border-red-300">
                                 <span>{task.project.icon}</span>
                                 <span>{task.project.name}</span>
-                              </div>
+                              </span>
                             )}
-                          </div>
-
-                          {/* Actions */}
-                          <div className="flex items-center gap-3">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                removeFromMissed(task.id);
-                              }}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                            >
-                              Remover
-                            </Button>
-                            
-                            <Button
-                              onClick={() => toggleTaskExpansion(task.id)}
-                              variant="ghost"
-                              size="icon"
-                              className="border bg-background border-transparent w-9 h-9 p-2 text-red-600 hover:text-red-700 hover:bg-red-100 rounded-lg transition-colors"
-                            >
-                              <ChevronDown className={`w-4 h-4 transition-transform ${
-                                isExpanded ? 'rotate-180' : ''
-                              }`} />
-                            </Button>
                           </div>
                         </div>
 
-                        {/* Expanded content - Informações completas como nas outras seções */}
-                        <AnimatePresence>
-                          {isExpanded && (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: 'auto' }}
-                              exit={{ opacity: 0, height: 0 }}
-                              className="mt-4 pt-4 border-t border-red-300"
-                            >
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* Comentários */}
-                                <div className="bg-gradient-to-br from-red-50 to-pink-100 rounded-xl p-5 border border-red-200 shadow-sm">
-                                  <div className="flex items-center gap-2 mb-4">
-                                    <div className="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center">
-                                      <span className="text-white text-sm font-semibold">💬</span>
-                                    </div>
-                                    <h4 className="font-semibold text-red-800">Comentários ({task.comments?.length || 0})</h4>
-                                  </div>
-                                  {task.comments?.length ? (
-                                    <div className="space-y-3 max-h-40 overflow-y-auto">
-                                      {task.comments.map((comment) => (
-                                        <div key={comment.id} className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-red-200/50 shadow-sm">
-                                          <div className="flex items-center gap-2 mb-2">
-                                            <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
-                                              <span className="text-xs font-semibold text-red-700">{comment.author.charAt(0).toUpperCase()}</span>
-                                            </div>
-                                            <span className="font-medium text-sm text-red-700">{comment.author}</span>
-                                            <span className="text-xs text-red-500 ml-auto">{new Date(comment.createdAt).toLocaleDateString()} {new Date(comment.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                                          </div>
-                                          <p className="text-sm text-red-600 leading-relaxed">{comment.content}</p>
+                        {/* Ações */}
+                        <div className="flex items-center space-x-2 ml-4">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeFromMissed(task.id);
+                            }}
+                            className="text-red-600 hover:text-red-700 border-red-200 hover:bg-red-50"
+                          >
+                            Remover
+                          </Button>
+                          
+                          <Button
+                            onClick={() => toggleTaskExpansion(task.id)}
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <ChevronDown className={`w-4 h-4 transition-transform ${
+                              isExpanded ? 'rotate-180' : ''
+                            }`} />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Conteúdo Expandido Completo para Missed Tasks */}
+                      <AnimatePresence>
+                        {isExpanded && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="mt-4 pt-4 border-t border-red-200"
+                          >
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              {/* Comentários */}
+                              <div className="space-y-3">
+                                <h4 className="font-medium text-red-900 flex items-center space-x-2">
+                                  <MessageSquare className="w-4 h-4" />
+                                  <span>Comentários ({task.comments?.length || 0})</span>
+                                </h4>
+                                {task.comments?.length ? (
+                                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                                    {task.comments.map((comment) => (
+                                      <div key={comment.id} className="bg-red-100 rounded-lg p-3">
+                                        <div className="flex items-center space-x-2 mb-1">
+                                          <span className="font-medium text-sm text-red-900">{comment.author}</span>
+                                          <span className="text-xs text-red-600">
+                                            {new Date(comment.createdAt).toLocaleDateString()}
+                                          </span>
                                         </div>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <div className="text-center py-6">
-                                      <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                        <span className="text-red-500 text-xl">💬</span>
+                                        <p className="text-sm text-red-800">{comment.content}</p>
                                       </div>
-                                      <p className="text-sm text-red-500">Nenhum comentário ainda</p>
-                                    </div>
-                                  )}
-                                </div>
-                                
-                                {/* Histórico */}
-                                <div className="bg-gradient-to-br from-red-50 to-pink-100 rounded-xl p-5 border border-red-200 shadow-sm">
-                                  <div className="flex items-center gap-2 mb-4">
-                                    <div className="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center">
-                                      <span className="text-white text-sm font-semibold">📋</span>
-                                    </div>
-                                    <h4 className="font-semibold text-red-800">Histórico ({task.history?.length || 0})</h4>
+                                    ))}
                                   </div>
-                                  {task.history?.length ? (
-                                    <div className="space-y-2 max-h-40 overflow-y-auto">
-                                      {task.history.map((entry) => (
-                                        <div key={entry.id} className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-red-200/50 shadow-sm">
-                                          <div className="flex items-center justify-between mb-1">
-                                            <div className="flex items-center gap-2">
-                                              <div className={`w-2 h-2 rounded-full ${
-                                                entry.action === 'created' ? 'bg-green-400' :
-                                                entry.action === 'completed' ? 'bg-blue-400' :
-                                                entry.action === 'postponed' ? 'bg-yellow-400' :
-                                                entry.action === 'edited' ? 'bg-purple-400' : 'bg-gray-400'
-                                              }`}></div>
-                                              <span className="font-medium text-sm text-red-900">
-                                                {formatHistoryMessage(entry, projects)}
+                                ) : (
+                                  <p className="text-sm text-red-600">Nenhum comentário</p>
+                                )}
+                              </div>
+                              
+                              {/* Histórico */}
+                              <div className="space-y-3">
+                                <h4 className="font-medium text-red-900 flex items-center space-x-2">
+                                  <BarChart3 className="w-4 h-4" />
+                                  <span>Histórico ({task.history?.length || 0})</span>
+                                </h4>
+                                {task.history?.length ? (
+                                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                                    {task.history.map((entry) => (
+                                      <div key={entry.id} className="bg-red-100 rounded-lg p-3">
+                                        <div className="flex items-center justify-between mb-1">
+                                          <span className="font-medium text-sm text-red-900">
+                                            {formatHistoryMessage(entry, projects)}
+                                          </span>
+                                          <span className="text-xs text-red-600">
+                                            {new Date(entry.timestamp).toLocaleDateString('pt-BR')}
+                                          </span>
+                                        </div>
+                                        {entry.details?.reason && (
+                                          <p className="text-xs text-red-700 italic">"{entry.details.reason}"</p>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-red-600">Nenhuma edição registrada</p>
+                                )}
+                              </div>
+                              
+                              {/* Links Externos */}
+                              <div className="space-y-3">
+                                <h4 className="font-medium text-red-900 flex items-center space-x-2">
+                                  <ExternalLink className="w-4 h-4" />
+                                  <span>Links Úteis ({task.externalLinks?.length || 0})</span>
+                                </h4>
+                                {task.externalLinks?.length ? (
+                                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                                    {task.externalLinks.map((link, index) => (
+                                      <div key={index} className="bg-red-100 rounded-lg p-3 hover:bg-red-200 transition-colors">
+                                        <a 
+                                          href={link} 
+                                          target="_blank" 
+                                          rel="noopener noreferrer"
+                                          className="flex items-center gap-2 text-red-700 hover:text-red-900 text-sm transition-colors"
+                                        >
+                                          <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                                          <span className="truncate">{link.length > 40 ? link.substring(0, 40) + '...' : link}</span>
+                                        </a>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-red-600">Nenhum link cadastrado</p>
+                                )}
+                              </div>
+                              
+                              {/* Anexos */}
+                              <div className="space-y-3">
+                                <h4 className="font-medium text-red-900 flex items-center space-x-2">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                                    <polyline points="14,2 14,8 20,8"/>
+                                  </svg>
+                                  <span>Anexos ({task.attachments?.length || 0})</span>
+                                </h4>
+                                {task.attachments?.length ? (
+                                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                                    {task.attachments.map((attachment) => (
+                                      <div key={attachment.id} className="bg-red-100 rounded-lg p-3 hover:bg-red-200 transition-colors">
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                                            <div className="w-8 h-8 bg-red-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                                              <span className="text-red-700 text-xs font-semibold">
+                                                {attachment.type.includes('image') ? '🖼️' :
+                                                 attachment.type.includes('pdf') ? '📄' :
+                                                 attachment.type.includes('doc') ? '📝' : '📁'}
                                               </span>
                                             </div>
-                                            <span className="text-xs text-red-500">{new Date(entry.timestamp).toLocaleDateString('pt-BR')} {new Date(entry.timestamp).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</span>
+                                            <div className="min-w-0 flex-1">
+                                              <p className="font-medium text-sm text-red-900 truncate">{attachment.name}</p>
+                                              <p className="text-xs text-red-600">{(attachment.size / 1024).toFixed(1)} KB</p>
+                                            </div>
                                           </div>
-                                          {entry.details?.reason && (
-                                            <p className="text-xs text-red-600 ml-4 mt-1 italic">&quot;{entry.details.reason}&quot;</p>
-                                          )}
-                                        </div>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <div className="text-center py-6">
-                                      <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                        <span className="text-red-500 text-xl">📋</span>
-                                      </div>
-                                      <p className="text-sm text-red-500">Nenhuma edição registrada</p>
-                                    </div>
-                                  )}
-                                </div>
-                                
-                                {/* Links Externos */}
-                                <div className="bg-gradient-to-br from-red-50 to-pink-100 rounded-xl p-5 border border-red-200 shadow-sm">
-                                  <div className="flex items-center gap-2 mb-4">
-                                    <div className="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center">
-                                      <span className="text-white text-sm font-semibold">🔗</span>
-                                    </div>
-                                    <h4 className="font-semibold text-red-800">Links Úteis ({task.externalLinks?.length || 0})</h4>
-                                  </div>
-                                  {task.externalLinks?.length ? (
-                                    <div className="space-y-2 max-h-40 overflow-y-auto">
-                                      {task.externalLinks.map((link, index) => (
-                                        <div key={index} className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-red-200/50 shadow-sm hover:shadow-md transition-shadow">
                                           <a 
-                                            href={link} 
+                                            href={attachment.url} 
                                             target="_blank" 
                                             rel="noopener noreferrer"
-                                            className="flex items-center gap-2 text-red-600 hover:text-red-800 text-sm transition-colors"
+                                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-xs font-medium transition-colors flex-shrink-0"
                                           >
-                                            <ExternalLink className="w-4 h-4 flex-shrink-0" />
-                                            <span className="truncate">{link.length > 40 ? link.substring(0, 40) + '...' : link}</span>
+                                            Baixar
                                           </a>
                                         </div>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <div className="text-center py-6">
-                                      <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                        <span className="text-red-500 text-xl">🔗</span>
                                       </div>
-                                      <p className="text-sm text-red-500">Nenhum link cadastrado</p>
-                                    </div>
-                                  )}
-                                </div>
-                                
-                                {/* Anexos */}
-                                <div className="bg-gradient-to-br from-red-50 to-pink-100 rounded-xl p-5 border border-red-200 shadow-sm">
-                                  <div className="flex items-center gap-2 mb-4">
-                                    <div className="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center">
-                                      <span className="text-white text-sm font-semibold">📁</span>
-                                    </div>
-                                    <h4 className="font-semibold text-red-800">Anexos ({task.attachments?.length || 0})</h4>
+                                    ))}
                                   </div>
-                                  {task.attachments?.length ? (
-                                    <div className="space-y-2 max-h-40 overflow-y-auto">
-                                      {task.attachments.map((attachment) => (
-                                        <div key={attachment.id} className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-red-200/50 shadow-sm hover:shadow-md transition-shadow">
-                                          <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                                              <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                                <span className="text-red-600 text-xs font-semibold">
-                                                  {attachment.type.includes('image') ? '🖼️' :
-                                                   attachment.type.includes('pdf') ? '📄' :
-                                                   attachment.type.includes('doc') ? '📝' : '📁'}
-                                                </span>
-                                              </div>
-                                              <div className="min-w-0 flex-1">
-                                                <p className="font-medium text-sm text-red-700 truncate">{attachment.name}</p>
-                                                <p className="text-xs text-red-500">{(attachment.size / 1024).toFixed(1)} KB</p>
-                                              </div>
-                                            </div>
-                                            <a 
-                                              href={attachment.url} 
-                                              target="_blank" 
-                                              rel="noopener noreferrer"
-                                              className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-xs font-medium transition-colors flex-shrink-0"
-                                            >
-                                              Baixar
-                                            </a>
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <div className="text-center py-6">
-                                      <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                        <span className="text-red-500 text-xl">📁</span>
-                                      </div>
-                                      <p className="text-sm text-red-500">Nenhum anexo disponível</p>
-                                    </div>
-                                  )}
-                                </div>
+                                ) : (
+                                  <p className="text-sm text-red-600">Nenhum anexo disponível</p>
+                                )}
                               </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
-                  </motion.div>
+                  </div>
                 );
               })}
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Seção de Atividades Disponíveis */}
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-          Atividades Disponíveis ({availableTasks.length})
-        </h2>
-        
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        {/* Seção de Atividades Disponíveis */}
+        <div className="mb-8">
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+              <Calendar className="w-4 h-4 text-gray-600" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900">
+              Atividades Disponíveis ({availableTasks.length})
+            </h2>
+          </div>
+          
           {availableTasks.length === 0 ? (
-            <div className="text-center py-12">
-              <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+            <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
+              <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-500">Nenhuma atividade pendente</p>
             </div>
           ) : (
@@ -1068,264 +992,219 @@ export function PlanejamentoDiariaPage() {
                 const canPlan = (energyBudget.used + task.energyPoints) <= energyBudget.total;
 
                 return (
-                  <motion.div
+                  <div
                     key={task.id}
-                    className="bg-gradient-to-r from-white to-gray-50 rounded-xl shadow-md border border-gray-200 transition-all hover:shadow-lg hover:scale-[1.02]"
-                    whileHover={{ scale: 1.02 }}
+                    className="bg-white rounded-lg border border-gray-200 hover:border-gray-300 transition-colors"
                   >
-                    <div className="p-3">
-                      <div className="flex flex-col gap-2">
-                        {/* First Line - Task Description */}
-                        <div className="flex items-center justify-between w-full">
+                    <div className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
                           <Link 
                             href={`/task/${task.id}`}
-                            className="flex-1"
+                            className="block"
                           >
-                            <h3 className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors cursor-pointer">
+                            <h3 className="text-lg font-medium text-gray-900 hover:text-blue-600 transition-colors">
                               {task.description}
                             </h3>
                           </Link>
-                        </div>
-                        
-                        {/* Second Line - Badges and Actions */}
-                        <div className="flex items-center justify-between w-full">
-                          <div className="flex items-center gap-3">
-                            {/* Energia */}
-                            <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
-                              task.energyPoints === 1 ? 'bg-green-100 text-green-700 border border-green-200' :
-                              task.energyPoints === 3 ? 'bg-blue-100 text-blue-700 border border-blue-200' :
-                              'bg-purple-100 text-purple-700 border border-purple-200'
-                            }`}>
+                          
+                          <div className="flex items-center space-x-3 mt-2">
+                            {/* Badge de Energia */}
+                            <span className={`inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium border ${energyConfig.color}`}>
                               {energyConfig.icon}
                               <span>{energyConfig.label}</span>
-                            </div>
+                            </span>
 
-                            {/* Data */}
+                            {/* Data de Vencimento */}
                             {task.deadline && task.deadline !== 'Sem vencimento' && (
-                              <div className="flex items-center gap-1.5 px-3 py-1 bg-red-100 text-red-700 border-red-200 border rounded-full text-xs font-medium">
+                              <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium text-red-700 bg-red-50 border border-red-200">
                                 <Clock className="w-3 h-3" />
                                 <span>{task.deadline.split('T')[0].split('-').reverse().join('/')}</span>
-                              </div>
+                              </span>
                             )}
 
-                            {/* Projeto badge */}
+                            {/* Projeto */}
                             {task.project && (
-                              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700 border border-purple-200">
+                              <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200">
                                 <span>{task.project.icon}</span>
                                 <span>{task.project.name}</span>
-                              </div>
+                              </span>
                             )}
-                            {console.log('🔍 DEBUG AVAILABLE task.project:', task.project)}
-                          </div>
-
-                          {/* Actions */}
-                          <div className="flex items-center gap-3">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handlePlanTask(task.id)}
-                              disabled={!canPlan}
-                              className={`border bg-background h-9 rounded-md border-transparent px-2 ${
-                                canPlan 
-                                  ? 'text-green-600 hover:text-green-700 hover:bg-green-50' 
-                                  : 'text-red-600 bg-red-50 border-red-200 cursor-not-allowed'
-                              }`}
-                            >
-                              {canPlan ? 'Atuar Hoje' : 'Energia Insuficiente'}
-                            </Button>
-                            
-                            <Button
-                              onClick={() => toggleTaskExpansion(task.id)}
-                              variant="ghost"
-                              size="icon"
-                              className="border bg-background border-transparent w-9 h-9 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                            >
-                              <ChevronDown className={`w-4 h-4 transition-transform ${
-                                isExpanded ? 'rotate-180' : ''
-                              }`} />
-                            </Button>
                           </div>
                         </div>
 
-                        {/* Expanded content */}
-                        <AnimatePresence>
-                          {isExpanded && (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: 'auto' }}
-                              exit={{ opacity: 0, height: 0 }}
-                              className="mt-4 pt-4 border-t border-gray-200"
-                            >
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* Comentários */}
-                                <div className="bg-gradient-to-br from-gray-50 to-slate-100 rounded-xl p-5 border border-gray-200 shadow-sm">
-                                  <div className="flex items-center gap-2 mb-4">
-                                    <div className="w-8 h-8 bg-gray-500 rounded-lg flex items-center justify-center">
-                                      <span className="text-white text-sm font-semibold">💬</span>
-                                    </div>
-                                    <h4 className="font-semibold text-gray-800">Comentários ({allTasks.find(t => t.id === task.id)?.comments?.length || 0})</h4>
-                                  </div>
-                                  {allTasks.find(t => t.id === task.id)?.comments?.length ? (
-                                    <div className="space-y-3 max-h-40 overflow-y-auto">
-                                      {allTasks.find(t => t.id === task.id)?.comments?.map((comment: any) => (
-                                        <div key={comment.id} className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-gray-200/50 shadow-sm">
-                                          <div className="flex items-center gap-2 mb-2">
-                                            <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center">
-                                              <span className="text-xs font-semibold text-gray-700">{comment.author.charAt(0).toUpperCase()}</span>
-                                            </div>
-                                            <span className="font-medium text-sm text-gray-700">{comment.author}</span>
-                                            <span className="text-xs text-gray-500 ml-auto">{new Date(comment.createdAt).toLocaleDateString()} {new Date(comment.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                                          </div>
-                                          <p className="text-sm text-gray-600 leading-relaxed">{comment.content}</p>
+                        {/* Ações */}
+                        <div className="flex items-center space-x-2 ml-4">
+                          <Button
+                            variant={canPlan ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handlePlanTask(task.id)}
+                            disabled={!canPlan}
+                            className={!canPlan ? 'text-red-600 border-red-200 cursor-not-allowed' : ''}
+                          >
+                            {canPlan ? 'Atuar Hoje' : 'Energia Insuficiente'}
+                          </Button>
+                          
+                          <Button
+                            onClick={() => toggleTaskExpansion(task.id)}
+                            variant="ghost"
+                            size="sm"
+                            className="text-gray-400 hover:text-gray-600"
+                          >
+                            <ChevronDown className={`w-4 h-4 transition-transform ${
+                              isExpanded ? 'rotate-180' : ''
+                            }`} />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Conteúdo Expandido Completo para Available Tasks */}
+                      <AnimatePresence>
+                        {isExpanded && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="mt-4 pt-4 border-t border-gray-100"
+                          >
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              {/* Comentários */}
+                              <div className="space-y-3">
+                                <h4 className="font-medium text-gray-900 flex items-center space-x-2">
+                                  <MessageSquare className="w-4 h-4" />
+                                  <span>Comentários ({allTasks.find(t => t.id === task.id)?.comments?.length || 0})</span>
+                                </h4>
+                                {allTasks.find(t => t.id === task.id)?.comments?.length ? (
+                                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                                    {allTasks.find(t => t.id === task.id)?.comments?.map((comment: any) => (
+                                      <div key={comment.id} className="bg-gray-50 rounded-lg p-3">
+                                        <div className="flex items-center space-x-2 mb-1">
+                                          <span className="font-medium text-sm text-gray-900">{comment.author}</span>
+                                          <span className="text-xs text-gray-500">
+                                            {new Date(comment.createdAt).toLocaleDateString()}
+                                          </span>
                                         </div>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <div className="text-center py-6">
-                                      <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                        <span className="text-gray-500 text-xl">💬</span>
+                                        <p className="text-sm text-gray-700">{comment.content}</p>
                                       </div>
-                                      <p className="text-sm text-gray-500">Nenhum comentário ainda</p>
-                                    </div>
-                                  )}
-                                </div>
-                                
-                                {/* Histórico */}
-                                <div className="bg-gradient-to-br from-slate-50 to-gray-100 rounded-xl p-5 border border-slate-200 shadow-sm">
-                                  <div className="flex items-center gap-2 mb-4">
-                                    <div className="w-8 h-8 bg-slate-500 rounded-lg flex items-center justify-center">
-                                      <span className="text-white text-sm font-semibold">📋</span>
-                                    </div>
-                                    <h4 className="font-semibold text-gray-800">Histórico ({allTasks.find(t => t.id === task.id)?.history?.length || 0})</h4>
+                                    ))}
                                   </div>
-                                  {allTasks.find(t => t.id === task.id)?.history?.length ? (
-                                    <div className="space-y-2 max-h-40 overflow-y-auto">
-                                      {allTasks.find(t => t.id === task.id)?.history?.map((entry: any) => (
-                                        <div key={entry.id} className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-slate-200/50 shadow-sm">
-                                          <div className="flex items-center justify-between mb-1">
-                                            <div className="flex items-center gap-2">
-                                              <div className={`w-2 h-2 rounded-full ${
-                                                entry.action === 'created' ? 'bg-green-400' :
-                                                entry.action === 'completed' ? 'bg-blue-400' :
-                                                entry.action === 'postponed' ? 'bg-yellow-400' :
-                                                entry.action === 'edited' ? 'bg-purple-400' : 'bg-gray-400'
-                                              }`}></div>
-                                              <span className="font-medium text-sm text-gray-900">
-                                                {formatHistoryMessage(entry, projects)}
+                                ) : (
+                                  <p className="text-sm text-gray-500">Nenhum comentário</p>
+                                )}
+                              </div>
+                              
+                              {/* Histórico */}
+                              <div className="space-y-3">
+                                <h4 className="font-medium text-gray-900 flex items-center space-x-2">
+                                  <BarChart3 className="w-4 h-4" />
+                                  <span>Histórico ({allTasks.find(t => t.id === task.id)?.history?.length || 0})</span>
+                                </h4>
+                                {allTasks.find(t => t.id === task.id)?.history?.length ? (
+                                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                                    {allTasks.find(t => t.id === task.id)?.history?.map((entry: any) => (
+                                      <div key={entry.id} className="bg-gray-50 rounded-lg p-3">
+                                        <div className="flex items-center justify-between mb-1">
+                                          <span className="font-medium text-sm text-gray-900">
+                                            {formatHistoryMessage(entry, projects)}
+                                          </span>
+                                          <span className="text-xs text-gray-500">
+                                            {new Date(entry.timestamp).toLocaleDateString('pt-BR')}
+                                          </span>
+                                        </div>
+                                        {entry.details?.reason && (
+                                          <p className="text-xs text-gray-600 italic">"{entry.details.reason}"</p>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-gray-500">Nenhuma edição registrada</p>
+                                )}
+                              </div>
+                              
+                              {/* Links Externos */}
+                              <div className="space-y-3">
+                                <h4 className="font-medium text-gray-900 flex items-center space-x-2">
+                                  <ExternalLink className="w-4 h-4" />
+                                  <span>Links Úteis ({allTasks.find(t => t.id === task.id)?.externalLinks?.length || 0})</span>
+                                </h4>
+                                {allTasks.find(t => t.id === task.id)?.externalLinks?.length ? (
+                                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                                    {allTasks.find(t => t.id === task.id)?.externalLinks?.map((link: string, index: number) => (
+                                      <div key={index} className="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors">
+                                        <a 
+                                          href={link} 
+                                          target="_blank" 
+                                          rel="noopener noreferrer"
+                                          className="flex items-center gap-2 text-blue-600 hover:text-blue-800 text-sm transition-colors"
+                                        >
+                                          <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                                          <span className="truncate">{link.length > 40 ? link.substring(0, 40) + '...' : link}</span>
+                                        </a>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-gray-500">Nenhum link cadastrado</p>
+                                )}
+                              </div>
+                              
+                              {/* Anexos */}
+                              <div className="space-y-3">
+                                <h4 className="font-medium text-gray-900 flex items-center space-x-2">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                                    <polyline points="14,2 14,8 20,8"/>
+                                  </svg>
+                                  <span>Anexos ({allTasks.find(t => t.id === task.id)?.attachments?.length || 0})</span>
+                                </h4>
+                                {allTasks.find(t => t.id === task.id)?.attachments?.length ? (
+                                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                                    {allTasks.find(t => t.id === task.id)?.attachments?.map((attachment: any) => (
+                                      <div key={attachment.id} className="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors">
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                                            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                              <span className="text-blue-600 text-xs font-semibold">
+                                                {attachment.type.includes('image') ? '🖼️' :
+                                                 attachment.type.includes('pdf') ? '📄' :
+                                                 attachment.type.includes('doc') ? '📝' : '📁'}
                                               </span>
                                             </div>
-                                            <span className="text-xs text-gray-500">{new Date(entry.timestamp).toLocaleDateString('pt-BR')} {new Date(entry.timestamp).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</span>
+                                            <div className="min-w-0 flex-1">
+                                              <p className="font-medium text-sm text-gray-900 truncate">{attachment.name}</p>
+                                              <p className="text-xs text-gray-500">{(attachment.size / 1024).toFixed(1)} KB</p>
+                                            </div>
                                           </div>
-                                          {entry.details?.reason && (
-                                            <p className="text-xs text-gray-600 ml-4 mt-1 italic">&quot;{entry.details.reason}&quot;</p>
-                                          )}
-                                        </div>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <div className="text-center py-6">
-                                      <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                        <span className="text-slate-500 text-xl">📋</span>
-                                      </div>
-                                      <p className="text-sm text-gray-500">Nenhuma edição registrada</p>
-                                    </div>
-                                  )}
-                                </div>
-                                
-                                {/* Links Externos */}
-                                <div className="bg-gradient-to-br from-indigo-50 to-blue-100 rounded-xl p-5 border border-indigo-200 shadow-sm">
-                                  <div className="flex items-center gap-2 mb-4">
-                                    <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">
-                                      <span className="text-white text-sm font-semibold">🔗</span>
-                                    </div>
-                                    <h4 className="font-semibold text-gray-800">Links Úteis ({allTasks.find(t => t.id === task.id)?.externalLinks?.length || 0})</h4>
-                                  </div>
-                                  {allTasks.find(t => t.id === task.id)?.externalLinks?.length ? (
-                                    <div className="space-y-2 max-h-40 overflow-y-auto">
-                                      {allTasks.find(t => t.id === task.id)?.externalLinks?.map((link: string, index: number) => (
-                                        <div key={index} className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-indigo-200/50 shadow-sm hover:shadow-md transition-shadow">
                                           <a 
-                                            href={link} 
+                                            href={attachment.url} 
                                             target="_blank" 
                                             rel="noopener noreferrer"
-                                            className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 text-sm transition-colors"
+                                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-xs font-medium transition-colors flex-shrink-0"
                                           >
-                                            <ExternalLink className="w-4 h-4 flex-shrink-0" />
-                                            <span className="truncate">{link.length > 40 ? link.substring(0, 40) + '...' : link}</span>
+                                            Baixar
                                           </a>
                                         </div>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <div className="text-center py-6">
-                                      <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                        <span className="text-indigo-500 text-xl">🔗</span>
                                       </div>
-                                      <p className="text-sm text-gray-500">Nenhum link cadastrado</p>
-                                    </div>
-                                  )}
-                                </div>
-                                
-                                {/* Anexos */}
-                                <div className="bg-gradient-to-br from-orange-50 to-amber-100 rounded-xl p-5 border border-orange-200 shadow-sm">
-                                  <div className="flex items-center gap-2 mb-4">
-                                    <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
-                                      <span className="text-white text-sm font-semibold">📁</span>
-                                    </div>
-                                    <h4 className="font-semibold text-gray-800">Anexos ({allTasks.find(t => t.id === task.id)?.attachments?.length || 0})</h4>
+                                    ))}
                                   </div>
-                                  {allTasks.find(t => t.id === task.id)?.attachments?.length ? (
-                                    <div className="space-y-2 max-h-40 overflow-y-auto">
-                                      {allTasks.find(t => t.id === task.id)?.attachments?.map((attachment: any) => (
-                                        <div key={attachment.id} className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-orange-200/50 shadow-sm hover:shadow-md transition-shadow">
-                                          <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                                              <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                                <span className="text-orange-600 text-xs font-semibold">
-                                                  {attachment.type.includes('image') ? '🖼️' :
-                                                   attachment.type.includes('pdf') ? '📄' :
-                                                   attachment.type.includes('doc') ? '📝' : '📁'}
-                                                </span>
-                                              </div>
-                                              <div className="min-w-0 flex-1">
-                                                <p className="font-medium text-sm text-gray-700 truncate">{attachment.name}</p>
-                                                <p className="text-xs text-gray-500">{(attachment.size / 1024).toFixed(1)} KB</p>
-                                              </div>
-                                            </div>
-                                            <a 
-                                              href={attachment.url} 
-                                              target="_blank" 
-                                              rel="noopener noreferrer"
-                                              className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded-lg text-xs font-medium transition-colors flex-shrink-0"
-                                            >
-                                              Baixar
-                                            </a>
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <div className="text-center py-6">
-                                      <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                        <span className="text-orange-500 text-xl">📁</span>
-                                      </div>
-                                      <p className="text-sm text-gray-500">Nenhum anexo disponível</p>
-                                    </div>
-                                  )}
-                                </div>
+                                ) : (
+                                  <p className="text-sm text-gray-500">Nenhum anexo disponível</p>
+                                )}
                               </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
-                  </motion.div>
+                  </div>
                 );
               })}
             </div>
           )}
         </div>
       </div>
+
       {/* Modal de confirmação de adiamento */}
       {postponeModal && (
         <PostponeConfirmModal

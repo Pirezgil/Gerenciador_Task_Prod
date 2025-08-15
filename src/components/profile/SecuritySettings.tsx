@@ -1,7 +1,7 @@
 'use client';
 
 // ============================================================================
-// SECURITY SETTINGS - Configurações de segurança + Senha Caixa de Areia
+// SECURITY SETTINGS - Configurações de segurança + Senha Pátio das Ideias
 // ============================================================================
 
 import React, { useState } from 'react';
@@ -95,7 +95,7 @@ export function SecuritySettings() {
       setConfirmSandboxPassword('');
       
       // Mostrar sucesso
-      setSandboxMessage('Senha da Caixa de Areia configurada com sucesso!');
+      setSandboxMessage('Senha do Pátio das Ideias configurada com sucesso!');
       setSandboxIsError(false);
       
       // Limpar mensagem após 3 segundos
@@ -124,7 +124,7 @@ export function SecuritySettings() {
       
       setSandboxPassword('');
       setConfirmSandboxPassword('');
-      setSandboxMessage('Proteção da Caixa de Areia desabilitada');
+      setSandboxMessage('Proteção do Pátio das Ideias desabilitada');
       setSandboxIsError(false);
       
       setTimeout(() => setSandboxMessage(''), 3000);
@@ -196,7 +196,7 @@ export function SecuritySettings() {
         </div>
       </motion.div>
 
-      {/* Senha da Caixa de Areia */}
+      {/* Senha do Pátio das Ideias */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -208,7 +208,7 @@ export function SecuritySettings() {
             <span className="text-white text-lg">🏖️</span>
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Caixa de Areia Privada</h2>
+            <h2 className="text-xl font-bold text-gray-900">Pátio das Ideias Privado</h2>
             <p className="text-gray-600">Configure uma senha para proteger suas notas privadas</p>
           </div>
         </div>
@@ -219,19 +219,19 @@ export function SecuritySettings() {
             {isSandboxEnabled && hasSandboxPassword ? (
               <>
                 <CheckCircle className="w-5 h-5 text-green-600" />
-                <span className="text-green-700 font-medium">Caixa de Areia protegida por senha</span>
+                <span className="text-green-700 font-medium">Pátio das Ideias protegido por senha</span>
               </>
             ) : (
               <>
                 <XCircle className="w-5 h-5 text-red-600" />
-                <span className="text-red-700 font-medium">Caixa de Areia não protegida</span>
+                <span className="text-red-700 font-medium">Pátio das Ideias não protegido</span>
               </>
             )}
           </div>
           
           {isSandboxEnabled && hasSandboxPassword && (
             <p className="text-sm text-gray-600 mt-2">
-              Uma senha será solicitada sempre que você acessar a Caixa de Areia
+              Uma senha será solicitada sempre que você acessar o Pátio das Ideias
             </p>
           )}
         </div>
@@ -240,7 +240,7 @@ export function SecuritySettings() {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Nova Senha da Caixa de Areia
+              Nova Senha do Pátio das Ideias
             </label>
             <div className="relative">
               <input
@@ -248,7 +248,7 @@ export function SecuritySettings() {
                 value={sandboxPassword}
                 onChange={(e) => setSandboxPassword(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-amber-400/20 focus:border-amber-400 pr-12"
-                placeholder="Digite uma senha para a Caixa de Areia"
+                placeholder="Digite uma senha para o Pátio das Ideias"
               />
               <button
                 type="button"
@@ -350,7 +350,7 @@ export function SecuritySettings() {
             <div>
               <h4 className="font-medium text-amber-800">Dica de Segurança</h4>
               <p className="text-sm text-amber-700 mt-1">
-                Use uma senha única e fácil de lembrar. Esta senha protegerá todas as suas notas privadas na Caixa de Areia.
+                Use uma senha única e fácil de lembrar. Esta senha protegerá todas as suas notas privadas no Pátio das Ideias.
               </p>
             </div>
           </div>

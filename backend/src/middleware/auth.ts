@@ -26,7 +26,7 @@ export const requireAuth = async (
       });
       
       // LOOP PREVENTION: Clear any invalid cookies and add no-cache headers
-      clearSecureCookie(res);
+      clearSecureCookie(res, req);
       
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.setHeader('Pragma', 'no-cache');
@@ -48,7 +48,7 @@ export const requireAuth = async (
       });
       
       // LOOP PREVENTION: Clear invalid token and set no-cache headers
-      clearSecureCookie(res);
+      clearSecureCookie(res, req);
       
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       
@@ -78,7 +78,7 @@ export const requireAuth = async (
       });
       
       // Limpar cookie inválido
-      clearSecureCookie(res);
+      clearSecureCookie(res, req);
       
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       
@@ -133,7 +133,7 @@ export const requireAuth = async (
     // Detectar especificamente se o erro é de token expirado
     if (error.message === 'Token inválido ou expirado' || error.name === 'TokenExpiredError') {
       // Limpar cookie expirado
-      clearSecureCookie(res);
+      clearSecureCookie(res, req);
       
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       

@@ -25,14 +25,23 @@ import type {
   ReminderFilter
 } from '@/types';
 
+import { getApiUrl } from '@/lib/apiUrl';
+
 // Configuração base do axios
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',
+  baseURL: getApiUrl(),
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
   withCredentials: true, // Importante para cookies HTTP-only
+});
+
+// Interceptor para atualizar dinamicamente a baseURL a cada requisição
+api.interceptors.request.use((config) => {
+  // Atualizar baseURL dinamicamente para cada requisição
+  config.baseURL = getApiUrl();
+  return config;
 });
 
 // CSRF Token storage (in memory only for security)

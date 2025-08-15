@@ -72,14 +72,14 @@ export function LowEnergyModal() {
             )}
           </motion.button>
 
-          {/* Opção 2: Ir para Caixa de Areia */}
+          {/* Opção 2: Ir para Pátio das Ideias */}
           <motion.button 
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleGoToSandbox}
             className="w-full p-4 bg-gradient-to-r from-amber-50 to-orange-50 text-amber-700 rounded-2xl hover:from-amber-100 hover:to-orange-100 transition-all duration-300 text-left border border-amber-200 font-medium"
           >
-            🧠 Modo Reflexão (ir para Caixa de Areia)
+            🧠 Modo Reflexão (ir para Pátio das Ideias)
             <p className="text-amber-600 text-xs mt-1">
               Espaço seguro para colocar pensamentos para fora
             </p>

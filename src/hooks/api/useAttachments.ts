@@ -5,6 +5,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/providers/AuthProvider';
 import { queryKeys } from '@/lib/queryClient';
+import { getApiUrl } from '@/lib/apiUrl';
 
 // ============================================================================
 // TYPES
@@ -34,7 +35,7 @@ interface CreateAttachmentData {
 const attachmentsApi = {
   // Buscar anexos de uma tarefa
   getTaskAttachments: async (taskId: string, _token?: string): Promise<Attachment[]> => {
-    const response = await fetch(`http://localhost:3001/api/tasks/${taskId}/attachments`, {
+    const response = await fetch(`${getApiUrl()}/tasks/${taskId}/attachments`, {
       credentials: 'include' // Enviar cookies automaticamente
     });
 
@@ -51,7 +52,7 @@ const attachmentsApi = {
   createAttachment: async (data: CreateAttachmentData, _token?: string): Promise<Attachment> => {
     const { taskId, ...attachmentData } = data;
     
-    const response = await fetch(`http://localhost:3001/api/tasks/${taskId}/attachments`, {
+    const response = await fetch(`${getApiUrl()}/tasks/${taskId}/attachments`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -71,7 +72,7 @@ const attachmentsApi = {
 
   // Remover anexo
   deleteAttachment: async (taskId: string, attachmentId: string, _token?: string): Promise<void> => {
-    const response = await fetch(`http://localhost:3001/api/tasks/${taskId}/attachments/${attachmentId}`, {
+    const response = await fetch(`${getApiUrl()}/tasks/${taskId}/attachments/${attachmentId}`, {
       method: 'DELETE',
       credentials: 'include' // Enviar cookies automaticamente
     });

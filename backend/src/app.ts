@@ -85,7 +85,10 @@ app.use(cors({
         'http://127.0.0.1:3000',
         'http://localhost:3001',
         'http://127.0.0.1:3001',
-        process.env.FRONTEND_URL
+        'http://192.168.0.252:3000',
+        'http://192.168.0.252:3001',
+        process.env.FRONTEND_URL,
+        process.env.FRONTEND_URL_NETWORK
       ].filter(Boolean);
       
       // Permitir requests sem origin (Postman, etc)
@@ -169,7 +172,10 @@ app.use((req, res, next) => {
   if (req.cookies['auth-token']) {
     const origin = req.get('origin');
     const referer = req.get('referer');
-    const allowedOrigin = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const allowedOrigins = [
+      process.env.FRONTEND_URL || 'http://localhost:3000',
+      process.env.FRONTEND_URL_NETWORK || 'http://192.168.0.252:3000'
+    ];
     
     // Verificar se a origem é confiável
     if (!origin && !referer) {
@@ -183,7 +189,7 @@ app.use((req, res, next) => {
     }
     
     const requestOrigin = origin || (referer ? new URL(referer).origin : '');
-    if (requestOrigin !== allowedOrigin) {
+    if (!allowedOrigins.includes(requestOrigin)) {
       return res.status(403).json({
         success: false,
         error: {
@@ -307,9 +313,10 @@ process.on('SIGTERM', async () => {
 
 const PORT = env.PORT;
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
+  console.log(`🌐 Network: http://192.168.0.252:${PORT}/health`);
   console.log(`🌍 Ambiente: ${process.env.NODE_ENV || 'development'}`);
 });
 

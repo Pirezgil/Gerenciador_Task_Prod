@@ -2,6 +2,7 @@
 
 // Página de login ULTRA SIMPLES - sem nenhuma dependência complexa
 import { useState } from 'react';
+import { getApiUrl } from '@/lib/apiUrl';
 
 export default function SimpleLoginPage() {
   const [status, setStatus] = useState('');
@@ -17,7 +18,7 @@ export default function SimpleLoginPage() {
     try {
       console.log('🔐 Tentando login:', { email, password });
       
-      const response = await fetch('http://localhost:3001/api/auth/login', {
+      const response = await fetch(`${getApiUrl()}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

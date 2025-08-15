@@ -28,7 +28,7 @@ export const register = async (req: Request, res: Response, next: NextFunction):
     clearAuthAttempts(req);
     
     // CORREÇÃO: Configurar cookie seguro após registro
-    setSecureCookie(res, result.token);
+    setSecureCookie(res, result.token, req);
     
     // ETAPA 4: Log de segurança estruturado para registro
     await logAuthEvent('login_success', result.user.id, {
@@ -74,7 +74,7 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
     clearAuthAttempts(req);
     
     // CORREÇÃO: Configurar cookie seguro após login
-    setSecureCookie(res, result.token);
+    setSecureCookie(res, result.token, req);
     
     // ETAPA 4: Log de segurança estruturado
     await logAuthEvent('login_success', result.user.id, {
@@ -153,9 +153,9 @@ export const updateProfile = async (req: AuthenticatedRequest, res: Response, ne
   }
 };
 
-export const logout = async (_req: Request, res: Response): Promise<void> => {
+export const logout = async (req: Request, res: Response): Promise<void> => {
   // CONSISTENCY FIX: Use centralized cookie clearing function
-  clearSecureCookie(res);
+  clearSecureCookie(res, req);
   
   // LOOP PREVENTION: Add cache control headers
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -210,7 +210,7 @@ export const googleCallback = async (req: Request, res: Response): Promise<void>
     const { user, token } = await googleAuthService.findOrCreateGoogleUser(googleData);
 
     // SECURITY FIX: Set HTTP-only cookie instead of exposing token in URL
-    setSecureCookie(res, token);
+    setSecureCookie(res, token, req);
     
     // SECURITY FIX: Log successful OAuth login
     await logAuthEvent('oauth_login_success', user.id, {
