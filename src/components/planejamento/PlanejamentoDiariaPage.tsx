@@ -403,29 +403,70 @@ export function PlanejamentoDiariaPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header Simplificado */}
+      {/* Header - DUAL LAYOUT MOBILE/DESKTOP */}
       <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Planejamento Diário</h1>
-                <p className="text-gray-600 mt-1">Organize suas atividades para o dia</p>
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+          <div className="py-4 sm:py-6 lg:py-8">
+            
+            {/* MOBILE HEADER (< sm) */}
+            <div className="sm:hidden">
+              <div className="text-center mb-4">
+                <h1 className="text-xl font-bold text-gray-900">Planejamento Diário</h1>
+                <p className="text-gray-600 mt-1 text-sm">Organize suas atividades para o dia</p>
               </div>
               
-              {/* Métricas Simplificadas */}
-              <div className="flex items-center space-x-6">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900">{plannedTasks.length + completedTasks.length}</div>
-                  <div className="text-sm text-gray-500">Planejadas</div>
+              {/* Mobile Metrics - Grid 2x2 com gradientes */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-center shadow-sm">
+                  <div className="text-2xl font-bold text-white">{plannedTasks.length + completedTasks.length}</div>
+                  <div className="text-sm text-blue-100">Planejadas</div>
                 </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900">{completedTasks.length}</div>
-                  <div className="text-sm text-gray-500">Concluídas</div>
+                <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-4 text-center shadow-sm">
+                  <div className="text-2xl font-bold text-white">{completedTasks.length}</div>
+                  <div className="text-sm text-green-100">Concluídas</div>
                 </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900">{energyBudget.remaining}</div>
-                  <div className="text-sm text-gray-500">Energia Restante</div>
+                <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-4 text-center shadow-sm">
+                  <div className="text-2xl font-bold text-white">{energyBudget.remaining}</div>
+                  <div className="text-sm text-orange-100">Energia</div>
+                </div>
+                <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-4 text-center shadow-sm">
+                  <div className="text-2xl font-bold text-white">{availableTasks.length}</div>
+                  <div className="text-sm text-purple-100">Disponíveis</div>
+                </div>
+              </div>
+            </div>
+
+            {/* DESKTOP HEADER (≥ sm) - LAYOUT ORIGINAL MELHORADO */}
+            <div className="hidden sm:block">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="w-14 h-14 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-2xl flex items-center justify-center">
+                    <span className="text-3xl">📅</span>
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-900">Planejamento Diário</h1>
+                    <p className="text-gray-600 mt-1">Organize suas atividades para o dia</p>
+                  </div>
+                </div>
+                
+                {/* Desktop Métricas */}
+                <div className="flex items-center space-x-6">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-gray-900">{plannedTasks.length + completedTasks.length}</div>
+                    <div className="text-sm text-gray-500">Planejadas</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-gray-900">{completedTasks.length}</div>
+                    <div className="text-sm text-gray-500">Concluídas</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-gray-900">{energyBudget.remaining}</div>
+                    <div className="text-sm text-gray-500">Energia</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-gray-900">{availableTasks.length}</div>
+                    <div className="text-sm text-gray-500">Disponíveis</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -433,20 +474,21 @@ export function PlanejamentoDiariaPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
         {/* Seção de Tarefas Planejadas */}
         {plannedTasks.length > 0 && (
-          <div className="mb-8">
-            <div className="flex items-center space-x-3 mb-6">
+          <div className="mb-4 sm:mb-8">
+            {/* Content Title - MOBILE OTIMIZADO */}
+            <div className="flex items-center justify-center sm:justify-start space-x-3 mb-4 sm:mb-6">
               <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
                 <ListTodo className="w-4 h-4 text-blue-600" />
               </div>
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 text-center sm:text-left">
                 Tarefas Planejadas ({plannedTasks.length})
               </h2>
             </div>
             
-            <div className="space-y-3">
+            <div className="space-y-3 sm:space-y-4">
               {plannedTasks.map((task) => {
                 const isExpanded = expandedTasks.has(task.id);
                 const energyConfig = getEnergyConfig(task.energyPoints);
@@ -454,10 +496,71 @@ export function PlanejamentoDiariaPage() {
                 return (
                   <div
                     key={task.id}
-                    className="bg-white rounded-lg border border-gray-200 hover:border-gray-300 transition-colors"
+                    className="bg-white rounded-xl border border-gray-200 hover:border-gray-300 transition-colors shadow-sm"
                   >
-                    <div className="p-4">
-                      <div className="flex items-center justify-between">
+                    <div className="p-4 sm:p-6">
+                      {/* MOBILE LAYOUT */}
+                      <div className="sm:hidden">
+                        <Link 
+                          href={`/task/${task.id}`}
+                          className="block"
+                        >
+                          <h3 className="text-lg font-medium text-gray-900 hover:text-blue-600 transition-colors mb-3">
+                            {task.description}
+                          </h3>
+                        </Link>
+                        
+                        {/* Badges Mobile */}
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          <span className={`inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium border ${energyConfig.color}`}>
+                            {energyConfig.icon}
+                            <span>{energyConfig.label}</span>
+                          </span>
+
+                          {task.deadline && task.deadline !== 'Sem vencimento' && (
+                            <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium text-red-700 bg-red-50 border border-red-200">
+                              <Clock className="w-3 h-3" />
+                              <span>{task.deadline.split('T')[0].split('-').reverse().join('/')}</span>
+                            </span>
+                          )}
+
+                          {task.project && (
+                            <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200">
+                              <span>{task.project.icon}</span>
+                              <span>{task.project.name}</span>
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Ações Mobile */}
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeFromPlanned(task.id);
+                            }}
+                            className="text-red-600 hover:text-red-700 border-red-200 hover:bg-red-50 flex-1 min-h-[44px]"
+                          >
+                            Remover
+                          </Button>
+                          
+                          <Button
+                            onClick={() => toggleTaskExpansion(task.id)}
+                            variant="ghost"
+                            size="sm"
+                            className="text-gray-400 hover:text-gray-600 min-h-[44px] px-3"
+                          >
+                            <ChevronDown className={`w-4 h-4 transition-transform ${
+                              isExpanded ? 'rotate-180' : ''
+                            }`} />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* DESKTOP LAYOUT */}
+                      <div className="hidden sm:flex items-center justify-between">
                         <div className="flex-1">
                           <Link 
                             href={`/task/${task.id}`}
@@ -469,13 +572,11 @@ export function PlanejamentoDiariaPage() {
                           </Link>
                           
                           <div className="flex items-center space-x-3 mt-2">
-                            {/* Badge de Energia */}
                             <span className={`inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium border ${energyConfig.color}`}>
                               {energyConfig.icon}
                               <span>{energyConfig.label}</span>
                             </span>
 
-                            {/* Data de Vencimento */}
                             {task.deadline && task.deadline !== 'Sem vencimento' && (
                               <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium text-red-700 bg-red-50 border border-red-200">
                                 <Clock className="w-3 h-3" />
@@ -483,7 +584,6 @@ export function PlanejamentoDiariaPage() {
                               </span>
                             )}
 
-                            {/* Projeto */}
                             {task.project && (
                               <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200">
                                 <span>{task.project.icon}</span>
@@ -493,7 +593,6 @@ export function PlanejamentoDiariaPage() {
                           </div>
                         </div>
 
-                        {/* Ações */}
                         <div className="flex items-center space-x-2 ml-4">
                           <Button
                             variant="outline"
@@ -668,8 +767,15 @@ export function PlanejamentoDiariaPage() {
 
         {/* Seção de Tarefas Completadas */}
         {completedTasks.length > 0 && (
-          <div className="mb-8">
-            <div className="flex items-center space-x-3 mb-6">
+          <div className="mb-6 sm:mb-8">
+            {/* MOBILE TITLE */}
+            <div className="sm:hidden text-center mb-4">
+              <h2 className="text-lg font-bold text-gray-900">✅ Tarefas Completadas</h2>
+              <p className="text-sm text-gray-600">({completedTasks.length} concluídas)</p>
+            </div>
+
+            {/* DESKTOP TITLE - ORIGINAL */}
+            <div className="hidden sm:flex items-center space-x-3 mb-6">
               <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
                 <CheckCircle2 className="w-4 h-4 text-green-600" />
               </div>
@@ -678,16 +784,16 @@ export function PlanejamentoDiariaPage() {
               </h2>
             </div>
             
-            <div className="space-y-3">
+            <div className="space-y-3 sm:space-y-4">
               {completedTasks.map((task) => {
                 const energyConfig = getEnergyConfig(task.energyPoints);
 
                 return (
                   <div
                     key={task.id}
-                    className="bg-green-50 rounded-lg border border-green-200"
+                    className="bg-green-50 rounded-xl border border-green-200 shadow-sm"
                   >
-                    <div className="p-4">
+                    <div className="p-4 sm:p-6">
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
                           <Link 
@@ -724,8 +830,15 @@ export function PlanejamentoDiariaPage() {
 
         {/* Seção de Tarefas Não Executadas */}
         {missedTasks.length > 0 && (
-          <div className="mb-8">
-            <div className="flex items-center space-x-3 mb-6">
+          <div className="mb-6 sm:mb-8">
+            {/* MOBILE TITLE */}
+            <div className="sm:hidden text-center mb-4">
+              <h2 className="text-lg font-bold text-gray-900">⚠️ Tarefas Não Executadas</h2>
+              <p className="text-sm text-gray-600">({missedTasks.length} não executadas)</p>
+            </div>
+
+            {/* DESKTOP TITLE - ORIGINAL */}
+            <div className="hidden sm:flex items-center space-x-3 mb-6">
               <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
                 <AlertTriangle className="w-4 h-4 text-red-600" />
               </div>
@@ -734,7 +847,7 @@ export function PlanejamentoDiariaPage() {
               </h2>
             </div>
             
-            <div className="space-y-3">
+            <div className="space-y-3 sm:space-y-4">
               {missedTasks.map((task) => {
                 const isExpanded = expandedTasks.has(task.id);
                 const energyConfig = getEnergyConfig(task.energyPoints);
@@ -743,10 +856,84 @@ export function PlanejamentoDiariaPage() {
                 return (
                   <div
                     key={task.id}
-                    className="bg-red-50 rounded-lg border border-red-200"
+                    className="bg-red-50 rounded-xl border border-red-200 shadow-sm"
                   >
-                    <div className="p-4">
-                      <div className="flex items-center justify-between">
+                    <div className="p-4 sm:p-6">
+                      {/* MOBILE LAYOUT */}
+                      <div className="sm:hidden">
+                        {/* Badge de Não Execução - Mobile */}
+                        {task.missedDaysCount > 0 && (
+                          <div className="mb-3">
+                            <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
+                              task.missedDaysCount === 1 ? 'text-orange-700 bg-orange-100 border border-orange-200' :
+                              task.missedDaysCount <= 3 ? 'text-red-700 bg-red-100 border border-red-200' :
+                              'text-red-800 bg-red-200 border border-red-300'
+                            }`}>
+                              Não executada a {task.missedDaysCount} dia{task.missedDaysCount > 1 ? 's' : ''}
+                            </span>
+                          </div>
+                        )}
+
+                        <Link 
+                          href={`/task/${task.id}`}
+                          className="block"
+                        >
+                          <h3 className="text-lg font-medium text-red-800 hover:text-red-900 transition-colors mb-3">
+                            {task.description}
+                          </h3>
+                        </Link>
+                        
+                        {/* Badges Mobile */}
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium text-red-700 bg-red-100 border border-red-300">
+                            {energyConfig.icon}
+                            <span>{energyConfig.label}</span>
+                          </span>
+
+                          {task.dueDate && (
+                            <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium text-red-700 bg-red-100 border border-red-300">
+                              <Clock className="w-3 h-3" />
+                              <span>{new Date(task.dueDate + 'T00:00:00').toLocaleDateString('pt-BR')} (há {overdueDays} dia{overdueDays > 1 ? 's' : ''})</span>
+                            </span>
+                          )}
+
+                          {task.project && (
+                            <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium text-red-700 bg-red-100 border border-red-300">
+                              <span>{task.project.icon}</span>
+                              <span>{task.project.name}</span>
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Ações Mobile */}
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeFromMissed(task.id);
+                            }}
+                            className="text-red-600 hover:text-red-700 border-red-200 hover:bg-red-50 flex-1 min-h-[44px]"
+                          >
+                            Remover
+                          </Button>
+                          
+                          <Button
+                            onClick={() => toggleTaskExpansion(task.id)}
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700 min-h-[44px] px-3"
+                          >
+                            <ChevronDown className={`w-4 h-4 transition-transform ${
+                              isExpanded ? 'rotate-180' : ''
+                            }`} />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* DESKTOP LAYOUT */}
+                      <div className="hidden sm:flex items-center justify-between">
                         <div className="flex-1">
                           {/* Badge de Não Execução */}
                           {task.missedDaysCount > 0 && (
@@ -771,13 +958,11 @@ export function PlanejamentoDiariaPage() {
                           </Link>
                           
                           <div className="flex items-center space-x-3 mt-2">
-                            {/* Badge de Energia */}
                             <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium text-red-700 bg-red-100 border border-red-300">
                               {energyConfig.icon}
                               <span>{energyConfig.label}</span>
                             </span>
 
-                            {/* Data de vencimento */}
                             {task.dueDate && (
                               <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium text-red-700 bg-red-100 border border-red-300">
                                 <Clock className="w-3 h-3" />
@@ -785,7 +970,6 @@ export function PlanejamentoDiariaPage() {
                               </span>
                             )}
 
-                            {/* Projeto */}
                             {task.project && (
                               <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium text-red-700 bg-red-100 border border-red-300">
                                 <span>{task.project.icon}</span>
@@ -795,7 +979,6 @@ export function PlanejamentoDiariaPage() {
                           </div>
                         </div>
 
-                        {/* Ações */}
                         <div className="flex items-center space-x-2 ml-4">
                           <Button
                             variant="outline"
@@ -969,8 +1152,15 @@ export function PlanejamentoDiariaPage() {
         )}
 
         {/* Seção de Atividades Disponíveis */}
-        <div className="mb-8">
-          <div className="flex items-center space-x-3 mb-6">
+        <div className="mb-6 sm:mb-8">
+          {/* MOBILE TITLE */}
+          <div className="sm:hidden text-center mb-4">
+            <h2 className="text-lg font-bold text-gray-900">🎯 Atividades Disponíveis</h2>
+            <p className="text-sm text-gray-600">({availableTasks.length} disponíveis)</p>
+          </div>
+
+          {/* DESKTOP TITLE - ORIGINAL */}
+          <div className="hidden sm:flex items-center space-x-3 mb-6">
             <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
               <Calendar className="w-4 h-4 text-gray-600" />
             </div>
@@ -980,12 +1170,24 @@ export function PlanejamentoDiariaPage() {
           </div>
           
           {availableTasks.length === 0 ? (
-            <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-              <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">Nenhuma atividade pendente</p>
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+              {/* MOBILE EMPTY STATE */}
+              <div className="sm:hidden p-8 text-center">
+                <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                  <Calendar className="w-8 h-8 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Nenhuma atividade</h3>
+                <p className="text-gray-600 text-sm">Todas as atividades foram planejadas</p>
+              </div>
+
+              {/* DESKTOP EMPTY STATE */}
+              <div className="hidden sm:block p-12 text-center">
+                <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500">Nenhuma atividade pendente</p>
+              </div>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-3 sm:space-y-4">
               {availableTasks.map((task) => {
                 const isExpanded = expandedTasks.has(task.id);
                 const energyConfig = getEnergyConfig(task.energyPoints);
@@ -994,10 +1196,69 @@ export function PlanejamentoDiariaPage() {
                 return (
                   <div
                     key={task.id}
-                    className="bg-white rounded-lg border border-gray-200 hover:border-gray-300 transition-colors"
+                    className="bg-white rounded-xl border border-gray-200 hover:border-gray-300 transition-colors shadow-sm"
                   >
-                    <div className="p-4">
-                      <div className="flex items-center justify-between">
+                    <div className="p-4 sm:p-6">
+                      {/* MOBILE LAYOUT */}
+                      <div className="sm:hidden">
+                        <Link 
+                          href={`/task/${task.id}`}
+                          className="block"
+                        >
+                          <h3 className="text-lg font-medium text-gray-900 hover:text-blue-600 transition-colors mb-3">
+                            {task.description}
+                          </h3>
+                        </Link>
+                        
+                        {/* Badges Mobile */}
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          <span className={`inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium border ${energyConfig.color}`}>
+                            {energyConfig.icon}
+                            <span>{energyConfig.label}</span>
+                          </span>
+
+                          {task.deadline && task.deadline !== 'Sem vencimento' && (
+                            <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium text-red-700 bg-red-50 border border-red-200">
+                              <Clock className="w-3 h-3" />
+                              <span>{task.deadline.split('T')[0].split('-').reverse().join('/')}</span>
+                            </span>
+                          )}
+
+                          {task.project && (
+                            <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200">
+                              <span>{task.project.icon}</span>
+                              <span>{task.project.name}</span>
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Ações Mobile */}
+                        <div className="flex space-x-2">
+                          <Button
+                            variant={canPlan ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handlePlanTask(task.id)}
+                            disabled={!canPlan}
+                            className={`flex-1 min-h-[44px] ${!canPlan ? 'text-red-600 border-red-200 cursor-not-allowed' : ''}`}
+                          >
+                            {canPlan ? 'Atuar Hoje' : 'Energia Insuficiente'}
+                          </Button>
+                          
+                          <Button
+                            onClick={() => toggleTaskExpansion(task.id)}
+                            variant="ghost"
+                            size="sm"
+                            className="text-gray-400 hover:text-gray-600 min-h-[44px] px-3"
+                          >
+                            <ChevronDown className={`w-4 h-4 transition-transform ${
+                              isExpanded ? 'rotate-180' : ''
+                            }`} />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* DESKTOP LAYOUT */}
+                      <div className="hidden sm:flex items-center justify-between">
                         <div className="flex-1">
                           <Link 
                             href={`/task/${task.id}`}
@@ -1009,13 +1270,11 @@ export function PlanejamentoDiariaPage() {
                           </Link>
                           
                           <div className="flex items-center space-x-3 mt-2">
-                            {/* Badge de Energia */}
                             <span className={`inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium border ${energyConfig.color}`}>
                               {energyConfig.icon}
                               <span>{energyConfig.label}</span>
                             </span>
 
-                            {/* Data de Vencimento */}
                             {task.deadline && task.deadline !== 'Sem vencimento' && (
                               <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium text-red-700 bg-red-50 border border-red-200">
                                 <Clock className="w-3 h-3" />
@@ -1023,7 +1282,6 @@ export function PlanejamentoDiariaPage() {
                               </span>
                             )}
 
-                            {/* Projeto */}
                             {task.project && (
                               <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-md text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200">
                                 <span>{task.project.icon}</span>
@@ -1033,7 +1291,6 @@ export function PlanejamentoDiariaPage() {
                           </div>
                         </div>
 
-                        {/* Ações */}
                         <div className="flex items-center space-x-2 ml-4">
                           <Button
                             variant={canPlan ? "default" : "outline"}

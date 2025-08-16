@@ -155,7 +155,11 @@ export const updateTaskSchema = z.object({
     .max(1000, 'Descrição muito longa')
     .trim()
     .optional(),
-  status: z.enum(['pending', 'in_progress', 'completed', 'postponed']).optional(),
+  status: z.string()
+    .transform(val => val?.toLowerCase()) // Normalizar para minúsculo
+    .refine(val => !val || ['pending', 'in_progress', 'completed', 'postponed'].includes(val), 
+      'Status deve ser: pending, in_progress, completed ou postponed')
+    .optional(),
   energyPoints: z.number()
     .int('Pontos de energia devem ser um número inteiro')
     .refine(val => [1, 3, 5].includes(val), 'Pontos de energia devem ser 1, 3 ou 5')

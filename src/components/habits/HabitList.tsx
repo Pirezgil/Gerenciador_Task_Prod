@@ -131,7 +131,7 @@ export function HabitList({ habits, showDate = false }: HabitListProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
       {habits.map((habit, index) => {
         const completed = isCompletedToday(habit);
         const count = getTodayCompletionCount(habit);
@@ -166,29 +166,29 @@ export function HabitList({ habits, showDate = false }: HabitListProps) {
 
             </div>
 
-            {/* Estatísticas e ação principal */}
-            <div className="flex items-center justify-between">
-              {/* Cards de estatísticas */}
-              <div className="flex items-center space-x-4">
-                <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 text-center">
-                  <div className="font-bold text-xl text-blue-600">{habit.streak}</div>
-                  <div className="text-blue-500 text-sm font-medium">Sequência</div>
+            {/* Estatísticas Mobile-First */}
+            <div className="space-y-4">
+              {/* Cards de estatísticas empilhados em mobile */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-center">
+                  <div className="font-bold text-xl sm:text-2xl text-blue-600">{habit.streak}</div>
+                  <div className="text-blue-500 text-xs sm:text-sm font-medium">Sequência</div>
                 </div>
-                <div className="bg-green-50 border border-green-100 rounded-xl px-4 py-3 text-center">
-                  <div className="font-bold text-xl text-green-600">{habit.bestStreak || 0}</div>
-                  <div className="text-green-500 text-sm font-medium">Recorde</div>
+                <div className="bg-green-50 border border-green-100 rounded-xl p-3 text-center">
+                  <div className="font-bold text-xl sm:text-2xl text-green-600">{habit.bestStreak || 0}</div>
+                  <div className="text-green-500 text-xs sm:text-sm font-medium">Recorde</div>
                 </div>
                 
                 {/* Lembretes */}
                 {(() => {
                   const habitReminders = getHabitReminders(habit.id);
                   return habitReminders.length > 0 ? (
-                    <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 text-center">
+                    <div className="bg-purple-50 border border-purple-100 rounded-xl p-3 text-center col-span-2 sm:col-span-1">
                       <div className="flex items-center justify-center space-x-1">
-                        <Bell className="w-4 h-4 text-blue-600" />
-                        <span className="font-bold text-lg text-blue-600">{habitReminders.length}</span>
+                        <Bell className="w-4 h-4 text-purple-600" />
+                        <span className="font-bold text-xl sm:text-2xl text-purple-600">{habitReminders.length}</span>
                       </div>
-                      <div className="text-blue-500 text-sm font-medium">
+                      <div className="text-purple-500 text-xs sm:text-sm font-medium">
                         {habitReminders.length === 1 ? 'Lembrete' : 'Lembretes'}
                       </div>
                     </div>
@@ -197,45 +197,45 @@ export function HabitList({ habits, showDate = false }: HabitListProps) {
                 }
               </div>
 
-              {/* Ação principal */}
-              <div className="flex items-center">
-                {hasTarget && (
-                  <div className="flex items-center space-x-3 bg-gray-50 rounded-2xl p-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDecrement(habit);
-                      }}
-                      disabled={count === 0}
-                      className="w-10 h-10 rounded-xl bg-white hover:bg-gray-100 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-                    >
-                      <Minus className="w-4 h-4 text-gray-600" />
-                    </button>
-                    
-                    <div className="bg-white rounded-xl px-4 py-2 shadow-sm">
-                      <div className="text-xl font-bold text-gray-900">{count}</div>
-                      <div className="text-xs text-gray-500 text-center">de {habit.targetCount}</div>
-                    </div>
-                    
-                    <motion.button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleIncrement(habit);
-                      }}
-                      disabled={count >= (habit.targetCount || 1)}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      animate={count === habit.targetCount ? {
-                        backgroundColor: ['#dcfce7', '#bbf7d0', '#dcfce7'],
-                        transition: { duration: 1, repeat: Infinity }
-                      } : {}}
-                      className="w-10 h-10 rounded-xl bg-green-500 hover:bg-green-600 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-white shadow-lg"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </motion.button>
+              {/* Ação principal - Mobile Touch Optimized */}
+              {hasTarget && (
+                <div className="flex items-center justify-center space-x-4 bg-gray-50 rounded-2xl p-4">
+                  <motion.button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDecrement(habit);
+                    }}
+                    disabled={count === 0}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="w-12 h-12 sm:w-10 sm:h-10 rounded-xl bg-white hover:bg-gray-100 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm border border-gray-200"
+                  >
+                    <Minus className="w-5 h-5 sm:w-4 sm:h-4 text-gray-600" />
+                  </motion.button>
+                  
+                  <div className="bg-white rounded-xl px-6 py-3 shadow-sm border border-gray-200">
+                    <div className="text-2xl sm:text-xl font-bold text-gray-900">{count}</div>
+                    <div className="text-xs text-gray-500 text-center">de {habit.targetCount}</div>
                   </div>
-                )}
-              </div>
+                  
+                  <motion.button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleIncrement(habit);
+                    }}
+                    disabled={count >= (habit.targetCount || 1)}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    animate={count === habit.targetCount ? {
+                      backgroundColor: ['#dcfce7', '#bbf7d0', '#dcfce7'],
+                      transition: { duration: 1, repeat: Infinity }
+                    } : {}}
+                    className="w-12 h-12 sm:w-10 sm:h-10 rounded-xl bg-green-500 hover:bg-green-600 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-white shadow-lg"
+                  >
+                    <Plus className="w-5 h-5 sm:w-4 sm:h-4" />
+                  </motion.button>
+                </div>
+              )}
             </div>
           </motion.div>
         );

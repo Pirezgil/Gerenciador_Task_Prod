@@ -267,73 +267,31 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
         ? 'bg-green-50 border-green-200' 
         : 'bg-white border-gray-200'
     }`}>
-      <div className="p-6 border-b border-gray-100">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center">
-            <span className="text-2xl mr-3">{project.icon}</span>
-            <div>
-              <div className="flex items-center space-x-2">
-                <h3 className="text-lg font-semibold theme-text">{project.name}</h3>
-                {project.status?.toLowerCase() === 'completed' && (
-                  <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
-                    ✅ Finalizado
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center space-x-4 text-sm">
-                {project.deadline && (
-                  <p className="theme-text-muted">
-                    📅 Prazo: {new Date(project.deadline).toLocaleDateString('pt-BR')}
-                  </p>
-                )}
-                <p className="theme-text-muted">
-                  🧱 {(project.backlog || project.tasks)?.length || 0} tijolos
-                </p>
-                {((project.backlog || project.tasks)?.filter(t => t.status?.toLowerCase() === 'completed').length || 0) > 0 && (
-                  <p className="text-green-600">
-                    ✅ {(project.backlog || project.tasks)?.filter(t => t.status?.toLowerCase() === 'completed').length || 0} concluídos
-                  </p>
-                )}
+      <div className="p-4 sm:p-6 border-b border-gray-100">
+        {/* MOBILE LAYOUT (< sm) */}
+        <div className="sm:hidden">
+          {/* Header Mobile */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center flex-1">
+              <span className="text-2xl mr-3 flex-shrink-0">{project.icon}</span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center space-x-2 mb-1">
+                  <h3 className="text-lg font-semibold theme-text truncate">{project.name}</h3>
+                  {project.status?.toLowerCase() === 'completed' && (
+                    <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium flex-shrink-0">
+                      ✅ Finalizado
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            {project.status !== 'completed' && (
-              <Button
-                onClick={handleNewBrick}
-                variant="outline"
-                size="sm"
-                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200 flex items-center space-x-1"
-              >
-                <Plus className="w-3 h-3" />
-                <span>Novo Tijolo</span>
-              </Button>
-            )}
-            {project.status !== 'completed' && (
-              <Button
-                onClick={handleFinishProject}
-                disabled={updateProjectMutation.isPending}
-                variant="outline"
-                size="sm"
-                className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
-              >
-                {updateProjectMutation.isPending ? 'Finalizando...' : 'Finalizar'}
-              </Button>
-            )}
-            <Button
-              onClick={handleDeleteProject}
-              disabled={deleteProjectMutation.isPending}
-              variant="outline"
-              size="sm"
-              className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-            >
-              {deleteProjectMutation.isPending ? 'Excluindo...' : 'Excluir'}
-            </Button>
+            
+            {/* Botão Expandir Mobile */}
             <Button
               onClick={() => setSelectedProjectId(isExpanded ? null : project.id)}
               variant="ghost"
               size="icon"
-              className="border bg-background border-transparent w-9 h-9 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              className="border bg-background border-transparent w-10 h-10 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0 ml-2"
               title={isExpanded ? "Recolher tijolos" : "Expandir tijolos"}
             >
               {isExpanded ? (
@@ -343,8 +301,151 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
               )}
             </Button>
           </div>
+          
+          {/* Estatísticas Mobile */}
+          <div className="flex flex-wrap items-center gap-2 text-sm mb-4">
+            {project.deadline && (
+              <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium border border-blue-200">
+                📅 {new Date(project.deadline).toLocaleDateString('pt-BR')}
+              </span>
+            )}
+            <span className="px-3 py-1 bg-purple-50 text-purple-600 rounded-full text-xs font-medium border border-purple-200">
+              🧱 {(project.backlog || project.tasks)?.length || 0} tijolos
+            </span>
+            {((project.backlog || project.tasks)?.filter(t => t.status?.toLowerCase() === 'completed').length || 0) > 0 && (
+              <span className="px-3 py-1 bg-green-50 text-green-600 rounded-full text-xs font-medium border border-green-200">
+                ✅ {(project.backlog || project.tasks)?.filter(t => t.status?.toLowerCase() === 'completed').length || 0} concluídos
+              </span>
+            )}
+          </div>
+          
+          {/* Botões Mobile - Stack */}
+          {project.status !== 'completed' && (
+            <div className="flex flex-col gap-2">
+              <Button
+                onClick={handleNewBrick}
+                variant="outline"
+                className="w-full min-h-[48px] text-base font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200 flex items-center justify-center space-x-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Novo Tijolo</span>
+              </Button>
+              
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleFinishProject}
+                  disabled={updateProjectMutation.isPending}
+                  variant="outline"
+                  className="flex-1 min-h-[48px] text-base font-medium text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
+                >
+                  {updateProjectMutation.isPending ? 'Finalizando...' : 'Finalizar'}
+                </Button>
+                
+                <Button
+                  onClick={handleDeleteProject}
+                  disabled={deleteProjectMutation.isPending}
+                  variant="outline"
+                  className="flex-1 min-h-[48px] text-base font-medium text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                >
+                  {deleteProjectMutation.isPending ? 'Excluindo...' : 'Excluir'}
+                </Button>
+              </div>
+            </div>
+          )}
+          
+          {project.status === 'completed' && (
+            <div className="flex justify-center">
+              <Button
+                onClick={handleDeleteProject}
+                disabled={deleteProjectMutation.isPending}
+                variant="outline"
+                className="w-full max-w-xs min-h-[48px] text-base font-medium text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+              >
+                {deleteProjectMutation.isPending ? 'Excluindo...' : 'Excluir'}
+              </Button>
+            </div>
+          )}
         </div>
 
+        {/* DESKTOP LAYOUT (≥ sm) - LAYOUT ORIGINAL */}
+        <div className="hidden sm:block">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <span className="text-2xl mr-3">{project.icon}</span>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <h3 className="text-lg font-semibold theme-text">{project.name}</h3>
+                  {project.status?.toLowerCase() === 'completed' && (
+                    <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
+                      ✅ Finalizado
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center space-x-4 text-sm">
+                  {project.deadline && (
+                    <p className="theme-text-muted">
+                      📅 Prazo: {new Date(project.deadline).toLocaleDateString('pt-BR')}
+                    </p>
+                  )}
+                  <p className="theme-text-muted">
+                    🧱 {(project.backlog || project.tasks)?.length || 0} tijolos
+                  </p>
+                  {((project.backlog || project.tasks)?.filter(t => t.status?.toLowerCase() === 'completed').length || 0) > 0 && (
+                    <p className="text-green-600">
+                      ✅ {(project.backlog || project.tasks)?.filter(t => t.status?.toLowerCase() === 'completed').length || 0} concluídos
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              {project.status !== 'completed' && (
+                <Button
+                  onClick={handleNewBrick}
+                  variant="outline"
+                  size="sm"
+                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200 flex items-center space-x-1"
+                >
+                  <Plus className="w-3 h-3" />
+                  <span>Novo Tijolo</span>
+                </Button>
+              )}
+              {project.status !== 'completed' && (
+                <Button
+                  onClick={handleFinishProject}
+                  disabled={updateProjectMutation.isPending}
+                  variant="outline"
+                  size="sm"
+                  className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
+                >
+                  {updateProjectMutation.isPending ? 'Finalizando...' : 'Finalizar'}
+                </Button>
+              )}
+              <Button
+                onClick={handleDeleteProject}
+                disabled={deleteProjectMutation.isPending}
+                variant="outline"
+                size="sm"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+              >
+                {deleteProjectMutation.isPending ? 'Excluindo...' : 'Excluir'}
+              </Button>
+              <Button
+                onClick={() => setSelectedProjectId(isExpanded ? null : project.id)}
+                variant="ghost"
+                size="icon"
+                className="border bg-background border-transparent w-9 h-9 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                title={isExpanded ? "Recolher tijolos" : "Expandir tijolos"}
+              >
+                {isExpanded ? (
+                  <ChevronUp className="w-5 h-5" />
+                ) : (
+                  <ChevronDown className="w-5 h-5" />
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <AnimatePresence>
@@ -354,9 +455,43 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="p-6 bg-gray-50"
+            className="p-4 sm:p-6 bg-gray-50"
           >
-            <div className="flex items-center justify-between mb-4">
+            {/* MOBILE HEADER (< sm) */}
+            <div className="sm:hidden mb-4">
+              <div className="text-center mb-3">
+                <h4 className="text-base font-medium theme-text flex items-center justify-center">
+                  🧱 Tijolos do projeto
+                  <span className="ml-2 text-sm bg-gray-200 theme-text-secondary px-2 py-1 rounded-full">
+                    {(project.backlog || project.tasks)?.length || 0}
+                  </span>
+                </h4>
+              </div>
+              
+              <div className="flex items-center justify-center space-x-2 text-xs">
+                {(() => {
+                  const projectTasks = project.backlog || project.tasks || [];
+                  const pendingCount = projectTasks.filter(isTaskPending).length;
+                  const completedCount = projectTasks.filter(t => 
+                    t.status?.toLowerCase() === 'completed'
+                  ).length;
+                  
+                  return (
+                    <>
+                      <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full font-medium">
+                        {pendingCount} pendentes
+                      </span>
+                      <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full font-medium">
+                        {completedCount} concluídos
+                      </span>
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
+
+            {/* DESKTOP HEADER (≥ sm) - LAYOUT ORIGINAL */}
+            <div className="hidden sm:flex items-center justify-between mb-4">
               <div className="flex items-center space-x-4">
                 <h4 className="text-md font-medium theme-text flex items-center">
                   🧱 Tijolos do projeto
@@ -368,9 +503,7 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
                 <div className="flex items-center space-x-2 text-xs">
                   {(() => {
                     const projectTasks = project.backlog || project.tasks || [];
-                    
                     const pendingCount = projectTasks.filter(isTaskPending).length;
-                    
                     const completedCount = projectTasks.filter(t => 
                       t.status?.toLowerCase() === 'completed'
                     ).length;
@@ -390,18 +523,18 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
               </div>
             </div>
 
-            <div className="bg-amber-50 rounded-lg p-4 mb-4">
+            <div className="bg-amber-50 rounded-xl p-3 sm:p-4 mb-4 border border-amber-200">
               <Button
                 onClick={() => setSandboxExpanded(!sandboxExpanded)}
                 variant="ghost"
-                className="w-full flex items-center justify-between text-sm font-medium text-amber-800 mb-2 hover:text-amber-900 transition-colors p-0 h-auto"
+                className="w-full flex items-center justify-between text-sm sm:text-sm font-medium text-amber-800 mb-2 hover:text-amber-900 transition-colors p-0 h-auto min-h-[44px] sm:min-h-[auto]"
               >
                 <div className="flex items-center">
-                  <FileText className="w-4 h-4 mr-1" />
-                  Pátio das Ideias do Projeto
+                  <FileText className="w-4 h-4 mr-2" />
+                  <span className="text-left">Pátio das Ideias do Projeto</span>
                 </div>
                 <motion.div animate={{ rotate: sandboxExpanded ? 180 : 0 }}>
-                  <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <ChevronDown className="w-4 h-4 sm:w-3 sm:h-3 flex-shrink-0" />
                 </motion.div>
               </Button>
               <AnimatePresence>
@@ -413,15 +546,15 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
                     transition={{ duration: 0.2 }}
                   >
                     <textarea
-                      className="w-full min-h-[5rem] text-sm theme-text-secondary bg-transparent resize-y border-none focus:outline-none placeholder-amber-400"
+                      className="w-full min-h-[8rem] sm:min-h-[5rem] text-sm sm:text-sm theme-text-secondary bg-transparent resize-y border-none focus:outline-none placeholder-amber-400 rounded-lg p-2 sm:p-0"
                       value={project.sandboxNotes}
                       placeholder="Rabisque suas ideias livremente aqui..."
                       onChange={(e) => updateProjectNotes(project.id, e.target.value)}
-                      style={{ height: 'auto', minHeight: '5rem' }}
+                      style={{ height: 'auto', minHeight: '8rem' }}
                       onInput={(e) => {
                         const target = e.target as HTMLTextAreaElement;
                         target.style.height = 'auto';
-                        target.style.height = Math.max(80, target.scrollHeight) + 'px';
+                        target.style.height = Math.max(128, target.scrollHeight) + 'px';
                       }}
                     />
                   </motion.div>
@@ -429,7 +562,7 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
               </AnimatePresence>
             </div>
 
-            {/* Formulário de Adicionar Tijolo */}
+            {/* Formulário de Adicionar Tijolo - MOBILE OTIMIZADO */}
             <AnimatePresence>
               {showAddForm && (
                 <motion.div
@@ -437,9 +570,50 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="bg-white rounded-lg p-4 border border-gray-200 mb-4"
+                  className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200 mb-4 shadow-sm"
                 >
-                  <div className="flex items-center space-x-2">
+                  {/* MOBILE LAYOUT (< sm) */}
+                  <div className="sm:hidden space-y-3">
+                    <input
+                      type="text"
+                      value={newTaskDescription}
+                      onChange={(e) => setNewTaskDescription(e.target.value)}
+                      placeholder="Descreva o novo tijolo..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg text-base focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      onKeyPress={(e) => e.key === 'Enter' && handleAddTask()}
+                      autoFocus
+                    />
+                    
+                    <div className="flex justify-center space-x-2">
+                      {[1, 3, 5].map((energy) => (
+                        <button
+                          key={energy}
+                          onClick={() => setNewTaskEnergy(energy as 1 | 3 | 5)}
+                          className={`p-3 rounded-lg transition-all min-w-[48px] min-h-[48px] flex items-center justify-center ${
+                            newTaskEnergy === energy
+                              ? 'bg-purple-100 border-2 border-purple-500'
+                              : 'bg-gray-100 border-2 border-gray-300 hover:border-purple-300'
+                          }`}
+                          title={`${energy} pontos de energia`}
+                        >
+                          {getEnergyIcon(energy)}
+                        </button>
+                      ))}
+                    </div>
+                    
+                    <Button
+                      onClick={handleAddTask}
+                      disabled={!newTaskDescription.trim()}
+                      variant="outline"
+                      className="w-full min-h-[48px] text-base font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                    >
+                      <Save className="w-4 h-4" />
+                      <span>Salvar Tijolo</span>
+                    </Button>
+                  </div>
+
+                  {/* DESKTOP LAYOUT (≥ sm) - LAYOUT ORIGINAL */}
+                  <div className="hidden sm:flex items-center space-x-2">
                     <input
                       type="text"
                       value={newTaskDescription}
@@ -519,100 +693,98 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
                       : ''
                   }`}
                 >
-                  <div className="p-3">
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-center justify-between w-full">
-                        <div 
-                          className="flex-1 cursor-pointer" 
-                          onClick={() => window.location.href = `/task/${task.id}`}
-                        >
-                          <h3 className={`text-lg font-semibold hover:text-blue-600 transition-colors ${
-                            task.status?.toLowerCase() === 'completed' 
-                              ? 'text-green-800 line-through' 
-                              : 'text-gray-900'
-                          }`}>
-                            {task.description}
-                          </h3>
-                        </div>
+                  <div className="p-3 sm:p-3">
+                    {/* MOBILE LAYOUT (< sm) */}
+                    <div className="sm:hidden space-y-3">
+                      {/* Título Mobile */}
+                      <div 
+                        className="cursor-pointer" 
+                        onClick={() => window.location.href = `/task/${task.id}`}
+                      >
+                        <h3 className={`text-base font-semibold hover:text-blue-600 transition-colors leading-tight ${
+                          task.status?.toLowerCase() === 'completed' 
+                            ? 'text-green-800 line-through' 
+                            : 'text-gray-900'
+                        }`}>
+                          {task.description}
+                        </h3>
                       </div>
                       
-                      <div className="flex items-center justify-between w-full">
-                        <div className="flex items-center gap-3">
-                          <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
-                            task.energyPoints === 1 ? 'bg-green-100 text-green-700 border border-green-200' :
-                            task.energyPoints === 3 ? 'bg-blue-100 text-blue-700 border border-blue-200' :
-                            'bg-purple-100 text-purple-700 border border-purple-200'
-                          }`}>
-                            {getEnergyIcon(task.energyPoints)}
-                            <span>
-                              {task.energyPoints === 1 ? 'Baixa' : 
-                               task.energyPoints === 3 ? 'Normal' : 'Alta'}
-                            </span>
-                          </div>
-                          
-                          {task.dueDate ? (
-                            (() => {
-                              const today = new Date();
-                              today.setHours(0, 0, 0, 0);
-                              
-                              const dateStr = task.dueDate.includes('T') ? task.dueDate.split('T')[0] : task.dueDate;
-                              const [year, month, day] = dateStr.split('-').map(Number);
-                              const dueDate = new Date(year, month - 1, day);
-                              
-                              const isOverdue = dueDate < today;
-                              const isDueToday = dueDate.getTime() === today.getTime();
-                              
-                              const colorClasses = isOverdue || isDueToday
-                                ? 'bg-red-100 text-red-700 border-red-200'
-                                : 'bg-green-100 text-green-700 border-green-200';
-                              
-                              return (
-                                <div className={`flex items-center gap-1.5 px-3 py-1 ${colorClasses} border rounded-full text-xs font-medium`}>
-                                  <Clock className="w-3 h-3" />
-                                  <span>{dueDate.toLocaleDateString('pt-BR')}</span>
-                                </div>
-                              );
-                            })()
-                          ) : null}
-                          
+                      {/* Badges Mobile */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
+                          task.energyPoints === 1 ? 'bg-green-100 text-green-700 border border-green-200' :
+                          task.energyPoints === 3 ? 'bg-blue-100 text-blue-700 border border-blue-200' :
+                          'bg-purple-100 text-purple-700 border border-purple-200'
+                        }`}>
+                          {getEnergyIcon(task.energyPoints)}
+                          <span>
+                            {task.energyPoints === 1 ? 'Baixa' : 
+                             task.energyPoints === 3 ? 'Normal' : 'Alta'}
+                          </span>
                         </div>
                         
-                        <div className="flex items-center gap-3">
-                          <Button
-                            onClick={async (e) => {
-                              e.stopPropagation();
-                              try {
-                                await updateTaskMutation.mutateAsync({
-                                  taskId: task.id,
-                                  updates: {
-                                    plannedForToday: true,
-                                    status: 'pending'
-                                  }
-                                });
-                                window.location.href = '/bombeiro';
-                              } catch (error) {
-                                console.error('Erro ao planejar tarefa para hoje:', error);
-                              }
-                            }}
-                            variant="outline"
-                            size="sm"
-                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
-                            title="Mover para hoje"
-                          >
-                            Atuar hoje
-                          </Button>
-                          
+                        {task.dueDate && (
+                          (() => {
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            
+                            const dateStr = task.dueDate.includes('T') ? task.dueDate.split('T')[0] : task.dueDate;
+                            const [year, month, day] = dateStr.split('-').map(Number);
+                            const dueDate = new Date(year, month - 1, day);
+                            
+                            const isOverdue = dueDate < today;
+                            const isDueToday = dueDate.getTime() === today.getTime();
+                            
+                            const colorClasses = isOverdue || isDueToday
+                              ? 'bg-red-100 text-red-700 border-red-200'
+                              : 'bg-green-100 text-green-700 border-green-200';
+                            
+                            return (
+                              <div className={`flex items-center gap-1.5 px-3 py-1 ${colorClasses} border rounded-full text-xs font-medium`}>
+                                <Clock className="w-3 h-3" />
+                                <span>{dueDate.toLocaleDateString('pt-BR')}</span>
+                              </div>
+                            );
+                          })()
+                        )}
+                      </div>
+                      
+                      {/* Botões Mobile */}
+                      <div className="flex flex-col gap-2">
+                        <Button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            try {
+                              await updateTaskMutation.mutateAsync({
+                                taskId: task.id,
+                                updates: {
+                                  plannedForToday: true,
+                                  status: 'pending'
+                                }
+                              });
+                              window.location.href = '/bombeiro';
+                            } catch (error) {
+                              console.error('Erro ao planejar tarefa para hoje:', error);
+                            }
+                          }}
+                          variant="outline"
+                          className="w-full min-h-[48px] text-base font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
+                        >
+                          Atuar hoje
+                        </Button>
+                        
+                        <div className="flex gap-2">
                           <Button
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDelete(task.id);
                             }}
-                            variant="ghost"
-                            size="icon"
-                            className="border bg-background border-transparent w-9 h-9 p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Excluir"
+                            variant="outline"
+                            className="flex-1 min-h-[48px] text-base font-medium text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Excluir
                           </Button>
                           
                           <Button
@@ -620,14 +792,128 @@ export function ProjectContainer({ project }: ProjectContainerProps) {
                               e.stopPropagation();
                               handleTaskExpansion(task.id);
                             }}
-                            variant="ghost"
-                            size="icon"
-                            className="border bg-background border-transparent w-9 h-9 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                            variant="outline"
+                            className="flex-1 min-h-[48px] text-base font-medium text-gray-600 hover:text-gray-700 hover:bg-gray-50 border-gray-300"
                           >
-                            <motion.div animate={{ rotate: expandedTask === task.id ? 180 : 0 }}>
+                            <motion.div animate={{ rotate: expandedTask === task.id ? 180 : 0 }} className="mr-2">
                               <ChevronDown className="w-4 h-4" />
                             </motion.div>
+                            Detalhes
                           </Button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* DESKTOP LAYOUT (≥ sm) - LAYOUT ORIGINAL */}
+                    <div className="hidden sm:block">
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center justify-between w-full">
+                          <div 
+                            className="flex-1 cursor-pointer" 
+                            onClick={() => window.location.href = `/task/${task.id}`}
+                          >
+                            <h3 className={`text-lg font-semibold hover:text-blue-600 transition-colors ${
+                              task.status?.toLowerCase() === 'completed' 
+                                ? 'text-green-800 line-through' 
+                                : 'text-gray-900'
+                            }`}>
+                              {task.description}
+                            </h3>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex items-center gap-3">
+                            <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
+                              task.energyPoints === 1 ? 'bg-green-100 text-green-700 border border-green-200' :
+                              task.energyPoints === 3 ? 'bg-blue-100 text-blue-700 border border-blue-200' :
+                              'bg-purple-100 text-purple-700 border border-purple-200'
+                            }`}>
+                              {getEnergyIcon(task.energyPoints)}
+                              <span>
+                                {task.energyPoints === 1 ? 'Baixa' : 
+                                 task.energyPoints === 3 ? 'Normal' : 'Alta'}
+                              </span>
+                            </div>
+                            
+                            {task.dueDate && (
+                              (() => {
+                                const today = new Date();
+                                today.setHours(0, 0, 0, 0);
+                                
+                                const dateStr = task.dueDate.includes('T') ? task.dueDate.split('T')[0] : task.dueDate;
+                                const [year, month, day] = dateStr.split('-').map(Number);
+                                const dueDate = new Date(year, month - 1, day);
+                                
+                                const isOverdue = dueDate < today;
+                                const isDueToday = dueDate.getTime() === today.getTime();
+                                
+                                const colorClasses = isOverdue || isDueToday
+                                  ? 'bg-red-100 text-red-700 border-red-200'
+                                  : 'bg-green-100 text-green-700 border-green-200';
+                                
+                                return (
+                                  <div className={`flex items-center gap-1.5 px-3 py-1 ${colorClasses} border rounded-full text-xs font-medium`}>
+                                    <Clock className="w-3 h-3" />
+                                    <span>{dueDate.toLocaleDateString('pt-BR')}</span>
+                                  </div>
+                                );
+                              })()
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center gap-3">
+                            <Button
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                try {
+                                  await updateTaskMutation.mutateAsync({
+                                    taskId: task.id,
+                                    updates: {
+                                      plannedForToday: true,
+                                      status: 'pending'
+                                    }
+                                  });
+                                  window.location.href = '/bombeiro';
+                                } catch (error) {
+                                  console.error('Erro ao planejar tarefa para hoje:', error);
+                                }
+                              }}
+                              variant="outline"
+                              size="sm"
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
+                              title="Mover para hoje"
+                            >
+                              Atuar hoje
+                            </Button>
+                            
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(task.id);
+                              }}
+                              variant="ghost"
+                              size="icon"
+                              className="border bg-background border-transparent w-9 h-9 p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Excluir"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                            
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleTaskExpansion(task.id);
+                              }}
+                              variant="ghost"
+                              size="icon"
+                              className="border bg-background border-transparent w-9 h-9 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                            >
+                              <motion.div animate={{ rotate: expandedTask === task.id ? 180 : 0 }}>
+                                <ChevronDown className="w-4 h-4" />
+                              </motion.div>
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </div>

@@ -283,8 +283,8 @@ export function AchievementGrid({
         </motion.div>
       )}
 
-      {/* Grid de medalhas */}
-      <div className="responsive-grid cols-2-sm cols-3-md cols-4-lg gap-4 sm:gap-6">
+      {/* Grid de medalhas - LAYOUT 3 COLUNAS */}
+      <div className="grid grid-cols-3 gap-3 sm:gap-4 md:gap-6">
         {isLoading ? (
           <LoadingSkeleton count={8} medalSize={medalSize} />
         ) : filteredAchievements.length === 0 ? (

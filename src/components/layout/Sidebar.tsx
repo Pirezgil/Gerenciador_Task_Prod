@@ -346,23 +346,25 @@ export function Sidebar({ className = '' }: SidebarProps) {
                               : 'hover:bg-gray-50'
                           }`}
                         >
-                        <div className="flex items-center space-x-3">
-                          <div className={`flex-shrink-0 p-2 rounded-lg transition-all duration-200 ${
-                            active 
-                              ? 'bg-white/20' 
-                              : isPrimary
-                              ? 'bg-white border border-gray-200 group-hover:border-gray-300'
-                              : 'bg-gray-100 group-hover:bg-gray-200'
-                          }`}>
-                            <Icon className={`w-5 h-5 transition-colors ${
+                        <div className="flex items-center">
+                          <div className="w-12 flex justify-center flex-shrink-0">
+                            <div className={`p-2 rounded-lg transition-all duration-200 ${
                               active 
-                                ? 'text-white' 
+                                ? 'bg-white/20' 
                                 : isPrimary
-                                ? 'text-blue-600'
-                                : 'text-gray-600'
-                            }`} />
+                                ? 'bg-white border border-gray-200 group-hover:border-gray-300'
+                                : 'bg-gray-100 group-hover:bg-gray-200'
+                            }`}>
+                              <Icon className={`w-5 h-5 transition-colors ${
+                                active 
+                                  ? 'text-white' 
+                                  : isPrimary
+                                  ? 'text-blue-600'
+                                  : 'text-gray-600'
+                              }`} />
+                            </div>
                           </div>
-                          <div className="flex-1 min-w-0">
+                          <div className="flex-1 min-w-0 ml-3">
                             <div className={`font-semibold text-sm transition-colors ${
                               active 
                                 ? 'text-white' 
@@ -400,12 +402,14 @@ export function Sidebar({ className = '' }: SidebarProps) {
                           <Button
                             onClick={() => handleNavigation(item.path)}
                             variant="ghost"
-                            className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 group h-auto justify-start focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+                            className={`w-full flex items-center px-3 py-2 rounded-lg transition-all duration-200 group h-auto justify-start focus:ring-2 focus:ring-blue-500 focus:outline-none ${
                               active ? 'bg-gray-100' : 'hover:bg-gray-50'
                             }`}
                           >
-                          <Icon className="w-4 h-4 text-gray-600 transition-transform group-hover:scale-105" />
-                          <div className="flex-1 text-left">
+                          <div className="w-12 flex justify-center flex-shrink-0">
+                            <Icon className="w-4 h-4 text-gray-600 transition-transform group-hover:scale-105" />
+                          </div>
+                          <div className="flex-1 text-left ml-3">
                             <div className="font-medium text-sm text-gray-700">{item.label}</div>
                             <div className="text-xs text-gray-500">{item.description}</div>
                           </div>
@@ -551,21 +555,23 @@ export function Sidebar({ className = '' }: SidebarProps) {
                     : 'hover:bg-gray-50'
                 }`}
               >
-              <div className={`flex items-center ${isCollapsed ? 'space-x-2' : 'space-x-3'}`}>
-                <div className={`flex-shrink-0 p-2 rounded-lg transition-all duration-200 ${
-                  active 
-                    ? 'bg-white/20' 
-                    : isCollapsed
-                    ? (isPrimary ? 'bg-white border border-gray-200 group-hover:border-gray-300' : 'bg-gray-100 group-hover:bg-gray-200')
-                    : (isPrimary ? 'bg-white border border-gray-200 group-hover:border-gray-300' : 'bg-gray-100 group-hover:bg-gray-200')
-                }`}>
-                  <Icon className={`w-5 h-5 transition-colors ${
+              <div className="flex items-center">
+                <div className="w-12 flex justify-center flex-shrink-0">
+                  <div className={`p-2 rounded-lg transition-all duration-200 ${
                     active 
-                      ? 'text-white' 
+                      ? 'bg-white/20' 
                       : isPrimary
-                      ? 'text-blue-600'
-                      : 'text-gray-600'
-                  }`} />
+                      ? 'bg-white border border-gray-200 group-hover:border-gray-300'
+                      : 'bg-gray-100 group-hover:bg-gray-200'
+                  }`}>
+                    <Icon className={`w-5 h-5 transition-colors ${
+                      active 
+                        ? 'text-white' 
+                        : isPrimary
+                        ? 'text-blue-600'
+                        : 'text-gray-600'
+                    }`} />
+                  </div>
                 </div>
                 
                 <AnimatePresence>
@@ -575,7 +581,7 @@ export function Sidebar({ className = '' }: SidebarProps) {
                       initial="collapsed"
                       animate="expanded"
                       exit="collapsed"
-                      className="flex-1 min-w-0"
+                      className="flex-1 min-w-0 ml-3"
                     >
                       <div className={`font-semibold text-sm transition-colors ${
                         active 
@@ -620,12 +626,14 @@ export function Sidebar({ className = '' }: SidebarProps) {
                 <Button
                   onClick={() => handleNavigation(item.path)}
                   variant="ghost"
-                  className={`w-full flex items-center ${isCollapsed ? 'space-x-2' : 'space-x-3'} px-3 py-2 rounded-lg transition-all duration-200 group h-auto focus:ring-2 focus:ring-blue-500 focus:outline-none ${
+                  className={`w-full flex items-center px-3 py-2 rounded-lg transition-all duration-200 group h-auto focus:ring-2 focus:ring-blue-500 focus:outline-none ${
                     active ? 'bg-gray-100' : 'hover:bg-gray-50'
                   }`}
                   title={isCollapsed ? `${item.label} - ${item.description}` : undefined}
                 >
-                <Icon className="w-4 h-4 text-gray-600 transition-transform group-hover:scale-105" />
+                <div className="w-12 flex justify-center flex-shrink-0">
+                  <Icon className="w-4 h-4 text-gray-600 transition-transform group-hover:scale-105" />
+                </div>
                 <AnimatePresence>
                   {!isCollapsed && (
                     <motion.div
@@ -633,7 +641,7 @@ export function Sidebar({ className = '' }: SidebarProps) {
                       initial="collapsed"
                       animate="expanded"
                       exit="collapsed"
-                      className="flex-1 text-left min-w-0"
+                      className="flex-1 text-left min-w-0 ml-3"
                     >
                       <div className="font-medium text-sm text-gray-700">{item.label}</div>
                       <div className="text-xs text-gray-500 truncate">{item.description}</div>

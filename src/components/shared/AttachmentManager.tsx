@@ -393,36 +393,39 @@ export function AttachmentManager({
 
   return (
     <div className="space-y-4">
-      {/* Cabeçalho */}
-      <div className="flex items-center justify-between">
+      {/* Cabeçalho RESPONSIVO */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
           <Paperclip className="w-5 h-5" />
           Anexos ({currentAttachments.length})
         </h3>
         
         <div className="text-xs text-gray-500">
-          <span>Limite: 50MB por arquivo, 2GB total por usuário</span>
+          <span className="hidden sm:inline">Limite: 50MB por arquivo, 2GB total por usuário</span>
+          <span className="sm:hidden">50MB/arquivo • 2GB/usuário</span>
         </div>
       </div>
 
-      {/* Botão de upload */}
+      {/* Botão de upload RESPONSIVO */}
       <div className="flex items-center gap-2">
         <Button
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
           variant="outline"
           size="sm"
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 min-h-[44px] flex-1 sm:flex-none justify-center touch-manipulation"
         >
           {isUploading ? (
             <>
               <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
-              Enviando...
+              <span className="hidden xs:inline">Enviando...</span>
+              <span className="xs:hidden">...</span>
             </>
           ) : (
             <>
               <Upload className="w-4 h-4" />
-              Adicionar Anexo
+              <span className="hidden xs:inline">Adicionar Anexo</span>
+              <span className="xs:hidden">Adicionar</span>
             </>
           )}
         </Button>
@@ -449,76 +452,152 @@ export function AttachmentManager({
         </div>
       )}
 
-      {/* Lista de anexos */}
+      {/* Lista de anexos RESPONSIVA */}
       {currentAttachments.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
           <Paperclip className="w-12 h-12 text-gray-300 mx-auto mb-2" />
           <p className="text-sm">Nenhum anexo adicionado</p>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {currentAttachments.map((attachment) => (
             <div
               key={attachment.id}
-              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
+              className="bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
             >
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div className={`text-gray-600 ${attachment.isSaving ? 'opacity-50' : ''}`}>
-                  {attachment.isSaving ? (
-                    <div className="w-5 h-5 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
-                  ) : (
-                    getFileIcon(attachment.type)
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className={`text-sm font-medium truncate ${
-                      attachment.hasError 
-                        ? 'text-red-600' 
-                        : attachment.isSaving 
-                          ? 'text-gray-500' 
-                          : 'text-gray-900'
-                    }`}>
-                      {attachment.name}
-                    </p>
-                    {attachment.isSaving && (
-                      <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
-                        Salvando...
-                      </span>
-                    )}
-                    {attachment.hasError && (
-                      <span className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded-full">
-                        Erro ao salvar
-                      </span>
+              {/* LAYOUT MOBILE */}
+              <div className="sm:hidden p-4">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className={`text-gray-600 mt-1 flex-shrink-0 ${attachment.isSaving ? 'opacity-50' : ''}`}>
+                    {attachment.isSaving ? (
+                      <div className="w-5 h-5 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
+                    ) : (
+                      getFileIcon(attachment.type)
                     )}
                   </div>
-                  <p className="text-xs text-gray-500">
-                    {formatFileSize(attachment.size)} • {new Date(attachment.uploadedAt).toLocaleDateString()}
-                  </p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <p className={`text-sm font-medium leading-tight ${
+                        attachment.hasError 
+                          ? 'text-red-600' 
+                          : attachment.isSaving 
+                            ? 'text-gray-500' 
+                            : 'text-gray-900'
+                      }`}>
+                        {attachment.name}
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 mb-2">
+                      <p className="text-xs text-gray-500">
+                        {formatFileSize(attachment.size)}
+                      </p>
+                      <span className="text-xs text-gray-400">•</span>
+                      <p className="text-xs text-gray-500">
+                        {new Date(attachment.uploadedAt).toLocaleDateString('pt-BR')}
+                      </p>
+                    </div>
+
+                    {/* Status badges mobile */}
+                    <div className="flex gap-2 mb-3">
+                      {attachment.isSaving && (
+                        <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                          Salvando...
+                        </span>
+                      )}
+                      {attachment.hasError && (
+                        <span className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded-full">
+                          Erro ao salvar
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Botões de ação mobile */}
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => handleDownload(attachment)}
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 min-h-[44px] touch-manipulation"
+                    disabled={attachment.isSaving}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download
+                  </Button>
+                  <Button
+                    onClick={() => handleRemoveAttachment(attachment.id)}
+                    variant="outline"
+                    size="sm"
+                    className="min-h-[44px] px-4 text-red-600 border-red-200 hover:bg-red-50 touch-manipulation"
+                    disabled={attachment.isSaving}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
               </div>
 
-              <div className="flex items-center gap-1">
-                <Button
-                  onClick={() => handleDownload(attachment)}
-                  variant="ghost"
-                  size="sm"
-                  className="p-2"
-                  title="Download"
-                  disabled={attachment.isSaving}
-                >
-                  <Download className="w-4 h-4" />
-                </Button>
-                <Button
-                  onClick={() => handleRemoveAttachment(attachment.id)}
-                  variant="ghost"
-                  size="sm"
-                  className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-                  title="Remover"
-                  disabled={attachment.isSaving}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+              {/* LAYOUT DESKTOP */}
+              <div className="hidden sm:flex items-center justify-between p-3">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className={`text-gray-600 ${attachment.isSaving ? 'opacity-50' : ''}`}>
+                    {attachment.isSaving ? (
+                      <div className="w-5 h-5 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
+                    ) : (
+                      getFileIcon(attachment.type)
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className={`text-sm font-medium truncate ${
+                        attachment.hasError 
+                          ? 'text-red-600' 
+                          : attachment.isSaving 
+                            ? 'text-gray-500' 
+                            : 'text-gray-900'
+                      }`}>
+                        {attachment.name}
+                      </p>
+                      {attachment.isSaving && (
+                        <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                          Salvando...
+                        </span>
+                      )}
+                      {attachment.hasError && (
+                        <span className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded-full">
+                          Erro ao salvar
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      {formatFileSize(attachment.size)} • {new Date(attachment.uploadedAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <Button
+                    onClick={() => handleDownload(attachment)}
+                    variant="ghost"
+                    size="sm"
+                    className="p-2"
+                    title="Download"
+                    disabled={attachment.isSaving}
+                  >
+                    <Download className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    onClick={() => handleRemoveAttachment(attachment.id)}
+                    variant="ghost"
+                    size="sm"
+                    className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    title="Remover"
+                    disabled={attachment.isSaving}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           ))}

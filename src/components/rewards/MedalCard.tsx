@@ -60,26 +60,26 @@ function getSizeClasses(size: MedalCardProps['size']) {
   switch (size) {
     case 'tiny':
       return {
-        container: 'w-8 h-8',
-        emoji: 'text-sm',
+        container: 'w-6 h-6 sm:w-8 sm:h-8',
+        emoji: 'text-xs sm:text-sm',
         text: 'text-xs',
       };
     case 'small':
       return {
-        container: 'w-16 h-16',
-        emoji: 'text-2xl',
+        container: 'w-11 h-11 sm:w-16 sm:h-16',
+        emoji: 'text-lg sm:text-2xl',
         text: 'text-xs',
       };
     case 'large':
       return {
-        container: 'w-32 h-32',
-        emoji: 'text-6xl',
-        text: 'text-lg',
+        container: 'w-22 h-22 sm:w-32 sm:h-32',
+        emoji: 'text-4xl sm:text-6xl',
+        text: 'text-base sm:text-lg',
       };
     default: // medium
       return {
-        container: 'w-24 h-24',
-        emoji: 'text-4xl',
+        container: 'w-17 h-17 sm:w-24 sm:h-24',
+        emoji: 'text-3xl sm:text-4xl',
         text: 'text-sm',
       };
   }
@@ -171,10 +171,10 @@ function MedalTooltip({ achievement, medalConfig, isVisible }: {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 10, scale: 0.95 }}
           transition={{ duration: 0.2 }}
-          className="fixed top-8 left-1/2 transform -translate-x-1/2 z-[9999] pointer-events-none"
+          className="fixed inset-x-4 top-4 sm:top-8 sm:left-1/2 sm:right-auto sm:transform sm:-translate-x-1/2 sm:max-w-sm z-[9999] pointer-events-none"
         >
           <div 
-            className="relative bg-gray-900 text-white p-4 rounded-xl shadow-2xl border border-gray-700 max-w-sm backdrop-blur-sm pointer-events-auto"
+            className="relative bg-gray-900 text-white p-3 sm:p-4 rounded-xl shadow-2xl border border-gray-700 backdrop-blur-sm pointer-events-auto"
             style={{ 
               background: `linear-gradient(135deg, rgba(17, 24, 39, 0.98), rgba(31, 41, 55, 0.98))`,
               borderColor: medalConfig.colors.primary,
@@ -182,32 +182,32 @@ function MedalTooltip({ achievement, medalConfig, isVisible }: {
             }}
           >
             <div className="text-center relative z-10">
-              <div className="text-2xl font-bold text-white mb-4 flex items-center justify-center gap-3">
-                <span className="text-4xl">{medalConfig.emoji}</span>
-                {medalConfig.name}
+              <div className="text-lg sm:text-2xl font-bold text-white mb-3 sm:mb-4 flex items-center justify-center gap-2 sm:gap-3">
+                <span className="text-2xl sm:text-4xl">{medalConfig.emoji}</span>
+                <span className="text-sm sm:text-base">{medalConfig.name}</span>
               </div>
               
-              <div className="bg-black/40 backdrop-blur-sm rounded-lg p-4 space-y-4">
-                <div className="text-lg font-bold text-yellow-300 text-center">
+              <div className="bg-black/40 backdrop-blur-sm rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-3">
+                <div className="text-sm sm:text-lg font-bold text-yellow-300 text-center">
                   Medalha nível {achievement.subtype || 'bronze'}
                 </div>
                 
-                <div className="text-center space-y-3">
+                <div className="text-center space-y-2 sm:space-y-3">
                   {achievement.metadata?.projectName && (
-                    <div className="text-base text-blue-300 font-medium">
+                    <div className="text-xs sm:text-base text-blue-300 font-medium">
                       🏗️ Projeto: {achievement.metadata.projectName}
                     </div>
                   )}
                   {achievement.metadata?.taskDescription && (
-                    <div className="text-base text-green-300 font-medium">
+                    <div className="text-xs sm:text-base text-green-300 font-medium">
                       ✅ Tarefa: {achievement.metadata.taskDescription}
                     </div>
                   )}
-                  <div className="text-base text-white font-medium">
+                  <div className="text-xs sm:text-base text-white font-medium">
                     {formatDate(achievement.earnedAt)}
                   </div>
                   {achievement.metadata?.energyPoints && (
-                    <div className="text-lg text-yellow-400 font-semibold">
+                    <div className="text-sm sm:text-lg text-yellow-400 font-semibold">
                       ⚡ {achievement.metadata.energyPoints} pontos de energia
                     </div>
                   )}

@@ -10,7 +10,7 @@ import { useTasksStore } from '@/stores/tasksStore';
 import { useUpdateTask, useTask } from '@/hooks/api/useTasks';
 import { useUpdateProject, useUpdateProjectTask, useProjects } from '@/hooks/api/useProjects';
 import { Button } from '@/components/ui/button';
-import { Edit, Paperclip, MessageSquare, Clock, ArrowLeft, Link as LinkIcon, ChevronLeft, ChevronRight, Grid3X3, Bell, Plus, Settings, Calendar } from 'lucide-react';
+import { Edit, Paperclip, MessageSquare, Clock, ArrowLeft, Link as LinkIcon, ChevronLeft, ChevronRight, Grid3X3, Bell, Plus, Settings } from 'lucide-react';
 import { CommentSection } from '@/components/task/CommentSection';
 import { AttachmentManager } from '@/components/shared/AttachmentManager';
 import Link from 'next/link';
@@ -326,8 +326,8 @@ const EditView = ({ task, onSave, onCancel }: { task: Task, onSave: (updates: Pa
                 )}
 
                 <div className="flex space-x-3 pt-4">
-                    <Button onClick={handleSave} className="text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 border-0 shadow-md hover:shadow-lg transition-all duration-200">
-                        ✨ Salvar
+                    <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700 text-white">
+                        Salvar
                     </Button>
                     <Button onClick={onCancel} variant="outline">
                         Cancelar
@@ -521,38 +521,38 @@ export function TaskDetailClient({ task: initialTask, onTaskUpdate }: { task: Ta
                 <div className="space-y-6">
                     {/* Informações de Compromisso */}
                     {formData.isAppointment && formData.appointment && (
-                        <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4 shadow-sm">
+                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-lg border border-green-200 dark:border-gray-700 p-6">
                             <div className="flex items-center mb-4">
-                                <div className="p-2 bg-gray-100 rounded-lg mr-3">
-                                    <span className="text-gray-600 text-xl">📅</span>
+                                <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg mr-3">
+                                    <span className="text-green-600 text-xl">📅</span>
                                 </div>
-                                <h3 className="text-xl font-semibold text-gray-900">Detalhes do Compromisso</h3>
+                                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Detalhes do Compromisso</h3>
                             </div>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                <div className="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100">
-                                    <div className="text-lg font-bold text-gray-700">{formatTime(formData.appointment.scheduledTime)}</div>
-                                    <div className="text-sm text-gray-600">Horário</div>
+                                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-green-100 dark:border-gray-600">
+                                    <div className="text-lg font-bold text-green-700 dark:text-green-400">{formatTime(formData.appointment.scheduledTime)}</div>
+                                    <div className="text-sm text-gray-600 dark:text-gray-400">Horário</div>
                                 </div>
                                 
                                 {formData.appointment.preparationTime > 0 && (
-                                    <div className="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100">
-                                        <div className="text-lg font-bold text-gray-700">{formData.appointment.preparationTime} min</div>
-                                        <div className="text-sm text-gray-600">Preparação</div>
+                                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-green-100 dark:border-gray-600">
+                                        <div className="text-lg font-bold text-green-700 dark:text-green-400">{formData.appointment.preparationTime} min</div>
+                                        <div className="text-sm text-gray-600 dark:text-gray-400">Preparação</div>
                                     </div>
                                 )}
                                 
                                 {formData.appointment.location && (
-                                    <div className="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100">
-                                        <div className="text-lg font-bold text-gray-700 truncate">📍 {formData.appointment.location}</div>
-                                        <div className="text-sm text-gray-600">Local</div>
+                                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-green-100 dark:border-gray-600">
+                                        <div className="text-lg font-bold text-green-700 dark:text-green-400 truncate">📍 {formData.appointment.location}</div>
+                                        <div className="text-sm text-gray-600 dark:text-gray-400">Local</div>
                                     </div>
                                 )}
                                 
                                 {formData.appointment.notes && (
-                                    <div className="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100 md:col-span-2 lg:col-span-1">
-                                        <div className="text-sm font-medium text-gray-700 mb-2">Observações:</div>
-                                        <div className="text-sm text-gray-800">{formData.appointment.notes}</div>
+                                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-green-100 dark:border-gray-600 md:col-span-2 lg:col-span-1">
+                                        <div className="text-sm font-medium text-green-700 dark:text-green-400 mb-2">Observações:</div>
+                                        <div className="text-sm text-gray-800 dark:text-gray-200">{formData.appointment.notes}</div>
                                     </div>
                                 )}
                             </div>
@@ -561,45 +561,45 @@ export function TaskDetailClient({ task: initialTask, onTaskUpdate }: { task: Ta
                     
                     {/* Informações de Recorrência */}
                     {formData.isRecurring && formData.recurrence && (
-                        <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4 shadow-sm">
+                        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-lg border border-purple-200 dark:border-gray-700 p-6">
                             <div className="flex items-center mb-4">
-                                <div className="p-2 bg-gray-100 rounded-lg mr-3">
-                                    <span className="text-gray-600 text-xl">🔄</span>
+                                <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg mr-3">
+                                    <span className="text-purple-600 text-xl">🔄</span>
                                 </div>
-                                <h3 className="text-xl font-semibold text-gray-900">Configuração de Recorrência</h3>
+                                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Configuração de Recorrência</h3>
                             </div>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <div className="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100">
-                                    <div className="text-lg font-bold text-gray-700">
+                                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-purple-100 dark:border-gray-600">
+                                    <div className="text-lg font-bold text-purple-700 dark:text-purple-400">
                                         {formData.recurrence.frequency === 'daily' ? 'Diariamente' : 
                                          formData.recurrence.frequency === 'weekly' ? 'Semanalmente' : 'Personalizado'}
                                     </div>
-                                    <div className="text-sm text-gray-600">Frequência</div>
+                                    <div className="text-sm text-gray-600 dark:text-gray-400">Frequência</div>
                                 </div>
                                 
                                 {formData.recurrence.daysOfWeek && formData.recurrence.daysOfWeek.length > 0 && (
-                                    <div className="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100 md:col-span-2">
-                                        <div className="text-lg font-bold text-gray-700">{formatDaysOfWeek(formData.recurrence.daysOfWeek)}</div>
-                                        <div className="text-sm text-gray-600">Dias da semana</div>
+                                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-purple-100 dark:border-gray-600 md:col-span-2">
+                                        <div className="text-lg font-bold text-purple-700 dark:text-purple-400">{formatDaysOfWeek(formData.recurrence.daysOfWeek)}</div>
+                                        <div className="text-sm text-gray-600 dark:text-gray-400">Dias da semana</div>
                                     </div>
                                 )}
                                 
                                 {formData.recurrence.lastCompleted && (
-                                    <div className="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100">
-                                        <div className="text-lg font-bold text-gray-700">
+                                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-purple-100 dark:border-gray-600">
+                                        <div className="text-lg font-bold text-purple-700 dark:text-purple-400">
                                             {new Date(formData.recurrence.lastCompleted).toLocaleDateString('pt-BR')}
                                         </div>
-                                        <div className="text-sm text-gray-600">Última conclusão</div>
+                                        <div className="text-sm text-gray-600 dark:text-gray-400">Última conclusão</div>
                                     </div>
                                 )}
                                 
                                 {formData.recurrence.nextDue && (
-                                    <div className="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100">
-                                        <div className="text-lg font-bold text-gray-700">
+                                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-purple-100 dark:border-gray-600">
+                                        <div className="text-lg font-bold text-purple-700 dark:text-purple-400">
                                             {new Date(formData.recurrence.nextDue).toLocaleDateString('pt-BR')}
                                         </div>
-                                        <div className="text-sm text-gray-600">Próxima data</div>
+                                        <div className="text-sm text-gray-600 dark:text-gray-400">Próxima data</div>
                                     </div>
                                 )}
                             </div>
@@ -609,21 +609,21 @@ export function TaskDetailClient({ task: initialTask, onTaskUpdate }: { task: Ta
                 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Comentários - 2/3 da largura */}
-                    <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-3 sm:p-4 shadow-sm flex flex-col">
+                    <div className="lg:col-span-2 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-lg border border-blue-200 dark:border-gray-700 p-6 flex flex-col">
                         <div className="flex items-center mb-6">
-                            <div className="p-2 bg-gray-100 rounded-lg mr-3">
-                                <MessageSquare className="w-5 h-5 text-gray-600"/>
+                            <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg mr-3">
+                                <MessageSquare className="w-5 h-5 text-blue-600 dark:text-blue-400"/>
                             </div>
-                            <h2 className="text-xl font-semibold text-gray-900">Comentários</h2>
-                            <span className="ml-auto bg-gray-600 text-white text-xs px-2 py-1 rounded-full">{(formData.comments || []).length}</span>
+                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Comentários</h2>
+                            <span className="ml-auto bg-blue-600 text-white text-xs px-2 py-1 rounded-full">{(formData.comments || []).length}</span>
                         </div>
                         
                         <div className="space-y-3 max-h-96 overflow-y-auto">
                             {(formData.comments || []).map(c => (
-                                <div key={c.id} className="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100">
-                                    <p className="text-sm text-gray-800 leading-relaxed">{c.content}</p>
-                                    <p className="text-xs text-gray-500 mt-2 flex items-center">
-                                        <span className="w-2 h-2 bg-gray-400 rounded-full mr-2"></span>
+                                <div key={c.id} className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-blue-100 dark:border-gray-600">
+                                    <p className="text-sm text-gray-800 dark:text-gray-200 leading-relaxed">{c.content}</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 flex items-center">
+                                        <span className="w-2 h-2 bg-blue-400 rounded-full mr-2"></span>
                                         {c.author} • {new Date(c.createdAt).toLocaleString()}
                                     </p>
                                 </div>
@@ -631,36 +631,36 @@ export function TaskDetailClient({ task: initialTask, onTaskUpdate }: { task: Ta
                             {(formData.comments || []).length === 0 && (
                                 <div className="text-center py-8">
                                     <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-3"/>
-                                    <p className="text-gray-500">Nenhum comentário ainda</p>
+                                    <p className="text-gray-500 dark:text-gray-400">Nenhum comentário ainda</p>
                                 </div>
                             )}
                         </div>
                         
-                        <div className="mt-auto pt-4 border-t border-gray-200">
+                        <div className="mt-auto pt-4 border-t border-blue-200 dark:border-gray-700">
                             <CommentSection task={task} />
                         </div>
                     </div>
 
                     {/* Histórico - 1/3 da largura */}
-                    <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4 shadow-sm">
+                    <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-lg border border-amber-200 dark:border-gray-700 p-6">
                         <div className="flex items-center mb-6">
-                            <div className="p-2 bg-gray-100 rounded-lg mr-3">
-                                <Clock className="w-5 h-5 text-gray-600"/>
+                            <div className="p-2 bg-amber-100 dark:bg-amber-900 rounded-lg mr-3">
+                                <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400"/>
                             </div>
-                            <h2 className="text-xl font-semibold text-gray-900">Histórico</h2>
-                            <span className="ml-auto bg-gray-600 text-white text-xs px-2 py-1 rounded-full">{(formData.history || []).length}</span>
+                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Histórico</h2>
+                            <span className="ml-auto bg-amber-600 text-white text-xs px-2 py-1 rounded-full">{(formData.history || []).length}</span>
                         </div>
                         
                         <div className="space-y-3 max-h-96 overflow-y-auto">
                             {[...(formData.history || [])].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).map(h => (
-                                <div key={h.id} className="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-100">
+                                <div key={h.id} className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-amber-100 dark:border-gray-600">
                                     <div className="flex items-start">
-                                        <div className="w-2 h-2 bg-gray-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                                        <div className="w-2 h-2 bg-amber-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
                                         <div className="flex-1 text-sm">
-                                            <p className="text-gray-800 leading-relaxed">
+                                            <p className="text-gray-800 dark:text-gray-200 leading-relaxed">
                                                 {formatHistoryMessage(h, projects)}
                                             </p>
-                                            <p className="text-xs text-gray-500 mt-1">{new Date(h.timestamp).toLocaleDateString('pt-BR')} {new Date(h.timestamp).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{new Date(h.timestamp).toLocaleDateString('pt-BR')} {new Date(h.timestamp).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</p>
                                             {h.details?.reason && (
                                                 <p className="text-xs text-gray-600 mt-1 italic">&quot;{h.details.reason}&quot;</p>
                                             )}
@@ -671,7 +671,7 @@ export function TaskDetailClient({ task: initialTask, onTaskUpdate }: { task: Ta
                             {(formData.history || []).length === 0 && (
                                 <div className="text-center py-8">
                                     <Clock className="w-12 h-12 text-gray-300 mx-auto mb-3"/>
-                                    <p className="text-gray-500">Nenhuma alteração registrada</p>
+                                    <p className="text-gray-500 dark:text-gray-400">Nenhuma alteração registrada</p>
                                 </div>
                             )}
                         </div>
@@ -687,133 +687,83 @@ export function TaskDetailClient({ task: initialTask, onTaskUpdate }: { task: Ta
     );
 
     return (
-        <div>
+        <div className="max-w-7xl mx-auto p-4 sm:p-6">
             {/* Header */}
-            <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
-                <div className="py-4 sm:py-6 lg:py-8">
-                    {/* MOBILE HEADER (< sm) */}
-                    <div className="sm:hidden">
-                        <div className="text-center mb-4">
-                            <h1 className="text-xl font-bold text-gray-900">{formData.description}</h1>
+            <div className="mb-8">
+                <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
+                        <div className="flex items-center space-x-4 mb-4 sm:mb-0">
+                            <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-3xl">
+                                {formData.type === 'brick' ? '🧱' : 
+                                 formData.isAppointment ? '📅' : 
+                                 formData.isRecurring ? '🔄' : '📋'}
+                            </div>
+                            <div>
+                                <h1 className="text-3xl font-bold">{formData.description}</h1>
+                                <p className="text-blue-100 text-sm mt-1">{getTaskTypeDisplay(formData)}</p>
+                            </div>
                         </div>
-                        <div className="flex justify-center space-x-2">
+                        
+                        <div className="flex items-center space-x-2">
                             <Button
                                 onClick={() => router.back()}
-                                className="text-blue-500 border-blue-300 hover:bg-blue-50 min-h-[48px] text-base font-medium shadow-sm hover:shadow-md transition-all"
-                                variant="outline"
+                                variant="ghost"
+                                className="flex items-center space-x-2 px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-xl hover:bg-white/30 transition-colors border border-white/30"
                             >
-                                <ArrowLeft className="w-5 h-5 mr-2" />
+                                <ArrowLeft className="w-4 h-4" />
                                 <span>Voltar</span>
                             </Button>
+                            
                             {!isEditing && (
                                 <Button
                                     onClick={() => setIsEditing(true)}
-                                    className="text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100 hover:border-blue-300 min-h-[48px] text-base font-medium shadow-sm hover:shadow-md transition-all duration-200"
-                                    variant="outline"
+                                    variant="ghost"
+                                    className="flex items-center space-x-2 px-6 py-3 bg-white/20 backdrop-blur-sm text-white rounded-xl hover:bg-white/30 transition-colors border border-white/30"
                                 >
-                                    <Edit className="w-5 h-5 mr-2" />
+                                    <Edit className="w-5 h-5" />
                                     <span>Editar</span>
                                 </Button>
                             )}
                         </div>
                     </div>
 
-                    {/* DESKTOP HEADER (≥ sm) */}
-                    <div className="hidden sm:block">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-4">
-                                <div className="w-14 h-14 bg-gradient-to-r from-blue-100 to-green-100 rounded-2xl flex items-center justify-center">
-                                    <span className="text-3xl">
-                                        {formData.type === 'brick' ? '🧱' : 
-                                         formData.isAppointment ? '📅' : 
-                                         formData.isRecurring ? '🔄' : '📋'}
-                                    </span>
-                                </div>
-                                <div>
-                                    <h1 className="text-2xl font-bold text-gray-900">{formData.description}</h1>
-                                </div>
-                            </div>
-                            <div className="flex items-center space-x-4">
-                                <Button
-                                    onClick={() => router.back()}
-                                    className="inline-flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
-                                    variant="outline"
-                                >
-                                    <ArrowLeft className="w-4 h-4" />
-                                    <span>Voltar</span>
-                                </Button>
-                                
-                                <Link
-                                    href="/calendar"
-                                    className="inline-flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
-                                >
-                                    <Calendar className="w-4 h-4" />
-                                    <span>Calendário</span>
-                                </Link>
-                                
-                                {!isEditing && (
-                                    <Button
-                                        onClick={() => setIsEditing(true)}
-                                        className="inline-flex items-center space-x-2 px-4 py-2 text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100 hover:border-blue-300 transition-all duration-200"
-                                    >
-                                        <Edit className="w-4 h-4" />
-                                        <span>Editar</span>
-                                    </Button>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Estatísticas Cards */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 mt-6">
+                    {/* Estatísticas Adaptáveis por Tipo */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-6">
                         {/* Energia */}
-                        <div className={`rounded-xl border p-3 sm:p-4 text-center shadow-sm transition-all duration-200 ${
-                            formData.energyPoints === 1 ? 'bg-gradient-to-br from-emerald-50 to-green-100 border-emerald-200' :
-                            formData.energyPoints === 3 ? 'bg-gradient-to-br from-blue-50 to-indigo-100 border-blue-200' :
-                            'bg-gradient-to-br from-amber-50 to-orange-100 border-amber-200'
-                        }`}>
-                            <div className={`text-xl sm:text-2xl font-bold ${
-                                formData.energyPoints === 1 ? 'text-emerald-700' :
-                                formData.energyPoints === 3 ? 'text-blue-700' :
-                                'text-amber-700'
-                            }`}>{formData.energyPoints}</div>
-                            <div className="text-xs sm:text-sm text-gray-600">Energia</div>
+                        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
+                            <div className="text-2xl font-bold">{formData.energyPoints}</div>
+                            <div className="text-sm text-blue-100">Energia</div>
                         </div>
                         
                         {/* Status */}
-                        <div className={`rounded-xl border p-3 sm:p-4 text-center shadow-sm transition-all duration-200 ${
-                            formData.status === 'completed' 
-                                ? 'bg-gradient-to-br from-green-50 to-emerald-100 border-green-200' 
-                                : 'bg-gradient-to-br from-orange-50 to-amber-100 border-orange-200'
-                        }`}>
-                            <div className={`text-xl sm:text-2xl font-bold ${
-                                formData.status === 'completed' ? 'text-green-700' : 'text-orange-700'
-                            }`}>{formData.status === 'completed' ? '✅' : '⏳'}</div>
-                            <div className="text-xs sm:text-sm text-gray-600">{formData.status === 'completed' ? 'Concluída' : 'Pendente'}</div>
+                        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
+                            <div className="text-2xl font-bold">{formData.status === 'completed' ? '✅' : '⏳'}</div>
+                            <div className="text-sm text-blue-100">{formData.status === 'completed' ? 'Concluída' : 'Pendente'}</div>
                         </div>
                         
                         {/* Comentários */}
-                        <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4 text-center shadow-sm">
-                            <div className="text-xl sm:text-2xl font-bold text-gray-900">{formData.comments?.length || 0}</div>
-                            <div className="text-xs sm:text-sm text-gray-600">Comentários</div>
+                        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
+                            <div className="text-2xl font-bold">{formData.comments?.length || 0}</div>
+                            <div className="text-sm text-blue-100">Comentários</div>
                         </div>
+                        
                         
                         {/* Horário do Compromisso */}
                         {formData.isAppointment && formData.appointment?.scheduledTime && (
-                            <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4 text-center shadow-sm">
-                                <div className="text-lg font-bold text-gray-900">{formatTime(formData.appointment.scheduledTime)}</div>
-                                <div className="text-xs sm:text-sm text-gray-600">Horário</div>
+                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
+                                <div className="text-lg font-bold">{formatTime(formData.appointment.scheduledTime)}</div>
+                                <div className="text-sm text-blue-100">Horário</div>
                             </div>
                         )}
                         
                         {/* Recorrência */}
                         {formData.isRecurring && formData.recurrence && (
-                            <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4 text-center shadow-sm">
-                                <div className="text-lg font-bold text-gray-900">
+                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
+                                <div className="text-lg font-bold">
                                     {formData.recurrence.frequency === 'daily' ? '📆' : 
                                      formData.recurrence.frequency === 'weekly' ? '📅' : '🗓️'}
                                 </div>
-                                <div className="text-xs sm:text-sm text-gray-600">
+                                <div className="text-sm text-blue-100">
                                     {formData.recurrence.frequency === 'daily' ? 'Diário' : 
                                      formData.recurrence.frequency === 'weekly' ? 'Semanal' : 'Custom'}
                                 </div>
@@ -822,8 +772,8 @@ export function TaskDetailClient({ task: initialTask, onTaskUpdate }: { task: Ta
                         
                         {/* Data de Vencimento */}
                         {formData.dueDate && (
-                            <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4 text-center shadow-sm">
-                                <div className="text-lg font-semibold text-gray-900">{
+                            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
+                                <div className="text-lg font-semibold">{
                                     (() => {
                                         try {
                                             let dateStr = formData.dueDate;
@@ -841,62 +791,61 @@ export function TaskDetailClient({ task: initialTask, onTaskUpdate }: { task: Ta
                                             
                                             return 'Data inválida';
                                         } catch (err) {
+                                            // Não usar console.error aqui pois é apenas formatação
                                             return 'Data inválida';
                                         }
                                     })()
                                 }</div>
-                                <div className="text-xs sm:text-sm text-gray-600">Vencimento</div>
+                                <div className="text-sm text-blue-100">Vencimento</div>
                             </div>
                         )}
                     </div>
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
-                {isEditing ? (
-                    <div className="max-w-3xl mx-auto">
-                        <EditView task={formData} onSave={handleSave} onCancel={handleCancel} />
-                    </div>
-                ) : (
-                    <>
-                        <ReadOnlyView />
-                        
-                        {/* Seção de Anexos e Links */}
-                        <div className="mt-8">
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                {/* Anexos - 1/3 da largura */}
-                                <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4 shadow-sm">
-                                    <AttachmentManager
-                                        taskId={formData.id}
-                                        attachments={attachments}
-                                        onAttachmentsChange={(newAttachments) => {
-                                            setAttachments(newAttachments);
-                                            // Atualizar dados locais
-                                            setFormData(prev => ({ ...prev, attachments: newAttachments }));
-                                            // CORREÇÃO: Não atualizar store local aqui pois causa conflito
-                                            // O AttachmentManager já chama a API corretamente
-                                        }}
-                                    />
+            {isEditing ? (
+                <div className="max-w-3xl mx-auto">
+                    <EditView task={formData} onSave={handleSave} onCancel={handleCancel} />
+                </div>
+            ) : (
+                <>
+                    <ReadOnlyView />
+                    
+                    {/* Seção de Anexos e Links */}
+                    <div className="mt-8">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            {/* Anexos - 1/3 da largura */}
+                            <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-lg border border-green-200 dark:border-gray-700 p-6">
+                                <AttachmentManager
+                                    taskId={formData.id}
+                                    attachments={attachments}
+                                    onAttachmentsChange={(newAttachments) => {
+                                        setAttachments(newAttachments);
+                                        // Atualizar dados locais
+                                        setFormData(prev => ({ ...prev, attachments: newAttachments }));
+                                        // CORREÇÃO: Não atualizar store local aqui pois causa conflito
+                                        // O AttachmentManager já chama a API corretamente
+                                    }}
+                                />
+                            </div>
+                            
+                            {/* Links - 2/3 da largura */}
+                            <div className="lg:col-span-2 bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-lg border border-cyan-200 dark:border-gray-700 p-6">
+                                <div className="flex items-center mb-6">
+                                    <div className="p-2 bg-cyan-100 dark:bg-cyan-900 rounded-lg mr-3">
+                                        <LinkIcon className="w-5 h-5 text-cyan-600 dark:text-cyan-400"/>
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Links</h3>
                                 </div>
-                                
-                                {/* Links - 2/3 da largura */}
-                                <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-3 sm:p-4 shadow-sm">
-                                    <div className="flex items-center mb-6">
-                                        <div className="p-2 bg-gray-100 rounded-lg mr-3">
-                                            <LinkIcon className="w-5 h-5 text-gray-600"/>
-                                        </div>
-                                        <h3 className="text-lg font-semibold text-gray-900">Links</h3>
-                                    </div>
-                                    <div className="text-center py-8">
-                                        <LinkIcon className="w-12 h-12 text-gray-300 mx-auto mb-3"/>
-                                        <p className="text-sm text-gray-500">Em breve</p>
-                                    </div>
+                                <div className="text-center py-8">
+                                    <LinkIcon className="w-12 h-12 text-gray-300 mx-auto mb-3"/>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Em breve</p>
                                 </div>
                             </div>
                         </div>
-                    </>
-                )}
-            </div>
+                    </div>
+                </>
+            )}
 
             {/* Modal de Lembretes */}
             <ModernReminderModal

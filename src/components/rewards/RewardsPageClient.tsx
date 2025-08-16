@@ -269,36 +269,68 @@ export function RewardsPageClient() {
       case 'gallery':
         return (
           <div>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">
-                Galeria de Medalhas
-              </h2>
+            {/* Gallery Header - DUAL LAYOUT MOBILE/DESKTOP */}
+            <div className="mb-4 sm:mb-6">
               
-              {/* View toggle */}
-              <div className="flex items-center gap-2">
-                <Button
-                  onClick={() => setViewMode('grid')}
-                  variant={viewMode === 'grid' ? "default" : "outline"}
-                  size="sm"
-                  className="flex items-center space-x-2"
-                >
-                  <Grid3X3 className="w-4 h-4" />
-                  <span className="hidden sm:inline">Grade</span>
-                </Button>
-                <Button
-                  onClick={() => setViewMode('calendar')}
-                  variant={viewMode === 'calendar' ? "default" : "outline"}
-                  size="sm"
-                  className="flex items-center space-x-2"
-                >
-                  <Calendar className="w-4 h-4" />
-                  <span className="hidden sm:inline">Calendário</span>
-                </Button>
+              {/* MOBILE HEADER (< sm) */}
+              <div className="sm:hidden">
+                <h2 className="text-lg font-semibold text-gray-900 text-center mb-4">
+                  Galeria de Medalhas
+                </h2>
+                
+                {/* View toggle - Mobile */}
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => setViewMode('grid')}
+                    variant={viewMode === 'grid' ? "default" : "outline"}
+                    className="flex-1 flex items-center justify-center space-x-2 min-h-[44px] text-sm"
+                  >
+                    <Grid3X3 className="w-4 h-4" />
+                    <span>Grade</span>
+                  </Button>
+                  <Button
+                    onClick={() => setViewMode('calendar')}
+                    variant={viewMode === 'calendar' ? "default" : "outline"}
+                    className="flex-1 flex items-center justify-center space-x-2 min-h-[44px] text-sm"
+                  >
+                    <Calendar className="w-4 h-4" />
+                    <span>Calendário</span>
+                  </Button>
+                </div>
+              </div>
+
+              {/* DESKTOP HEADER (≥ sm) - LAYOUT ORIGINAL */}
+              <div className="hidden sm:flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Galeria de Medalhas
+                </h2>
+                
+                {/* View toggle */}
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => setViewMode('grid')}
+                    variant={viewMode === 'grid' ? "default" : "outline"}
+                    size="sm"
+                    className="flex items-center space-x-2"
+                  >
+                    <Grid3X3 className="w-4 h-4" />
+                    <span className="hidden sm:inline">Grade</span>
+                  </Button>
+                  <Button
+                    onClick={() => setViewMode('calendar')}
+                    variant={viewMode === 'calendar' ? "default" : "outline"}
+                    size="sm"
+                    className="flex items-center space-x-2"
+                  >
+                    <Calendar className="w-4 h-4" />
+                    <span className="hidden sm:inline">Calendário</span>
+                  </Button>
+                </div>
               </div>
             </div>
             
             {viewMode === 'grid' ? (
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 shadow-sm">
                 <AchievementGrid
                   achievements={getFilteredAchievements(data.achievements)}
                   showFilters={false}
@@ -343,39 +375,137 @@ export function RewardsPageClient() {
     
     return (
       <div className="min-h-screen bg-gray-50">
-        {/* Header Simplificado */}
+        {/* Header - DUAL LAYOUT MOBILE/DESKTOP */}
         <div className="bg-white border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="py-8">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Central de Recompensas</h1>
-                  <p className="text-gray-600 mt-1">Celebre suas conquistas e acompanhe seu progresso</p>
+          <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+            <div className="py-4 sm:py-6 lg:py-8">
+              
+              {/* MOBILE HEADER (< sm) */}
+              <div className="sm:hidden">
+                <div className="text-center mb-4">
+                  <h1 className="text-xl font-bold text-gray-900">Central de Recompensas</h1>
+                  <p className="text-gray-600 mt-1 text-sm">Celebre suas conquistas e acompanhe seu progresso</p>
                 </div>
-                
-                {/* Botão de Configurações */}
-                <Button
-                  onClick={() => setShowSettings(true)}
-                  variant="outline"
-                  className="inline-flex items-center space-x-2 px-4 py-2"
-                >
-                  <Settings className="w-4 h-4" />
-                  <span>Configurações</span>
-                </Button>
+
+                {/* Botão Mobile */}
+                <div className="flex justify-center">
+                  <Button
+                    onClick={() => setShowSettings(true)}
+                    className="w-full max-w-xs min-h-[48px] text-base font-medium shadow-sm hover:shadow-md transition-all"
+                  >
+                    <Settings className="w-5 h-5 mr-2" />
+                    <span>Configurações</span>
+                  </Button>
+                </div>
+              </div>
+
+              {/* DESKTOP HEADER (≥ sm) - LAYOUT ORIGINAL MELHORADO */}
+              <div className="hidden sm:block">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-14 h-14 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-2xl flex items-center justify-center">
+                      <span className="text-3xl">🏆</span>
+                    </div>
+                    <div>
+                      <h1 className="text-2xl font-bold text-gray-900">Central de Recompensas</h1>
+                      <p className="text-gray-600 mt-1">Celebre suas conquistas e acompanhe seu progresso</p>
+                    </div>
+                  </div>
+                  
+                  {/* Botão de Configurações Desktop */}
+                  <Button
+                    onClick={() => setShowSettings(true)}
+                    variant="outline"
+                    className="inline-flex items-center space-x-2 px-4 py-2"
+                  >
+                    <Settings className="w-4 h-4" />
+                    <span>Configurações</span>
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Contador de Sequência de Hábitos */}
-          <div className="mb-6">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
+          {/* Contador de Sequência de Hábitos - RESPONSIVO */}
+          <div className="mb-4 sm:mb-6">
             <HabitStreakCounter />
           </div>
 
-          {/* Navigation Simplificada com Filtros */}
-          <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6">
-            <div className="flex gap-2 flex-wrap">
+          {/* Navigation - DUAL LAYOUT MOBILE/DESKTOP */}
+          <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 shadow-sm">
+            
+            {/* MOBILE NAVIGATION (< sm) */}
+            <div className="sm:hidden">
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  onClick={() => handleFilterChange('all')}
+                  variant={activeFilter === 'all' ? "default" : "outline"}
+                  className="flex items-center justify-center space-x-1 min-h-[44px] text-sm"
+                >
+                  <span>🏆</span>
+                  <span>Todas</span>
+                  <span className="bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded-full text-xs font-medium">
+                    {emptyData.user.totalAchievements || 0}
+                  </span>
+                </Button>
+                
+                <Button
+                  onClick={() => handleFilterChange('task_completion')}
+                  variant={activeFilter === 'task_completion' ? "default" : "outline"}
+                  className="flex items-center justify-center space-x-1 min-h-[44px] text-sm"
+                >
+                  <span>⚡</span>
+                  <span>Faíscas</span>
+                  <span className="bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded-full text-xs font-medium">
+                    0
+                  </span>
+                </Button>
+                
+                <Button
+                  onClick={() => handleFilterChange('project_completion')}
+                  variant={activeFilter === 'project_completion' ? "default" : "outline"}
+                  className="flex items-center justify-center space-x-1 min-h-[44px] text-sm"
+                >
+                  <span>🏗️</span>
+                  <span>Projetos</span>
+                  <span className="bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded-full text-xs font-medium">
+                    0
+                  </span>
+                </Button>
+                
+                <Button
+                  onClick={() => handleFilterChange('daily_master')}
+                  variant={activeFilter === 'daily_master' ? "default" : "outline"}
+                  className="flex items-center justify-center space-x-1 min-h-[44px] text-sm"
+                >
+                  <span>👑</span>
+                  <span>Imperador</span>
+                  <span className="bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded-full text-xs font-medium">
+                    0
+                  </span>
+                </Button>
+              </div>
+              
+              {/* Botão Guardião separado no mobile */}
+              <div className="mt-2">
+                <Button
+                  onClick={() => handleFilterChange('weekly_legend')}
+                  variant={activeFilter === 'weekly_legend' ? "default" : "outline"}
+                  className="w-full flex items-center justify-center space-x-2 min-h-[44px] text-sm"
+                >
+                  <span>⏳</span>
+                  <span>Guardião do Tempo</span>
+                  <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                    0
+                  </span>
+                </Button>
+              </div>
+            </div>
+
+            {/* DESKTOP NAVIGATION (≥ sm) - LAYOUT ORIGINAL */}
+            <div className="hidden sm:flex gap-2 flex-wrap">
               <Button
                 onClick={() => handleFilterChange('all')}
                 variant={activeFilter === 'all' ? "default" : "outline"}
@@ -438,12 +568,12 @@ export function RewardsPageClient() {
             </div>
           </div>
 
-          {/* Content */}
-          <div className="flex items-center space-x-3 mb-6">
+          {/* Content Title - MOBILE OTIMIZADO */}
+          <div className="flex items-center justify-center sm:justify-start space-x-3 mb-4 sm:mb-6">
             <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
               <ListTodo className="w-4 h-4 text-blue-600" />
             </div>
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 text-center sm:text-left">
               Galeria de Medalhas
             </h2>
           </div>
@@ -481,39 +611,137 @@ export function RewardsPageClient() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header Simplificado */}
+      {/* Header - DUAL LAYOUT MOBILE/DESKTOP */}
       <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Central de Recompensas</h1>
-                <p className="text-gray-600 mt-1">Celebre suas conquistas e acompanhe seu progresso</p>
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+          <div className="py-4 sm:py-6 lg:py-8">
+            
+            {/* MOBILE HEADER (< sm) */}
+            <div className="sm:hidden">
+              <div className="text-center mb-4">
+                <h1 className="text-xl font-bold text-gray-900">Central de Recompensas</h1>
+                <p className="text-gray-600 mt-1 text-sm">Celebre suas conquistas e acompanhe seu progresso</p>
               </div>
-              
-              {/* Botão de Configurações */}
-              <Button
-                onClick={() => setShowSettings(true)}
-                variant="outline"
-                className="inline-flex items-center space-x-2 px-4 py-2"
-              >
-                <Settings className="w-4 h-4" />
-                <span>Configurações</span>
-              </Button>
+
+              {/* Botão Mobile */}
+              <div className="flex justify-center">
+                <Button
+                  onClick={() => setShowSettings(true)}
+                  className="w-full max-w-xs min-h-[48px] text-base font-medium shadow-sm hover:shadow-md transition-all"
+                >
+                  <Settings className="w-5 h-5 mr-2" />
+                  <span>Configurações</span>
+                </Button>
+              </div>
+            </div>
+
+            {/* DESKTOP HEADER (≥ sm) - LAYOUT ORIGINAL MELHORADO */}
+            <div className="hidden sm:block">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="w-14 h-14 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-2xl flex items-center justify-center">
+                    <span className="text-3xl">🏆</span>
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-900">Central de Recompensas</h1>
+                    <p className="text-gray-600 mt-1">Celebre suas conquistas e acompanhe seu progresso</p>
+                  </div>
+                </div>
+                
+                {/* Botão de Configurações Desktop */}
+                <Button
+                  onClick={() => setShowSettings(true)}
+                  variant="outline"
+                  className="inline-flex items-center space-x-2 px-4 py-2"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span>Configurações</span>
+                </Button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Contador de Sequência de Hábitos */}
-        <div className="mb-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
+        {/* Contador de Sequência de Hábitos - RESPONSIVO */}
+        <div className="mb-4 sm:mb-6">
           <HabitStreakCounter />
         </div>
 
-        {/* Navigation Simplificada com Filtros */}
-        <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6">
-          <div className="flex gap-2 flex-wrap">
+        {/* Navigation - DUAL LAYOUT MOBILE/DESKTOP */}
+        <div className="bg-white border border-gray-200 rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 shadow-sm">
+          
+          {/* MOBILE NAVIGATION (< sm) */}
+          <div className="sm:hidden">
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                onClick={() => handleFilterChange('all')}
+                variant={activeFilter === 'all' ? "default" : "outline"}
+                className="flex items-center justify-center space-x-1 min-h-[44px] text-sm"
+              >
+                <span>🏆</span>
+                <span>Todas</span>
+                <span className="bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded-full text-xs font-medium">
+                  {rewardsData.user.totalAchievements || 0}
+                </span>
+              </Button>
+              
+              <Button
+                onClick={() => handleFilterChange('task_completion')}
+                variant={activeFilter === 'task_completion' ? "default" : "outline"}
+                className="flex items-center justify-center space-x-1 min-h-[44px] text-sm"
+              >
+                <span>⚡</span>
+                <span>Faíscas</span>
+                <span className="bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded-full text-xs font-medium">
+                  {rewardsData.achievements.filter(a => a.type === 'task_completion').length}
+                </span>
+              </Button>
+              
+              <Button
+                onClick={() => handleFilterChange('project_completion')}
+                variant={activeFilter === 'project_completion' ? "default" : "outline"}
+                className="flex items-center justify-center space-x-1 min-h-[44px] text-sm"
+              >
+                <span>🏗️</span>
+                <span>Projetos</span>
+                <span className="bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded-full text-xs font-medium">
+                  {rewardsData.achievements.filter(a => a.type === 'project_completion').length}
+                </span>
+              </Button>
+              
+              <Button
+                onClick={() => handleFilterChange('daily_master')}
+                variant={activeFilter === 'daily_master' ? "default" : "outline"}
+                className="flex items-center justify-center space-x-1 min-h-[44px] text-sm"
+              >
+                <span>👑</span>
+                <span>Imperador</span>
+                <span className="bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded-full text-xs font-medium">
+                  {rewardsData.achievements.filter(a => a.type === 'daily_master').length}
+                </span>
+              </Button>
+            </div>
+            
+            {/* Botão Guardião separado no mobile */}
+            <div className="mt-2">
+              <Button
+                onClick={() => handleFilterChange('weekly_legend')}
+                variant={activeFilter === 'weekly_legend' ? "default" : "outline"}
+                className="w-full flex items-center justify-center space-x-2 min-h-[44px] text-sm"
+              >
+                <span>⏳</span>
+                <span>Guardião do Tempo</span>
+                <span className="bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                  {rewardsData.achievements.filter(a => a.type === 'weekly_legend').length}
+                </span>
+              </Button>
+            </div>
+          </div>
+
+          {/* DESKTOP NAVIGATION (≥ sm) - LAYOUT ORIGINAL */}
+          <div className="hidden sm:flex gap-2 flex-wrap">
             <Button
               onClick={() => handleFilterChange('all')}
               variant={activeFilter === 'all' ? "default" : "outline"}
@@ -576,12 +804,12 @@ export function RewardsPageClient() {
           </div>
         </div>
 
-        {/* Content */}
-        <div className="flex items-center space-x-3 mb-6">
+        {/* Content Title - MOBILE OTIMIZADO */}
+        <div className="flex items-center justify-center sm:justify-start space-x-3 mb-4 sm:mb-6">
           <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
             <ListTodo className="w-4 h-4 text-blue-600" />
           </div>
-          <h2 className="text-xl font-semibold text-gray-900">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 text-center sm:text-left">
             Galeria de Medalhas
           </h2>
         </div>

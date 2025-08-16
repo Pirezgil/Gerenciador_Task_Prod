@@ -92,11 +92,11 @@ export function WeeklyMedalsCounter({ className = '' }: WeeklyMedalsCounterProps
       whileTap={{ scale: 0.98 }}
       onClick={handleClick}
     >
-      <div className="flex items-center gap-4">
-        {/* Ícone principal */}
-        <div className="relative">
+      <div className="flex items-center gap-3 sm:gap-4">
+        {/* Ícone principal - RESPONSIVO */}
+        <div className="relative flex-shrink-0">
           <motion.div
-            className={`w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm ${getIconColor()}`}
+            className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white flex items-center justify-center shadow-sm ${getIconColor()}`}
             animate={medalsCount > 0 ? { 
               scale: [1, 1.1, 1],
               rotate: [0, 5, -5, 0] 
@@ -108,18 +108,18 @@ export function WeeklyMedalsCounter({ className = '' }: WeeklyMedalsCounterProps
             }}
           >
             {medalsCount === 0 ? (
-              <Award className="w-6 h-6" />
+              <Award className="w-5 h-5 sm:w-6 sm:h-6" />
             ) : medalsCount <= 5 ? (
-              <Trophy className="w-6 h-6" />
+              <Trophy className="w-5 h-5 sm:w-6 sm:h-6" />
             ) : (
-              <Zap className="w-6 h-6" />
+              <Zap className="w-5 h-5 sm:w-6 sm:h-6" />
             )}
           </motion.div>
 
-          {/* Badge de contagem */}
+          {/* Badge de contagem - RESPONSIVO */}
           {medalsCount > 0 && (
             <motion.div
-              className="absolute -top-1 -right-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-lg"
+              className="absolute -top-0.5 sm:-top-1 -right-0.5 sm:-right-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-[10px] sm:text-xs font-bold rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center shadow-lg"
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ 
@@ -134,34 +134,36 @@ export function WeeklyMedalsCounter({ className = '' }: WeeklyMedalsCounterProps
           )}
         </div>
 
-        {/* Conteúdo textual */}
+        {/* Conteúdo textual - MELHOR LAYOUT MOBILE */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-baseline gap-2 mb-1">
-            <h3 className="font-semibold text-gray-800 text-sm sm:text-base">
+          <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2 mb-1">
+            <h3 className="font-semibold text-gray-800 text-sm sm:text-base leading-tight">
               Medalhas da Semana
             </h3>
-            <div className="text-xs text-gray-500 mt-1">
-              {getWeekPeriod()}
+            <div className="flex items-center gap-2">
+              <div className="text-[10px] sm:text-xs text-gray-500">
+                {getWeekPeriod()}
+              </div>
+              {medalsCount > 0 && (
+                <motion.span
+                  className="text-lg sm:text-2xl"
+                  animate={{ rotate: [0, 15, -15, 0] }}
+                  transition={{ duration: 1, repeat: Infinity, delay: 0.5 }}
+                >
+                  🏆
+                </motion.span>
+              )}
             </div>
-            {medalsCount > 0 && (
-              <motion.span
-                className="text-2xl"
-                animate={{ rotate: [0, 15, -15, 0] }}
-                transition={{ duration: 1, repeat: Infinity, delay: 0.5 }}
-              >
-                🏆
-              </motion.span>
-            )}
           </div>
 
           <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
             {getMotivationalMessage()}
           </p>
 
-          {/* Grid de medalhas por tipo */}
+          {/* Grid de medalhas por tipo - OTIMIZADO MOBILE */}
           {medalsCount > 0 && (
             <div className="mt-3">
-              <div className="flex items-center justify-center gap-4 bg-white/30 rounded-lg p-3">
+              <div className="flex items-center justify-start gap-2 sm:gap-4 sm:justify-center bg-white/30 rounded-lg p-2 sm:p-3 overflow-x-auto scrollbar-hide">
                 {medalsByType.map((medal, index) => {
                   const getTooltipText = () => {
                     switch (medal.type) {
@@ -182,20 +184,20 @@ export function WeeklyMedalsCounter({ className = '' }: WeeklyMedalsCounterProps
                   return (
                     <motion.div
                       key={`${medal.type}-${medal.subtype}`}
-                      className="relative flex flex-col items-center group"
+                      className="relative flex flex-col items-center group flex-shrink-0"
                       initial={{ scale: 0, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       transition={{ delay: index * 0.15, duration: 0.4 }}
                     >
-                      {/* Tooltip */}
-                      <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+                      {/* Tooltip - MOBILE SAFE */}
+                      <div className="absolute -top-8 sm:-top-12 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 max-w-[200px] sm:max-w-none whitespace-normal sm:whitespace-nowrap text-center">
                         {getTooltipText()}
-                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 sm:border-l-4 border-r-2 sm:border-r-4 border-t-2 sm:border-t-4 border-transparent border-t-gray-900"></div>
                       </div>
 
-                      {/* Medalha */}
+                      {/* Medalha - TAMANHO RESPONSIVO */}
                       <motion.div
-                        className="relative w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-lg cursor-pointer"
+                        className="relative w-8 h-8 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-lg sm:text-2xl shadow-lg cursor-pointer"
                         style={{ backgroundColor: medal.color }}
                         whileHover={{ scale: 1.1 }}
                         animate={{ 
@@ -210,9 +212,9 @@ export function WeeklyMedalsCounter({ className = '' }: WeeklyMedalsCounterProps
                       >
                         {medal.icon}
                         
-                        {/* Badge de contagem */}
+                        {/* Badge de contagem - RESPONSIVO */}
                         <motion.div
-                          className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shadow-md border-2 border-white"
+                          className="absolute -top-0.5 sm:-top-1 -right-0.5 sm:-right-1 bg-red-500 text-white text-[10px] sm:text-xs font-bold rounded-full w-4 h-4 sm:w-6 sm:h-6 flex items-center justify-center shadow-md border sm:border-2 border-white"
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
                           transition={{ 

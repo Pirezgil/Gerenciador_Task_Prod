@@ -149,37 +149,49 @@ export function BombeiroPageClient() {
 
   return (
     <>
-      <div className="container mx-auto p-2 sm:p-4 lg:p-6">
-        <div className="space-y-6">
+      <div className="container mx-auto p-3 sm:p-4 lg:p-6 max-w-7xl">
+        <div className="space-y-4 sm:space-y-6">
           
           {/* Contador de Medalhas Semanais */}
           <WeeklyMedalsCounter />
 
-          {/* Seção Principal de Tarefas */}
+          {/* Seção Principal de Tarefas - LAYOUT MOBILE OTIMIZADO */}
           <main className="w-full">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
-              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-text-primary ml-16 lg:ml-0">🔥 Missões de Hoje</h1>
-              <div className="flex gap-2 w-full sm:w-auto">
-                <Button onClick={() => setShowCaptureModal(true)} className="flex-1 sm:flex-none min-h-[44px]">
+            <div className="flex flex-col gap-4 mb-4">
+              {/* Título - Mobile First */}
+              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-text-primary text-center sm:text-left">
+                🔥 Missões de Hoje
+              </h1>
+              
+              {/* Botões - Stack Mobile, Row Desktop */}
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-2 sm:justify-center lg:justify-end">
+                <Button 
+                  onClick={() => setShowCaptureModal(true)} 
+                  className="w-full sm:flex-1 sm:max-w-[180px] min-h-[48px] sm:min-h-[44px] text-base sm:text-sm font-medium shadow-sm hover:shadow-md transition-all"
+                >
                   <span className="mr-2 text-lg font-bold">+</span>
-                  <span className="sm:inline">Adicionar Tarefa</span>
+                  <span>Adicionar Tarefa</span>
                 </Button>
                 <Button 
                   onClick={() => router.push('/planejamento')}
                   variant="outline"
-                  className="flex-1 sm:flex-none min-h-[44px]"
+                  className="w-full sm:flex-1 sm:max-w-[160px] min-h-[48px] sm:min-h-[44px] text-base sm:text-sm font-medium border-2 hover:border-primary hover:bg-primary/5 transition-all"
                 >
-                  📋 Planejamento
+                  <span className="mr-2">📋</span>
+                  <span>Planejamento</span>
                 </Button>
               </div>
             </div>
 
-            {/* Hábitos do Dia */}
+            {/* Hábitos do Dia - LAYOUT MOBILE SUPER OTIMIZADO */}
             {todayHabits.length > 0 && (
-              <div className="mb-8">
-                <h2 className="text-base sm:text-lg font-semibold text-text-primary mb-3">🎯 Hábitos de Hoje</h2>
-                <div className="bg-gradient-to-r from-teal-50 to-cyan-50 rounded-xl p-4 border border-teal-200">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+              <div className="mb-6 sm:mb-8">
+                <div className="text-center sm:text-left mb-4">
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-1">🎯 Hábitos de Hoje</h2>
+                  <p className="text-sm text-gray-600">Construindo sua rotina ideal</p>
+                </div>
+                <div className="bg-gradient-to-r from-teal-50 via-cyan-50 to-blue-50 rounded-2xl p-4 sm:p-4 border-2 border-teal-100 shadow-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     {todayHabits.map(habit => {
                       const isCompleted = habit.completions.some(c => c.date === today);
                       const count = habit.completions.filter(c => c.date === today).reduce((sum, c) => sum + c.count, 0);
@@ -196,12 +208,12 @@ export function BombeiroPageClient() {
                       return (
                         <div
                           key={habit.id}
-                          className={`p-5 rounded-lg transition-all cursor-pointer hover:shadow-md relative overflow-hidden min-w-0 ${
+                          className={`p-4 sm:p-5 rounded-xl transition-all cursor-pointer hover:shadow-lg relative overflow-hidden min-w-0 min-h-[120px] sm:min-h-[100px] ${
                             isCelebrating 
-                              ? 'bg-gradient-to-r from-green-200 to-emerald-200 border-2 border-green-400 animate-pulse shadow-lg' 
+                              ? 'bg-gradient-to-r from-green-200 to-emerald-200 border-2 border-green-400 animate-pulse shadow-xl' 
                               : isCompleted 
-                                ? 'bg-green-100 border border-green-300' 
-                                : 'bg-white border border-teal-200 hover:border-teal-300'
+                                ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 shadow-md' 
+                                : 'bg-white border-2 border-gray-100 hover:border-teal-300 hover:shadow-xl active:scale-[0.98] shadow-sm'
                           }`}
                           onClick={() => router.push(`/habit/${habit.id}`)}
                         >
@@ -217,44 +229,40 @@ export function BombeiroPageClient() {
                               </div>
                             </div>
                           )}
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3 flex-1 min-w-0">
+                          {/* LAYOUT DUAL: MOBILE 2 LINHAS | DESKTOP ORIGINAL */}
+                          
+                          {/* MOBILE LAYOUT (< sm) - 2 LINHAS */}
+                          <div className="sm:hidden space-y-3">
+                            {/* MOBILE LINHA 1: Ícone + Título */}
+                            <div className="flex items-center gap-3">
                               <div 
-                                className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold"
+                                className="w-12 h-12 rounded-xl flex items-center justify-center text-white text-xl font-bold shadow-md flex-shrink-0"
                                 style={{ backgroundColor: habit.color }}
                               >
                                 {habit.icon}
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <h4 className={`font-medium text-sm truncate ${
-                                  isCompleted ? 'text-green-800' : 'text-gray-900'
-                                }`}>
-                                  {habit.name}
-                                </h4>
-                                {habit.targetCount && (
-                                  <p className="text-xs text-gray-500">
-                                    {count}/{habit.targetCount}
-                                  </p>
+                              <h4 className={`font-semibold text-base leading-tight flex-1 ${
+                                isCompleted ? 'text-green-800' : 'text-gray-900'
+                              }`}>
+                                {habit.name}
+                              </h4>
+                            </div>
+
+                            {/* MOBILE LINHA 2: 3 Elementos Iguais */}
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0">
+                                {habit.streak > 0 ? (
+                                  <div className="w-full h-full bg-orange-100 border-2 border-orange-200 rounded-xl flex items-center justify-center gap-1">
+                                    <span className="text-orange-500 text-sm">🔥</span>
+                                    <span className="text-[10px] font-bold text-orange-700">{habit.streak}</span>
+                                  </div>
+                                ) : (
+                                  <div className="w-full h-full bg-gray-100 border-2 border-gray-200 rounded-xl flex items-center justify-center">
+                                    <span className="text-gray-400 text-sm">🔥</span>
+                                  </div>
                                 )}
                               </div>
-                              {habit.streak > 0 && (
-                                <div className="relative flex items-center justify-center w-8 h-8 ml-4">
-                                  <div className={`text-orange-500 text-3xl animate-pulse ${habit.streak >= 7 ? 'animate-bounce' : ''}`}>
-                                    🔥
-                                  </div>
-                                  <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="bg-orange-600 rounded-full w-4 h-4 flex items-center justify-center shadow-lg border border-orange-700">
-                                      <span className="text-[14px] font-black text-white leading-none">
-                                        {habit.streak}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                            
-                            <div className="flex items-center gap-3">
-                              {/* Botão de Lembrete */}
+                              
                               <Button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -262,13 +270,12 @@ export function BombeiroPageClient() {
                                 }}
                                 variant="ghost"
                                 size="icon"
-                                className="w-10 h-10 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center transition-all text-purple-600 hover:text-purple-700 hover:bg-purple-50 border border-transparent hover:border-purple-200"
-                                title="Configurar lembretes"
+                                className="w-12 h-12 rounded-xl flex items-center justify-center transition-all text-purple-600 hover:text-purple-700 hover:bg-purple-100 border-2 border-transparent hover:border-purple-200 active:scale-95 flex-shrink-0"
                               >
-                                <Bell className="w-4 h-4" />
+                                <Bell className="w-5 h-5" />
                               </Button>
 
-                              {/* Botão de Conclusão */}
+                              {/* Botão de Conclusão - TAMANHO PADRONIZADO */}
                               <Button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -324,18 +331,119 @@ export function BombeiroPageClient() {
                               }}
                               variant="ghost"
                               size="icon"
-                              className={`w-10 h-10 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center transition-all transform ${
-                                celebratingHabit === habit.id ? 'scale-110 celebration-bounce shadow-lg ring-2 ring-green-300' : ''
+                              className={`w-12 h-12 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all transform flex-shrink-0 border-2 ${
+                                celebratingHabit === habit.id ? 'scale-110 celebration-bounce shadow-lg ring-2 ring-green-300' : 'active:scale-95'
                               } ${
                                 isCompleted
-                                  ? 'bg-green-500 text-white hover:bg-green-600 shadow-md'
-                                  : 'bg-gray-100 text-gray-400 hover:bg-teal-100 hover:text-teal-600'
+                                  ? 'bg-green-500 text-white hover:bg-green-600 shadow-md border-green-400'
+                                  : 'bg-gray-50 text-gray-500 hover:bg-teal-100 hover:text-teal-600 hover:border-teal-300 border-gray-200'
                               }`}
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="w-6 h-6 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                               </svg>
                             </Button>
+                            </div>
+                          </div>
+
+                          {/* DESKTOP LAYOUT (≥ sm) - LAYOUT ORIGINAL */}
+                          <div className="hidden sm:flex items-center justify-between">
+                            <div className="flex items-center space-x-3 flex-1 min-w-0">
+                              <div 
+                                className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold"
+                                style={{ backgroundColor: habit.color }}
+                              >
+                                {habit.icon}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className={`font-medium text-sm truncate ${
+                                  isCompleted ? 'text-green-800' : 'text-gray-900'
+                                }`}>
+                                  {habit.name}
+                                </h4>
+                                {habit.targetCount && (
+                                  <p className="text-xs text-gray-500">
+                                    {count}/{habit.targetCount}
+                                  </p>
+                                )}
+                              </div>
+                              {habit.streak > 0 && (
+                                <div className="relative flex items-center justify-center w-8 h-8 ml-4">
+                                  <div className={`text-orange-500 text-3xl animate-pulse ${habit.streak >= 7 ? 'animate-bounce' : ''}`}>
+                                    🔥
+                                  </div>
+                                  <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="bg-orange-600 rounded-full w-4 h-4 flex items-center justify-center shadow-lg border border-orange-700">
+                                      <span className="text-[14px] font-black text-white leading-none">
+                                        {habit.streak}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="flex items-center gap-3">
+                              <Button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setReminderModalHabit(habit.id);
+                                }}
+                                variant="ghost"
+                                size="icon"
+                                className="w-8 h-8 rounded-lg flex items-center justify-center transition-all text-purple-600 hover:text-purple-700 hover:bg-purple-50 border border-transparent hover:border-purple-200"
+                                title="Configurar lembretes"
+                              >
+                                <Bell className="w-4 h-4" />
+                              </Button>
+
+                              <Button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  if (isCompleted) {
+                                    console.log('Undo completion não implementado');
+                                  } else {
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    setCompletionEffect({
+                                      id: habit.id,
+                                      x: rect.left + rect.width / 2,
+                                      y: rect.top + rect.height / 2
+                                    });
+                                    setCelebratingHabit(habit.id);
+                                    celebrate();
+                                    completeHabitMutation.mutate({
+                                      habitId: habit.id,
+                                      date: today
+                                    }, {
+                                      onSuccess: () => {
+                                        setTimeout(() => celebrate(), 500);
+                                        setTimeout(() => {
+                                          setCelebratingHabit(null);
+                                          setCompletionEffect(null);
+                                        }, 3000);
+                                      },
+                                      onError: () => {
+                                        setCelebratingHabit(null);
+                                        setCompletionEffect(null);
+                                      }
+                                    });
+                                  }
+                                }}
+                                variant="ghost"
+                                size="icon"
+                                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all transform ${
+                                  celebratingHabit === habit.id ? 'scale-110 celebration-bounce shadow-lg ring-2 ring-green-300' : ''
+                                } ${
+                                  isCompleted
+                                    ? 'bg-green-500 text-white hover:bg-green-600 shadow-md'
+                                    : 'bg-gray-100 text-gray-400 hover:bg-teal-100 hover:text-teal-600'
+                                }`}
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </Button>
                             </div>
                           </div>
                         </div>
@@ -343,7 +451,8 @@ export function BombeiroPageClient() {
                     })}
                   </div>
                   
-                  <div className="mt-3 text-xs text-teal-700 flex items-center justify-between">
+                  {/* Estatísticas - SOMENTE DESKTOP */}
+                  <div className="hidden sm:flex mt-3 text-xs text-teal-700 items-center justify-between">
                     <span>💡 Hábitos não consomem energia</span>
                     <span>{completedHabits.length}/{todayHabits.length} concluídos</span>
                   </div>
@@ -367,10 +476,10 @@ export function BombeiroPageClient() {
 
             {/* Listas de Tarefas do Dia */}
             <div className="space-y-6 lg:space-y-8">
-              {/* Tarefas Não Executadas */}
+              {/* Tarefas Não Executadas - MOBILE OPTIMIZED */}
               {missedTasks.length > 0 && (
                 <div>
-                  <h2 className="text-base sm:text-lg font-semibold text-red-600 mb-3">⚠️ Tarefas não executadas</h2>
+                  <h2 className="text-base sm:text-lg font-semibold text-red-600 mb-3 text-center sm:text-left">⚠️ Tarefas não executadas</h2>
                   <div className="space-y-3 sm:space-y-4">
                     {missedTasks.map(task => (
                       <div key={task.id} className="bg-red-50 border-l-4 border-red-400 rounded-lg p-4">
@@ -411,10 +520,10 @@ export function BombeiroPageClient() {
                 </div>
               )}
 
-              {/* Tarefas Pendentes (Planejadas para Hoje) */}
+              {/* Tarefas Pendentes (Planejadas para Hoje) - MOBILE OPTIMIZED */}
               {pendingTasks.length > 0 && (
                 <div>
-                  <h2 className="text-base sm:text-lg font-semibold text-text-primary mb-3">⚡ Tarefas de Hoje</h2>
+                  <h2 className="text-base sm:text-lg font-semibold text-text-primary mb-3 text-center sm:text-left">⚡ Tarefas de Hoje</h2>
                   {pendingTasks.length > 0 ? (
                   <div className="space-y-3 sm:space-y-4">
                     {pendingTasks.map(task => (
@@ -444,18 +553,18 @@ export function BombeiroPageClient() {
                     <p className="mt-2 text-sm text-green-600 px-4 mb-4">
                       Você está com o dia organizado. Que tal aproveitar para focar nos seus hábitos ou planejar o amanhã?
                     </p>
-                    <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-2 justify-center">
                       <Button 
                         onClick={() => router.push('/planejamento')}
                         variant="outline"
-                        className="border-green-300 text-green-700 hover:bg-green-100 text-sm"
+                        className="w-full sm:w-auto min-h-[44px] border-green-300 text-green-700 hover:bg-green-100 text-sm sm:text-xs font-medium"
                       >
                         📋 Planejar Amanhã
                       </Button>
                       <Button 
                         onClick={() => setShowCaptureModal(true)}
                         variant="outline"
-                        className="border-green-300 text-green-700 hover:bg-green-100 text-sm"
+                        className="w-full sm:w-auto min-h-[44px] border-green-300 text-green-700 hover:bg-green-100 text-sm sm:text-xs font-medium"
                       >
                         ➕ Nova Tarefa
                       </Button>
@@ -467,10 +576,10 @@ export function BombeiroPageClient() {
 
             </div>
 
-            {/* Tarefas Completadas Hoje */}
+            {/* Tarefas Completadas Hoje - MOBILE OPTIMIZED */}
             {completedTasksToday.length > 0 && (
               <div>
-                <h2 className="text-base sm:text-lg font-semibold text-green-600 mb-3 mt-8">✅ Concluídas Hoje</h2>
+                <h2 className="text-base sm:text-lg font-semibold text-green-600 mb-3 mt-6 sm:mt-8 text-center sm:text-left">✅ Concluídas Hoje</h2>
                 <div className="space-y-3 sm:space-y-4">
                   {completedTasksToday.map(task => (
                     <TaskItem 
@@ -483,9 +592,14 @@ export function BombeiroPageClient() {
                     />
                   ))}
                 </div>
-                <div className="mt-3 text-xs text-green-700 flex items-center justify-between bg-green-50 p-2 rounded-lg">
-                  <span>🎉 Parabéns pelo progresso!</span>
-                  <span>{completedTasksToday.length} tarefa(s) concluída(s)</span>
+                {/* Estatísticas de Progresso - MOBILE FRIENDLY */}
+                <div className="mt-4 sm:mt-3 p-3 sm:p-2 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-green-700">
+                    <span className="font-medium text-center sm:text-left">🎉 Parabéns pelo progresso!</span>
+                    <span className="font-semibold bg-green-200 px-3 py-1 rounded-full text-center">
+                      {completedTasksToday.length} tarefa(s) concluída(s)
+                    </span>
+                  </div>
                 </div>
               </div>
             )}

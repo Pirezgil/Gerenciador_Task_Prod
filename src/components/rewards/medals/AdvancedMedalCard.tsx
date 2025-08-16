@@ -397,20 +397,20 @@ function getSizeClasses(size: AdvancedMedalCardProps['size']) {
   switch (size) {
     case 'small':
       return {
-        container: 'w-20 h-20',
-        emoji: 'text-2xl',
+        container: 'w-14 h-14 sm:w-20 sm:h-20',
+        emoji: 'text-lg sm:text-2xl',
         text: 'text-xs',
       };
     case 'large':
       return {
-        container: 'w-40 h-40',
-        emoji: 'text-7xl',
-        text: 'text-lg',
+        container: 'w-28 h-28 sm:w-40 sm:h-40',
+        emoji: 'text-5xl sm:text-7xl',
+        text: 'text-base sm:text-lg',
       };
     default: // medium
       return {
-        container: 'w-28 h-28',
-        emoji: 'text-5xl',
+        container: 'w-20 h-20 sm:w-28 sm:h-28',
+        emoji: 'text-3xl sm:text-5xl',
         text: 'text-sm',
       };
   }
@@ -434,10 +434,10 @@ function AdvancedTooltip({ achievement, medalConfig, isVisible }: {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 10, scale: 0.95 }}
           transition={{ duration: 0.2 }}
-          className="fixed top-8 left-1/2 transform -translate-x-1/2 z-[9999] pointer-events-none"
+          className="fixed inset-x-4 top-4 sm:top-8 sm:left-1/2 sm:right-auto sm:transform sm:-translate-x-1/2 sm:max-w-md z-[9999] pointer-events-none"
         >
           <div 
-            className="relative bg-gray-900 text-white p-5 rounded-xl shadow-2xl border-2 max-w-md backdrop-blur-sm pointer-events-auto"
+            className="relative bg-gray-900 text-white p-3 sm:p-5 rounded-xl shadow-2xl border-2 w-full backdrop-blur-sm pointer-events-auto"
             style={{ 
               background: `linear-gradient(135deg, rgba(17, 24, 39, 0.98), rgba(31, 41, 55, 0.98))`,
               borderColor: medalConfig.colors.primary,
@@ -445,32 +445,32 @@ function AdvancedTooltip({ achievement, medalConfig, isVisible }: {
             }}
           >
             <div className="text-center relative z-10">
-              <div className="text-2xl font-bold text-white mb-4 flex items-center justify-center gap-3">
-                <span className="text-4xl">{medalConfig.emoji}</span>
-                {medalConfig.name}
+              <div className="text-lg sm:text-2xl font-bold text-white mb-3 sm:mb-4 flex items-center justify-center gap-2 sm:gap-3">
+                <span className="text-2xl sm:text-4xl">{medalConfig.emoji}</span>
+                <span className="text-sm sm:text-base">{medalConfig.name}</span>
               </div>
               
-              <div className="bg-black/40 backdrop-blur-sm rounded-lg p-4 space-y-4">
-                <div className="text-lg font-bold text-yellow-300 text-center">
+              <div className="bg-black/40 backdrop-blur-sm rounded-lg p-3 sm:p-4 space-y-2 sm:space-y-4">
+                <div className="text-sm sm:text-lg font-bold text-yellow-300 text-center">
                   Medalha nível {achievement.subtype || 'bronze'}
                 </div>
                 
-                <div className="text-center space-y-3">
+                <div className="text-center space-y-2 sm:space-y-3">
                   {achievement.metadata?.projectName && (
-                    <div className="text-base text-blue-300 font-medium">
+                    <div className="text-xs sm:text-base text-blue-300 font-medium">
                       🏗️ Projeto: {achievement.metadata.projectName}
                     </div>
                   )}
                   {achievement.metadata?.taskDescription && (
-                    <div className="text-base text-green-300 font-medium">
+                    <div className="text-xs sm:text-base text-green-300 font-medium">
                       ✅ Tarefa: {achievement.metadata.taskDescription}
                     </div>
                   )}
-                  <div className="text-base text-white font-medium">
+                  <div className="text-xs sm:text-base text-white font-medium">
                     {formatDate(achievement.earnedAt)}
                   </div>
                   {achievement.metadata?.energyPoints && (
-                    <div className="text-lg text-yellow-400 font-semibold">
+                    <div className="text-sm sm:text-lg text-yellow-400 font-semibold">
                       ⚡ {achievement.metadata.energyPoints} pontos de energia
                     </div>
                   )}

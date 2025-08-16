@@ -132,73 +132,134 @@ function CalendarHeader({
   };
 
   return (
-    <div className="flex items-center justify-between mb-6">
-      {/* Navigation */}
-      <div className="flex items-center gap-2">
-        <Button
-          onClick={() => navigateDate('prev')}
-          variant="ghost"
-          size="sm"
-          className="h-8 w-8 p-0 hover:bg-gray-100"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 mb-4 sm:mb-6">
+      {/* MOBILE NAVIGATION (< sm) */}
+      <div className="sm:hidden">
+        {/* Date Navigation - Mobile */}
+        <div className="flex items-center justify-between mb-4">
+          <Button
+            onClick={() => navigateDate('prev')}
+            variant="outline"
+            size="icon"
+            className="h-12 w-12 min-h-[48px]"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </Button>
+          
+          <div className="text-center">
+            <h2 className="text-base font-semibold text-gray-900">
+              {formatTitle()}
+            </h2>
+          </div>
+          
+          <Button
+            onClick={() => navigateDate('next')}
+            variant="outline"
+            size="icon"
+            className="h-12 w-12 min-h-[48px]"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </Button>
+        </div>
         
-        <h2 className="text-lg font-semibold text-gray-900 min-w-[200px] text-center">
-          {formatTitle()}
-        </h2>
-        
-        <Button
-          onClick={() => navigateDate('next')}
-          variant="ghost"
-          size="sm"
-          className="h-8 w-8 p-0 hover:bg-gray-100"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
+        {/* View Toggle - Mobile */}
+        <div className="grid grid-cols-3 gap-2">
+          <Button
+            onClick={() => onViewChange('day')}
+            variant={view === 'day' ? "default" : "outline"}
+            className="flex items-center justify-center space-x-1 min-h-[44px] text-sm"
+          >
+            <CalendarIcon className="w-4 h-4" />
+            <span>Dia</span>
+          </Button>
+          <Button
+            onClick={() => onViewChange('week')}
+            variant={view === 'week' ? "default" : "outline"}
+            className="flex items-center justify-center space-x-1 min-h-[44px] text-sm"
+          >
+            <BarChart2 className="w-4 h-4" />
+            <span>Semana</span>
+          </Button>
+          <Button
+            onClick={() => onViewChange('month')}
+            variant={view === 'month' ? "default" : "outline"}
+            className="flex items-center justify-center space-x-1 min-h-[44px] text-sm"
+          >
+            <Grid3X3 className="w-4 h-4" />
+            <span>Mês</span>
+          </Button>
+        </div>
       </div>
 
-      {/* View Toggle */}
-      <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-        <button
-          onClick={() => onViewChange('day')}
-          className={`
-            flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all
-            ${view === 'day' 
-              ? 'bg-white text-blue-600 shadow-sm' 
-              : 'text-gray-600 hover:text-gray-800'
-            }
-          `}
-        >
-          <CalendarIcon className="w-4 h-4" />
-          <span className="hidden sm:inline">Dia</span>
-        </button>
-        <button
-          onClick={() => onViewChange('week')}
-          className={`
-            flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all
-            ${view === 'week' 
-              ? 'bg-white text-blue-600 shadow-sm' 
-              : 'text-gray-600 hover:text-gray-800'
-            }
-          `}
-        >
-          <BarChart2 className="w-4 h-4" />
-          <span className="hidden sm:inline">Semana</span>
-        </button>
-        <button
-          onClick={() => onViewChange('month')}
-          className={`
-            flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all
-            ${view === 'month' 
-              ? 'bg-white text-blue-600 shadow-sm' 
-              : 'text-gray-600 hover:text-gray-800'
-            }
-          `}
-        >
-          <Grid3X3 className="w-4 h-4" />
-          <span className="hidden sm:inline">Mês</span>
-        </button>
+      {/* DESKTOP NAVIGATION (≥ sm) - LAYOUT ORIGINAL MELHORADO */}
+      <div className="hidden sm:flex items-center justify-between">
+        {/* Navigation */}
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => navigateDate('prev')}
+            variant="outline"
+            size="sm"
+            className="h-10 w-10 p-0 hover:bg-gray-100"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          
+          <h2 className="text-lg font-semibold text-gray-900 min-w-[200px] text-center">
+            {formatTitle()}
+          </h2>
+          
+          <Button
+            onClick={() => navigateDate('next')}
+            variant="outline"
+            size="sm"
+            className="h-10 w-10 p-0 hover:bg-gray-100"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* View Toggle */}
+        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+          <button
+            onClick={() => onViewChange('day')}
+            className={`
+              flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all
+              ${view === 'day' 
+                ? 'bg-white text-blue-600 shadow-sm' 
+                : 'text-gray-600 hover:text-gray-800'
+              }
+            `}
+          >
+            <CalendarIcon className="w-4 h-4" />
+            <span>Dia</span>
+          </button>
+          <button
+            onClick={() => onViewChange('week')}
+            className={`
+              flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all
+              ${view === 'week' 
+                ? 'bg-white text-blue-600 shadow-sm' 
+                : 'text-gray-600 hover:text-gray-800'
+              }
+            `}
+          >
+            <BarChart2 className="w-4 h-4" />
+            <span>Semana</span>
+          </button>
+          <button
+            onClick={() => onViewChange('month')}
+            className={`
+              flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all
+              ${view === 'month' 
+                ? 'bg-white text-blue-600 shadow-sm' 
+                : 'text-gray-600 hover:text-gray-800'
+              }
+            `}
+          >
+            <Grid3X3 className="w-4 h-4" />
+            <span>Mês</span>
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -218,10 +279,12 @@ function DayView({
   );
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6">
+    <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 shadow-sm">
       <div className="text-center mb-6">
-        <div className="text-4xl mb-2">📅</div>
-        <h3 className="text-xl font-semibold text-gray-900">
+        <div className="w-16 h-16 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+          <span className="text-4xl">🏆</span>
+        </div>
+        <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
           {currentDate.toLocaleDateString('pt-BR', { 
             weekday: 'long',
             day: 'numeric',
@@ -233,7 +296,7 @@ function DayView({
       {dayAchievements.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
           <div className="text-6xl mb-4">🌟</div>
-          <p>Nenhuma conquista neste dia</p>
+          <p className="text-gray-600">Nenhuma conquista neste dia</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -283,8 +346,8 @@ function WeekView({
   const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6">
-      <div className="grid grid-cols-7 gap-4 items-start">
+    <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 shadow-sm">
+      <div className="grid grid-cols-7 gap-2 sm:gap-4 items-start">
         {weekDays.map((day, index) => (
           <div key={index} className="text-center flex flex-col">
             <div className="font-medium text-gray-700 mb-2">
@@ -416,25 +479,25 @@ function MonthView({
   const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6">
+    <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 shadow-sm">
       {/* Header with day names */}
-      <div className="grid grid-cols-7 gap-2 mb-4">
+      <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-4">
         {dayNames.map((day) => (
-          <div key={day} className="text-center font-medium text-gray-700 py-2">
+          <div key={day} className="text-center font-medium text-gray-700 py-2 text-xs sm:text-sm">
             {day}
           </div>
         ))}
       </div>
 
       {/* Calendar grid */}
-      <div className="grid grid-cols-7 gap-2">
+      <div className="grid grid-cols-7 gap-1 sm:gap-2">
         {weeks.map((week) =>
           week.days.map((day, dayIndex) => (
             <div
               key={`${week.weekNumber}-${dayIndex}`}
               onClick={(e) => handleDayClick(day, e)}
               className={`
-                min-h-[80px] p-2 border rounded-lg transition-colors relative
+                min-h-[60px] sm:min-h-[80px] p-1 sm:p-2 border rounded-lg transition-colors relative
                 ${day.isCurrentMonth 
                   ? 'bg-white border-gray-200' 
                   : 'bg-gray-50 border-gray-100'

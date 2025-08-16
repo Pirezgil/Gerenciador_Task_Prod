@@ -55,7 +55,7 @@ export function StandardModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -77,22 +77,23 @@ export function StandardModal({
               duration: 0.2 
             }}
             className={cn(
-              'relative bg-white rounded-2xl shadow-2xl w-full max-h-[90vh] overflow-hidden flex flex-col',
+              'relative bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full flex flex-col',
               'border border-gray-200',
+              'h-[95vh] max-h-[95vh] sm:max-h-[90vh] sm:h-auto',
               maxWidthClasses[maxWidth],
               className
             )}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header Padronizado */}
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4 text-white flex-shrink-0">
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-4 sm:px-6 text-white flex-shrink-0">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  {Icon && <Icon className="w-6 h-6 text-white" />}
-                  <div>
-                    <h2 className="text-xl font-semibold text-white">{title}</h2>
+                <div className="flex items-center space-x-3 min-w-0 flex-1">
+                  {Icon && <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white flex-shrink-0" />}
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-lg sm:text-xl font-semibold text-white truncate">{title}</h2>
                     {subtitle && (
-                      <p className="text-blue-100 text-sm mt-1">{subtitle}</p>
+                      <p className="text-blue-100 text-xs sm:text-sm mt-1 line-clamp-2">{subtitle}</p>
                     )}
                   </div>
                 </div>
@@ -100,7 +101,7 @@ export function StandardModal({
                 {showCloseButton && (
                   <button
                     onClick={onClose}
-                    className="p-2 hover:bg-white/20 rounded-lg transition-colors flex-shrink-0"
+                    className="p-2 hover:bg-white/20 rounded-lg transition-colors flex-shrink-0 ml-2"
                     type="button"
                   >
                     <X className="w-5 h-5 text-white" />
@@ -110,7 +111,7 @@ export function StandardModal({
             </div>
 
             {/* Content */}
-            <div className="p-6 overflow-y-auto flex-1">
+            <div className="p-4 sm:p-6 overflow-y-auto flex-1">
               {children}
             </div>
           </motion.div>
@@ -132,7 +133,7 @@ export interface StandardModalActionsProps {
 export function StandardModalActions({ children, className }: StandardModalActionsProps) {
   return (
     <div className={cn(
-      'flex justify-end space-x-3 pt-6 border-t border-gray-200',
+      'flex justify-end pt-6 border-t border-gray-200',
       className
     )}>
       {children}

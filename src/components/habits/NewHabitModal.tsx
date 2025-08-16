@@ -110,10 +110,10 @@ export function NewHabitModal({ isOpen, onClose, template }: NewHabitModalProps)
       icon={Target}
       maxWidth="lg"
     >
-      <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-6">
-                {/* Nome e Descrição */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+              <div className="space-y-4 sm:space-y-6">
+                {/* Nome e Descrição - MOBILE OTIMIZADO */}
+                <div className="space-y-4 sm:grid sm:grid-cols-2 sm:gap-6 sm:space-y-0">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Nome do Hábito *
@@ -122,7 +122,7 @@ export function NewHabitModal({ isOpen, onClose, template }: NewHabitModalProps)
                       type="text"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="w-full px-3 py-3 sm:py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-base sm:text-sm"
                       placeholder="Ex: Beber água"
                       required
                     />
@@ -136,24 +136,24 @@ export function NewHabitModal({ isOpen, onClose, template }: NewHabitModalProps)
                       type="text"
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                      className="w-full px-3 py-3 sm:py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-base sm:text-sm"
                       placeholder="Descrição opcional"
                     />
                   </div>
                 </div>
 
-                {/* Ícone */}
+                {/* Ícone - MOBILE OTIMIZADO */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
                     Ícone
                   </label>
-                  <div className="grid grid-cols-8 gap-2">
+                  <div className="grid grid-cols-5 sm:grid-cols-8 gap-3 sm:gap-2 mb-3">
                     {predefinedIcons.map((icon) => (
                       <button
                         key={icon}
                         type="button"
                         onClick={() => setFormData({ ...formData, icon })}
-                        className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg transition-all ${
+                        className={`w-12 h-12 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center text-xl sm:text-lg transition-all ${
                           formData.icon === icon
                             ? 'bg-green-100 border-2 border-green-500'
                             : 'bg-gray-100 hover:bg-gray-200 border border-gray-300'
@@ -167,23 +167,23 @@ export function NewHabitModal({ isOpen, onClose, template }: NewHabitModalProps)
                     type="text"
                     value={formData.icon}
                     onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                    className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-3 sm:py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-base sm:text-sm"
                     placeholder="Ou digite um emoji personalizado"
                   />
                 </div>
 
-                {/* Cor */}
+                {/* Cor - MOBILE OTIMIZADO */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
                     Cor
                   </label>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-3 flex-wrap gap-y-3">
                     {predefinedColors.map((color) => (
                       <button
                         key={color}
                         type="button"
                         onClick={() => setFormData({ ...formData, color })}
-                        className={`w-8 h-8 rounded-lg transition-all ${
+                        className={`w-10 h-10 sm:w-8 sm:h-8 rounded-lg transition-all ${
                           formData.color === color
                             ? 'ring-2 ring-gray-400 ring-offset-2'
                             : 'hover:scale-110'
@@ -195,14 +195,14 @@ export function NewHabitModal({ isOpen, onClose, template }: NewHabitModalProps)
                       type="color"
                       value={formData.color}
                       onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                      className="w-8 h-8 rounded-lg border border-gray-300 cursor-pointer"
+                      className="w-10 h-10 sm:w-8 sm:h-8 rounded-lg border border-gray-300 cursor-pointer"
                     />
                   </div>
                 </div>
 
-                {/* Frequência */}
+                {/* Frequência - MOBILE OTIMIZADO */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
                     Frequência
                   </label>
                   <select
@@ -211,7 +211,7 @@ export function NewHabitModal({ isOpen, onClose, template }: NewHabitModalProps)
                       ...formData, 
                       frequency: { ...formData.frequency, type: e.target.value as any }
                     })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-3 sm:py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-base sm:text-sm"
                   >
                     <option value="daily">Todos os dias</option>
                     <option value="weekly">Semanalmente</option>
@@ -219,10 +219,10 @@ export function NewHabitModal({ isOpen, onClose, template }: NewHabitModalProps)
                   </select>
                 </div>
 
-                {/* Dias da Semana */}
+                {/* Dias da Semana - MOBILE OTIMIZADO */}
                 {(formData.frequency.type === 'weekly' || formData.frequency.type === 'custom') && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
                       Dias da Semana
                     </label>
                     <div className="grid grid-cols-7 gap-2">
@@ -231,7 +231,7 @@ export function NewHabitModal({ isOpen, onClose, template }: NewHabitModalProps)
                           key={index}
                           type="button"
                           onClick={() => toggleDay(index)}
-                          className={`p-2 text-sm rounded-lg transition-all ${
+                          className={`p-3 sm:p-2 text-sm rounded-lg transition-all min-h-[44px] sm:min-h-auto flex items-center justify-center ${
                             selectedDays.includes(index)
                               ? 'bg-green-100 text-green-700 border-2 border-green-500'
                               : 'bg-gray-100 text-gray-600 border border-gray-300 hover:bg-gray-200'
@@ -244,9 +244,9 @@ export function NewHabitModal({ isOpen, onClose, template }: NewHabitModalProps)
                   </div>
                 )}
 
-                {/* Meta Diária */}
+                {/* Meta Diária - MOBILE OTIMIZADO */}
                 <div>
-                  <label className="flex items-center space-x-2 mb-2">
+                  <label className="flex items-start space-x-3 mb-3 p-3 border border-gray-200 rounded-lg">
                     <input
                       type="checkbox"
                       checked={formData.targetCount !== undefined}
@@ -254,16 +254,16 @@ export function NewHabitModal({ isOpen, onClose, template }: NewHabitModalProps)
                         ...formData, 
                         targetCount: e.target.checked ? 1 : undefined 
                       })}
-                      className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                      className="mt-1 w-5 h-5 rounded border-gray-300 text-green-600 focus:ring-green-500"
                     />
-                    <span className="text-sm font-medium text-gray-700">
+                    <span className="text-sm font-medium text-gray-700 leading-relaxed">
                       Definir meta diária (quantas vezes por dia)
                     </span>
                   </label>
                   
                   {formData.targetCount !== undefined && (
-                    <div className="flex items-center space-x-2">
-                      <Hash className="w-4 h-4 text-gray-500" />
+                    <div className="flex items-center space-x-3 mt-3 p-3 bg-gray-50 rounded-lg">
+                      <Hash className="w-5 h-5 text-gray-500 flex-shrink-0" />
                       <input
                         type="number"
                         min="1"
@@ -273,16 +273,15 @@ export function NewHabitModal({ isOpen, onClose, template }: NewHabitModalProps)
                           ...formData, 
                           targetCount: parseInt(e.target.value) || 1 
                         })}
-                        className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                        className="w-20 px-3 py-3 sm:py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-base sm:text-sm text-center"
                       />
-                      <span className="text-sm text-gray-600">vezes por dia</span>
+                      <span className="text-sm text-gray-600 flex-1">vezes por dia</span>
                     </div>
                   )}
                 </div>
 
-                {/* Sistema de Lembretes Padronizado */}
+                {/* Sistema de Lembretes Padronizado - MOBILE OTIMIZADO */}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h3 className="text-lg font-medium text-gray-900 mb-3">Lembretes</h3>
                   <ReminderPicker
                     entityType="habit"
                     onRemindersChange={setHabitReminders}
@@ -293,11 +292,13 @@ export function NewHabitModal({ isOpen, onClose, template }: NewHabitModalProps)
                 </div>
               </div>
 
-        <StandardModalActions>
+        {/* Ações do Modal - MOBILE OTIMIZADO E CENTRALIZADO */}
+        <StandardModalActions className="flex-col sm:flex-row gap-4 items-center sm:justify-end">
           <StandardButton
             type="button"
             variant="secondary"
             onClick={handleClose}
+            className="w-full sm:w-auto order-2 sm:order-1 min-h-[48px] sm:min-h-auto"
           >
             Cancelar
           </StandardButton>
@@ -306,6 +307,7 @@ export function NewHabitModal({ isOpen, onClose, template }: NewHabitModalProps)
             variant="primary"
             disabled={!formData.name.trim()}
             loading={createHabitMutation.isPending}
+            className="w-full sm:w-auto order-1 sm:order-2 min-h-[48px] sm:min-h-auto"
           >
             Criar Hábito
           </StandardButton>
