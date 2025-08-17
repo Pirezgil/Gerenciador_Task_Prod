@@ -1,51 +1,59 @@
-# 🧠 Cérebro-Compatível: Gerenciador de Tarefas
+# Sistema Gerenciador de Tarefas
 
-Este é um sistema de gerenciamento de tarefas especialmente projetado para usuários neurodivergentes, com foco em reduzir a sobrecarga cognitiva e promover um fluxo de trabalho mais gentil e sustentável.
+Sistema completo de gerenciamento de tarefas desenvolvido com Next.js e Node.js.
 
-## ✨ Features
+## 🚀 Tecnologias
 
-- **Modo Bombeiro:** Foco total nas tarefas do dia.
-- **Modo Arquiteto:** Planejamento de projetos de longo prazo.
-- **Caixa de Areia:** Um espaço seguro para ideias e pensamentos livres.
-- **Sistema de Energia:** Gerencie suas tarefas com base no seu nível de energia diário.
-- **Design System "Sentinela":** Uma interface minimalista e acolhedora.
+- **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS
+- **Backend**: Node.js, Express, TypeScript
+- **Banco de Dados**: PostgreSQL com Prisma ORM
+- **Autenticação**: JWT + OAuth Google
+- **Notificações**: Push Notifications (Web Push)
+- **Deploy**: Docker, Railway
 
-## 🚀 Começando
+## 📦 Instalação e Execução
 
-### Pré-requisitos
-
-- Node.js (versão 18.17.0 ou superior)
-- npm
-
-### Instalação
-
-1. Clone o repositório:
-   ```bash
-   git clone <url-do-repositorio>
-   ```
-2. Navegue até o diretório do projeto:
-   ```bash
-   cd Gerenciador_Task
-   ```
-3. Instale as dependências:
-   ```bash
-   npm install
-   ```
-
-### Executando em Modo de Desenvolvimento
-
-Para iniciar o servidor de desenvolvimento, execute:
-
+### Frontend
 ```bash
+npm install
 npm run dev
 ```
 
-Abra [http://localhost:3000](http://localhost:3000) no seu navegador para ver a aplicação.
+### Backend
+```bash
+cd backend
+npm install
+npm run dev
+```
 
-## 🛠️ Scripts Disponíveis
+### Banco de Dados
+```bash
+cd backend
+npx prisma migrate deploy
+npx prisma generate
+npx prisma db seed
+```
 
-- `npm run dev`: Inicia o servidor de desenvolvimento.
-- `npm run build`: Compila a aplicação para produção.
-- `npm run start`: Inicia um servidor de produção.
-- `npm run lint`: Executa o linter (ESLint) para verificar a qualidade do código.
-- `npm run type-check`: Executa o compilador TypeScript para verificar os tipos.
+## 🌐 URLs
+
+- **Frontend**: http://localhost:3000
+- **Backend**: http://localhost:3001
+- **Banco**: PostgreSQL (configurar DATABASE_URL)
+
+## 📱 Funcionalidades
+
+✅ Gerenciamento de tarefas com energia  
+✅ Sistema de projetos  
+✅ Lembretes inteligentes  
+✅ Notificações push  
+✅ Autenticação segura  
+✅ Tema escuro/claro  
+✅ Sistema de recompensas  
+✅ Hábitos e streaks  
+
+## 🔧 Configuração
+
+Copie os arquivos `.env.example` e configure as variáveis de ambiente necessárias.
+
+---
+Sistema preparado para produção ✨
