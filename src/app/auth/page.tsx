@@ -315,42 +315,6 @@ export default function AuthPage() {
           </p>
         </div>
 
-        {/* Quick Login para desenvolvimento */}
-        <div className="mt-6 p-4 bg-blue-50 rounded-xl">
-          <p className="text-xs text-blue-700 mb-2 font-medium">🚀 Acesso Rápido (Desenvolvimento)</p>
-          <div className="space-y-2">
-            <button
-              type="button"
-              onClick={() => {
-                // Usar as credenciais já preenchidas
-                const event = new Event('submit', { bubbles: true, cancelable: true });
-                const form = document.querySelector('form');
-                if (form) {
-                  form.dispatchEvent(event);
-                }
-              }}
-              className="w-full text-sm bg-blue-100 text-blue-700 py-2 rounded-lg hover:bg-blue-200 transition-colors"
-            >
-              🚀 Login Automático
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                console.log('🧹 Limpando TODOS os dados...');
-                if (typeof window !== 'undefined') {
-                  localStorage.clear();
-                  sessionStorage.clear();
-                  // Para cookies HTTP-only, apenas recarregar
-                  alert('Cache local limpo! Recarregando...');
-                  window.location.reload();
-                }
-              }}
-              className="w-full text-sm bg-red-100 text-red-700 py-2 rounded-lg hover:bg-red-200 transition-colors"
-            >
-              🧹 RESET COMPLETO (Emergência)
-            </button>
-          </div>
-        </div>
       </motion.div>
     </div>
   );
