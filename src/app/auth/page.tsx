@@ -13,8 +13,8 @@ export default function AuthPage() {
   const router = useRouter();
   const { login, isAuthenticated, isLoading: authLoading } = useAuth();
   const [formData, setFormData] = useState({
-    email: 'demo@gerenciador.com',
-    password: 'demo1234',
+    email: '',
+    password: '',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
