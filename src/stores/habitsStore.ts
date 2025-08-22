@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Habit, HabitCompletion, HabitStats, HabitTemplate } from '@/types/habit';
+import { getTodayLocalString, getYesterdayLocalString } from '@/utils/dateUtils';
 
 // ============================================================================
 // HABITS STORE - Gerenciamento de hábitos
@@ -139,7 +140,7 @@ export const useHabitsStore = create<HabitsState>()(
       },
 
       completeHabit: (habitId, count = 1, notes) => {
-        const today = new Date().toISOString().split('T')[0];
+        const today = getTodayLocalString();
         const completionId = `${habitId}_${today}_${Date.now()}`;
 
         const newCompletion: HabitCompletion = {
@@ -302,8 +303,8 @@ export const useHabitsStore = create<HabitsState>()(
               .sort()
               .reverse(); // Mais recente primeiro
 
-            const today = new Date().toISOString().split('T')[0];
-            const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            const today = getTodayLocalString();
+            const yesterday = getYesterdayLocalString();
 
             // Verificar se completou hoje ou ontem (para manter streak)
             let streakDate = today;

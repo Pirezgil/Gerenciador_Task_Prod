@@ -213,10 +213,10 @@ function TimelineGroup({ date, achievements, onAchievementClick, medalSize, isFi
                       </span>
                     </div>
                     
-                    {achievement.points && (
+                    {(achievement as any).points && (
                       <div className="flex items-center gap-1">
                         <Trophy className="w-3 h-3" />
-                        <span>{achievement.points} pontos</span>
+                        <span>{(achievement as any).points} pontos</span>
                       </div>
                     )}
                   </div>

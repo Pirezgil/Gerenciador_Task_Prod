@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Minus, Calendar, Flame, Target, Bell } from 'lucide-react';
+import { getTodayLocalString } from '@/utils/dateUtils';
 import { useRouter } from 'next/navigation';
 import { useCompleteHabit } from '@/hooks/api/useHabits';
 import { HabitCompletionAnimation } from './HabitCompletionAnimation';
@@ -27,7 +28,7 @@ export function HabitList({ habits, showDate = false }: HabitListProps) {
     streak: number;
   } | null>(null);
   
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayLocalString();
 
   // Helper para obter lembretes de um hábito
   const getHabitReminders = (habitId: string) => {

@@ -120,11 +120,11 @@ export function TasksPageClient() {
 
   // Helper para obter lembretes de uma tarefa
   const getTaskReminders = (taskId: string) => {
-    return allReminders.filter(reminder => 
+    return Array.isArray(allReminders) ? allReminders.filter(reminder => 
       reminder.entityId === taskId && 
       reminder.entityType === 'task' && 
       reminder.isActive
-    );
+    ) : [];
   };
 
   // Aplicar busca e ordenação nas tarefas

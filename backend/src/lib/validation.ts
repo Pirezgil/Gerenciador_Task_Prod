@@ -439,7 +439,22 @@ export const createReminderSchema = z.object({
   message: z.string()
     .max(500, 'Mensagem muito longa')
     .optional(),
-  isActive: z.boolean().optional().default(true)
+  isActive: z.boolean().optional().default(true),
+  // Campos para lembretes intervalados
+  intervalEnabled: z.boolean().optional().default(false),
+  intervalMinutes: z.number()
+    .int('Intervalos devem ser um número inteiro')
+    .min(1, 'Mínimo 1 minuto de intervalo')
+    .max(1440, 'Máximo 24 horas de intervalo')
+    .optional(),
+  intervalStartTime: z.string()
+    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Horário de início deve estar no formato HH:MM')
+    .optional(),
+  intervalEndTime: z.string()
+    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Horário de fim deve estar no formato HH:MM')
+    .optional(),
+  subType: z.enum(['main', 'interval', 'prepare', 'urgent']).optional(),
+  parentReminderId: z.string().min(1, 'ID do lembrete pai inválido').optional()
 }).refine(data => {
   // Validações condicionais
   if (data.type === 'before_due' && !data.minutesBefore) {
@@ -451,9 +466,13 @@ export const createReminderSchema = z.object({
   if (data.type === 'recurring' && data.daysOfWeek.length === 0) {
     return false;
   }
+  // Validações para lembretes intervalados
+  if (data.intervalEnabled && (!data.intervalMinutes || !data.intervalStartTime || !data.intervalEndTime)) {
+    return false;
+  }
   return true;
 }, {
-  message: 'Dados de lembrete inconsistentes: before_due precisa de minutesBefore, scheduled/recurring precisam de scheduledTime, recurring precisa de daysOfWeek'
+  message: 'Dados de lembrete inconsistentes: before_due precisa de minutesBefore, scheduled/recurring precisam de scheduledTime, recurring precisa de daysOfWeek, intervalEnabled precisa de intervalMinutes, intervalStartTime e intervalEndTime'
 });
 
 export const updateReminderSchema = z.object({
@@ -476,7 +495,22 @@ export const updateReminderSchema = z.object({
   message: z.string()
     .max(500, 'Mensagem muito longa')
     .optional(),
-  isActive: z.boolean().optional()
+  isActive: z.boolean().optional(),
+  // Campos para lembretes intervalados
+  intervalEnabled: z.boolean().optional(),
+  intervalMinutes: z.number()
+    .int('Intervalos devem ser um número inteiro')
+    .min(1, 'Mínimo 1 minuto de intervalo')
+    .max(1440, 'Máximo 24 horas de intervalo')
+    .optional(),
+  intervalStartTime: z.string()
+    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Horário de início deve estar no formato HH:MM')
+    .optional(),
+  intervalEndTime: z.string()
+    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Horário de fim deve estar no formato HH:MM')
+    .optional(),
+  subType: z.enum(['main', 'interval', 'prepare', 'urgent']).optional(),
+  parentReminderId: z.string().min(1, 'ID do lembrete pai inválido').optional()
 });
 
 export const reminderFilterSchema = z.object({
@@ -496,17 +530,33 @@ import { createValidationErrorResponse } from './errors';
  */
 export const validate = (schema: z.ZodSchema) => {
   return (req: Request, res: Response, next: NextFunction) => {
+    console.log('🔍 [VALIDATION] Validando body:', {
+      url: req.originalUrl,
+      method: req.method,
+      body: req.body,
+      timestamp: new Date().toISOString()
+    });
+
     try {
       const result = schema.parse(req.body);
       req.body = result;
+      console.log('✅ [VALIDATION] Validação passou');
       next();
     } catch (error) {
+      console.error('❌ [VALIDATION] Erro de validação:', {
+        url: req.originalUrl,
+        body: req.body,
+        error: error
+      });
+
       if (error instanceof z.ZodError) {
         const validationErrors = error.errors.map(err => ({
           field: err.path.join('.'),
           message: err.message,
           code: err.code
         }));
+
+        console.error('❌ [VALIDATION] Detalhes do erro Zod:', validationErrors);
 
         const response = createValidationErrorResponse(
           validationErrors,

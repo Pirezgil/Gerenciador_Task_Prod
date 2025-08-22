@@ -39,7 +39,17 @@ export const getDynamicCookieOptions = (req?: any) => {
     // Configuração específica para cada tipo de acesso
     let cookieConfig;
     
-    if (origin?.includes('localhost') || host?.includes('localhost')) {
+    if (origin?.includes('ngrok') || host?.includes('ngrok') || origin?.includes('ngrok-free.app') || host?.includes('ngrok-free.app')) {
+      // Acesso via ngrok - configuração para HTTPS cross-site
+      cookieConfig = {
+        httpOnly: true,
+        secure: true, // Necessário para HTTPS
+        sameSite: 'none' as const, // Necessário para cross-site com HTTPS
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        domain: undefined,
+        path: '/'
+      };
+    } else if (origin?.includes('localhost') || host?.includes('localhost')) {
       // Acesso via localhost - usar sameSite: 'lax'
       cookieConfig = {
         httpOnly: true,
@@ -63,8 +73,8 @@ export const getDynamicCookieOptions = (req?: any) => {
       // Fallback seguro
       cookieConfig = {
         httpOnly: true,
-        secure: false,
-        sameSite: 'lax' as const,
+        secure: true, // Seguro por padrão
+        sameSite: 'none' as const, // Para compatibilidade cross-site
         maxAge: 7 * 24 * 60 * 60 * 1000,
         domain: undefined,
         path: '/'

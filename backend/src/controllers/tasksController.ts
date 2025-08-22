@@ -180,8 +180,24 @@ export const createTask = async (req: AuthenticatedRequest, res: Response, next:
 };
 
 export const updateTask = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+  console.log('🔄 [CONTROLLER] updateTask - INÍCIO CAPTURADO:', {
+    taskId: req.params.id,
+    userId: req.userId,
+    method: req.method,
+    path: req.path,
+    body: req.body,
+    bodyKeys: Object.keys(req.body || {}),
+    headers: {
+      'content-type': req.get('content-type'),
+      'x-csrf-token': req.get('x-csrf-token'),
+      'origin': req.get('origin')
+    },
+    timestamp: new Date().toISOString()
+  });
+
   try {
     if (!req.userId) {
+      console.log('❌ updateTask - Usuário não autenticado');
       res.status(401).json({
         success: false,
         error: 'Não autenticado',
@@ -191,6 +207,7 @@ export const updateTask = async (req: AuthenticatedRequest, res: Response, next:
     }
 
     const { id } = req.params;
+    console.log('🔄 updateTask - Parâmetros extraídos:', { taskId: id, userId: req.userId });
     
     // SECURITY: Mass Assignment Protection - Only allow safe fields
     const {
@@ -231,7 +248,19 @@ export const updateTask = async (req: AuthenticatedRequest, res: Response, next:
       reminders
     };
     
+    console.log('🔄 updateTask - Dados de atualização:', {
+      taskId: id,
+      userId: req.userId,
+      updateFields: Object.keys(updateData).filter(key => updateData[key] !== undefined)
+    });
+    
     const task = await taskService.updateTask(id, req.userId, updateData);
+    
+    console.log('✅ updateTask - Sucesso:', {
+      taskId: id,
+      success: true,
+      timestamp: new Date().toISOString()
+    });
     
     res.json({
       success: true,
@@ -240,6 +269,15 @@ export const updateTask = async (req: AuthenticatedRequest, res: Response, next:
       timestamp: new Date().toISOString()
     });
   } catch (error: any) {
+    console.error('❌ updateTask - ERRO CAPTURADO:', {
+      taskId: req.params.id,
+      userId: req.userId,
+      errorMessage: error.message,
+      errorStack: error.stack,
+      errorCode: error.code,
+      timestamp: new Date().toISOString()
+    });
+
     if (error.message === 'Tarefa não encontrada') {
       res.status(404).json({
         success: false,
@@ -256,6 +294,23 @@ export const updateTask = async (req: AuthenticatedRequest, res: Response, next:
       });
       return;
     }
+    if (error.message?.includes('Limite de energia excedido')) {
+      res.status(400).json({
+        success: false,
+        error: 'Limite de energia excedido',
+        message: error.message,
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
+    
+    // Adicionar log antes de passar para next()
+    console.error('❌ updateTask - Passando erro para middleware:', {
+      errorType: typeof error,
+      errorKeys: Object.keys(error),
+      timestamp: new Date().toISOString()
+    });
+    
     next(error);
   }
 };
@@ -443,6 +498,30 @@ export const getBombeiroTasks = async (req: AuthenticatedRequest, res: Response,
     res.json({
       success: true,
       data: bombeiroTasks,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const checkTaskCanBePlanned = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!req.userId) {
+      res.status(401).json({
+        success: false,
+        error: 'Não autenticado',
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
+
+    const { id } = req.params;
+    const result = await taskService.canTaskBePlanned(req.userId, id);
+    
+    res.json({
+      success: true,
+      data: result,
       timestamp: new Date().toISOString()
     });
   } catch (error) {

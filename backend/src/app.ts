@@ -40,6 +40,30 @@ import { reminderScheduler, schedulerHealthCheck } from './services/reminderSche
 const app = express();
 export const prisma = new PrismaClient();
 
+// INTERCEPTAR TUDO - ANTES DE QUALQUER COISA
+app.use('*', (req, res, next) => {
+  console.log('⚡ [INTERCEPTA-TUDO]:', req.method, req.originalUrl);
+  if (req.method === 'PUT') {
+    console.log('⚡ [PUT-DETECTADO] Headers raw:', req.headers);
+  }
+  next();
+});
+
+// LOG ULTRA BÁSICO - LITERALMENTE O PRIMEIRO MIDDLEWARE
+app.use((req, res, next) => {
+  console.log('🚨 [PRIMEIRO-LOG] Requisição recebida:', {
+    method: req.method,
+    url: req.originalUrl,
+    headers: {
+      'content-type': req.get('content-type'),
+      'origin': req.get('origin'),
+      'user-agent': req.get('user-agent')?.substring(0, 50)
+    },
+    timestamp: new Date().toISOString()
+  });
+  next();
+});
+
 // ETAPA 3: Headers de segurança fortalecidos (P2)
 app.use(helmet({
   // Configurações de CSP mais rigorosas
@@ -72,58 +96,9 @@ app.use(helmet({
   xssFilter: true
 }));
 
-// CORS configurado com segurança
+// CORS temporariamente permissivo para debug
 app.use(cors({
-  origin: (origin, callback) => {
-    // Em desenvolvimento, ser mais permissivo para debug
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔍 CORS Debug - Origin:', origin);
-      
-      // Lista de origens permitidas em desenvolvimento
-      const allowedOrigins = [
-        'http://localhost:3000',
-        'http://127.0.0.1:3000',
-        'http://localhost:3001',
-        'http://127.0.0.1:3001',
-        'http://192.168.0.252:3000',
-        'http://192.168.0.252:3001',
-        process.env.FRONTEND_URL,
-        process.env.FRONTEND_URL_NETWORK
-      ].filter(Boolean);
-      
-      // Permitir requests sem origin (Postman, etc)
-      if (!origin) {
-        console.log('✅ CORS - Permitindo request sem origin (desenvolvimento)');
-        return callback(null, true);
-      }
-      
-      if (allowedOrigins.includes(origin)) {
-        console.log('✅ CORS - Origin permitida:', origin);
-        return callback(null, true);
-      }
-      
-      console.log('❌ CORS - Origin não permitida:', origin, 'Permitidas:', allowedOrigins);
-    } else {
-      // Produção: mais restritivo
-      const allowedOrigins = [
-        process.env.FRONTEND_URL || 'http://localhost:3000',
-        'http://localhost:3000',
-      ];
-      
-      // Em produção, não permitir requests sem origin
-      if (!origin) {
-        return callback(new Error('Not allowed by CORS'));
-      }
-      
-      if (origin && allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      
-      return callback(new Error('Not allowed by CORS'));
-    }
-    
-    return callback(new Error('Not allowed by CORS'));
-  },
+  origin: true, // Permitir qualquer origem temporariamente
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: [
@@ -141,6 +116,35 @@ app.use(cors({
 
 app.use(cookieParser()); // Necessário para cookies HTTP-only
 
+// LOG ANTES DO PARSING
+app.use((req, res, next) => {
+  if (req.method === 'PUT') {
+    console.log('🔥 [PRE-PARSE] Requisição PUT recebida:', {
+      method: req.method,
+      url: req.originalUrl,
+      contentType: req.get('content-type'),
+      contentLength: req.get('content-length'),
+      timestamp: new Date().toISOString()
+    });
+  }
+  next();
+});
+
+// LOG EARLY PARA DEBUG 400
+app.use((req, res, next) => {
+  if (req.method === 'PUT' && req.path.includes('/tasks/')) {
+    console.log('🐛 [EARLY DEBUG] PUT /tasks CAPTURADO:', {
+      path: req.path,
+      method: req.method,
+      contentType: req.get('content-type'),
+      contentLength: req.get('content-length'),
+      origin: req.get('origin'),
+      timestamp: new Date().toISOString()
+    });
+  }
+  next();
+});
+
 // Limitação de payload para segurança
 app.use(express.json({ 
   limit: '1mb', // Reduzido de 10mb por segurança
@@ -151,11 +155,48 @@ app.use(express.urlencoded({
   limit: '1mb'
 }));
 
+// LOG DEPOIS DO PARSING
+app.use((req, res, next) => {
+  if (req.method === 'PUT') {
+    console.log('🔥 [POST-PARSE] Body parseado:', {
+      method: req.method,
+      url: req.originalUrl,
+      body: req.body,
+      bodyType: typeof req.body,
+      bodyKeys: Object.keys(req.body || {}),
+      timestamp: new Date().toISOString()
+    });
+  }
+  next();
+});
+
 // Logging de segurança
 app.use(morgan('combined'));
 
+// LOG GLOBAL PARA DEBUG - capturar TODAS as requisições
+app.use((req, res, next) => {
+  console.log('🌐 [GLOBAL] Nova requisição:', {
+    method: req.method,
+    path: req.path,
+    url: req.originalUrl,
+    userAgent: req.get('User-Agent'),
+    origin: req.get('origin'),
+    referer: req.get('referer'),
+    ip: req.ip,
+    timestamp: new Date().toISOString()
+  });
+  next();
+});
+
 // ETAPA 3: Middleware de proteção CSRF personalizado
 app.use((req, res, next) => {
+  console.log('🛡️ [CSRF-CUSTOM] Verificação personalizada:', {
+    path: req.path,
+    method: req.method,
+    hasAuthCookie: !!req.cookies['auth-token'],
+    timestamp: new Date().toISOString()
+  });
+
   // Pular CSRF para rotas de autenticação inicial e métodos seguros
   if (req.path === '/api/auth/login' || 
       req.path === '/api/auth/register' || 
@@ -165,11 +206,13 @@ app.use((req, res, next) => {
       req.method === 'GET' ||
       req.method === 'HEAD' ||
       req.method === 'OPTIONS') {
+    console.log('🛡️ [CSRF-CUSTOM] Pulando para:', req.method, req.path);
     return next();
   }
   
   // Para requests com cookies (usuários autenticados), verificar origem
   if (req.cookies['auth-token']) {
+    console.log('🛡️ [CSRF-CUSTOM] Usuário autenticado, verificando origem...');
     const origin = req.get('origin');
     const referer = req.get('referer');
     const allowedOrigins = [
@@ -177,8 +220,15 @@ app.use((req, res, next) => {
       process.env.FRONTEND_URL_NETWORK || 'http://192.168.0.252:3000'
     ];
     
+    console.log('🛡️ [CSRF-CUSTOM] Verificação de origem:', {
+      origin,
+      referer,
+      allowedOrigins
+    });
+    
     // Verificar se a origem é confiável
     if (!origin && !referer) {
+      console.log('❌ [CSRF-CUSTOM] Origem ausente - retornando 403');
       return res.status(403).json({
         success: false,
         error: {
@@ -190,6 +240,10 @@ app.use((req, res, next) => {
     
     const requestOrigin = origin || (referer ? new URL(referer).origin : '');
     if (!allowedOrigins.includes(requestOrigin)) {
+      console.log('❌ [CSRF-CUSTOM] Origem inválida - retornando 403:', {
+        requestOrigin,
+        allowedOrigins
+      });
       return res.status(403).json({
         success: false,
         error: {
@@ -198,6 +252,8 @@ app.use((req, res, next) => {
         }
       });
     }
+    
+    console.log('✅ [CSRF-CUSTOM] Origem válida');
   }
   
   next();
@@ -242,6 +298,18 @@ app.use('/api/users/reset-password', sensitiveLimiter); // Very strict for passw
 app.use('/api', generateCSRFToken); // Generate CSRF tokens for all API requests
 // CSRF validation com exceções para rotas de autenticação
 app.use((req, res, next) => {
+  // Log para debug do erro 400
+  if (req.method === 'PUT' && req.path.includes('/tasks/')) {
+    console.log('🔍 [MIDDLEWARE] PUT /tasks detectado:', {
+      path: req.path,
+      method: req.method,
+      hasCSRFToken: !!req.get('x-csrf-token'),
+      csrfToken: req.get('x-csrf-token')?.substring(0, 20) + '...',
+      bodyKeys: Object.keys(req.body || {}),
+      timestamp: new Date().toISOString()
+    });
+  }
+  
   // Pular validação CSRF para rotas de autenticação e token CSRF
   if (req.path === '/api/csrf-token' ||
       req.path === '/api/auth/login' || 

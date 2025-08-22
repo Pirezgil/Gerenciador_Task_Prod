@@ -59,10 +59,10 @@ export default function ReminderSectionIntegrated({
     if (!actions.createRecurring) return;
     
     try {
-      await actions.createRecurring.mutateAsync({
-        [entityType === 'task' ? 'taskId' : 'habitId']: entity.id,
-        config
-      });
+      const payload = entityType === 'task' 
+        ? { taskId: entity.id, config }
+        : { habitId: entity.id, config };
+      await actions.createRecurring.mutateAsync(payload as any);
       setActiveModal('none');
     } catch (error) {
       console.error('Erro ao criar lembretes recorrentes:', error);
@@ -75,10 +75,10 @@ export default function ReminderSectionIntegrated({
     }
 
     try {
-      await actions.delete.mutateAsync({
-        reminderId,
-        [entityType === 'task' ? 'taskId' : 'habitId']: entity.id
-      });
+      const deletePayload = entityType === 'task' 
+        ? { reminderId, taskId: entity.id }
+        : { reminderId, habitId: entity.id };
+      await actions.delete.mutateAsync(deletePayload as any);
     } catch (error) {
       console.error('Erro ao deletar lembrete:', error);
     }

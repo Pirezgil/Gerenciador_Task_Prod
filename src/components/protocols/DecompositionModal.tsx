@@ -66,7 +66,7 @@ export function DecompositionModal() {
           🔧 Vamos quebrar esta tarefa?
         </h3>
         <p className="text-gray-600 mb-4 text-center">
-          Esta tarefa foi adiada {showDecompositionModal?.postponedCount} vezes. Talvez ela seja grande demais. Vamos transformá-la em um projeto?
+          Esta tarefa foi adiada {(showDecompositionModal as any)?.postponementCount || 1} vezes. Talvez ela seja grande demais. Vamos transformá-la em um projeto?
         </p>
         <div className="bg-gray-50 rounded-xl p-4 mb-6">
           <p className="text-sm text-gray-700 font-medium">Tarefa original:</p>

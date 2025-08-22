@@ -3,12 +3,48 @@ import { addMissedDaysCountToTasks } from '../utils/taskUtils';
 
 export class DailyTaskTracker {
   /**
+   * Limpa tarefas completadas em dias anteriores que ainda estão marcadas como plannedForToday
+   * Resolve inconsistências no cálculo de energia
+   */
+  static async cleanupCompletedTasksFromPreviousDays(): Promise<void> {
+    try {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+
+      // Buscar tarefas completadas ANTES de hoje que ainda estão marcadas como plannedForToday
+      const tasksToCleanup = await prisma.task.updateMany({
+        where: {
+          status: 'completed',
+          plannedForToday: true,
+          completedAt: {
+            lt: today // Completadas antes de hoje
+          },
+          isDeleted: false
+        },
+        data: {
+          plannedForToday: false
+        }
+      });
+
+      console.log(`🧹 Limpeza de energia: ${tasksToCleanup.count} tarefas antigas removidas do orçamento atual`);
+      
+    } catch (error) {
+      console.error('❌ Erro na limpeza de energia:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Executa diariamente para processar tarefas não realizadas
    * Deve ser chamado via cron job ou similar
    */
   static async processMissedTasks(): Promise<void> {
     try {
-      const today = new Date();
+      // Primeiro, executar limpeza de energia
+      await this.cleanupCompletedTasksFromPreviousDays();
+      
+      const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
       const yesterday = new Date(today);
       yesterday.setDate(today.getDate() - 1);
       
@@ -43,7 +79,8 @@ export class DailyTaskTracker {
    */
   private static async processTaskMissedDay(task: any): Promise<void> {
     const plannedDate = new Date(task.plannedDate);
-    const today = new Date();
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
     const daysDiff = Math.floor((today.getTime() - plannedDate.getTime()) / (1000 * 60 * 60 * 24));
 
     // missedDaysCount agora é calculado dinamicamente - não precisamos mais atualizar
@@ -221,7 +258,8 @@ export class DailyTaskTracker {
     missedTasks: any[];
     completedTasks: any[];
   }> {
-    const today = new Date();
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
     today.setHours(0, 0, 0, 0);
 
     // Primeiro, processar tarefas recorrentes para hoje (se necessário)
@@ -234,14 +272,17 @@ export class DailyTaskTracker {
         OR: [
           {
             plannedForToday: true,
-            missedDaysCount: 0,
             status: {
-              in: ['pending', 'PENDING', 'postponed', 'POSTPONED']
+              in: ['pending', 'PENDING']
             }
           },
           {
             status: {
               in: ['postponed', 'POSTPONED']
+            },
+            postponedAt: {
+              gte: today,
+              lt: new Date(today.getTime() + 24 * 60 * 60 * 1000) // até final do dia
             }
           }
         ],
@@ -370,7 +411,6 @@ export class DailyTaskTracker {
         status: 'completed',
         completedAt: new Date(),
         plannedForToday: false,
-        missedDaysCount: 0, // Reset do contador
         history: {
           create: {
             action: 'completed',

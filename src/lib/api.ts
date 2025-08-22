@@ -49,26 +49,61 @@ let csrfToken: string | null = null;
 
 // Function to get CSRF token when needed
 const ensureCSRFToken = async (): Promise<void> => {
-  if (csrfToken) return; // Already have token
+  console.log('🔒 [ensureCSRFToken] INÍCIO - Token atual:', csrfToken ? 'existe' : 'não existe');
+  
+  // CORREÇÃO: Sempre renovar o token CSRF para garantir que está atualizado
+  console.log('🔒 Renovando CSRF token...');
   
   try {
     // Use dedicated CSRF token endpoint that doesn't require authentication
-    const response = await api.get('/csrf-token');
-    // Token will be captured by response interceptor
+    console.log('🔒 Tentando endpoint /api/csrf-token');
+    const response = await api.get('/api/csrf-token');
+    console.log('🔒 Resposta do CSRF endpoint:', response.data);
+    
+    // CORREÇÃO: Extrair token diretamente da resposta se não foi capturado pelo interceptador
+    const tokenFromData = response.data?.data?.csrfToken;
+    const tokenFromHeader = response.headers['x-csrf-token'];
+    
+    if (tokenFromData || tokenFromHeader) {
+      csrfToken = tokenFromData || tokenFromHeader;
+      console.log('✅ Token CSRF definido manualmente:', csrfToken ? 'obtido' : 'falhou');
+    }
+    
     if (process.env.NODE_ENV === 'development') {
       console.log('🔒 Token CSRF obtido via endpoint dedicado');
     }
   } catch (error) {
+    console.error('❌ Erro ao obter CSRF token via endpoint:', error);
     // Fallback: try to get token from any authenticated endpoint
     try {
-      await api.get('/auth/me');
-      // Token will be captured by response interceptor
+      console.log('🔒 Tentando fallback /auth/me');
+      const response = await api.get('/auth/me');
+      
+      // CORREÇÃO: Extrair token do fallback também
+      const tokenFromHeader = response.headers['x-csrf-token'];
+      if (tokenFromHeader) {
+        csrfToken = tokenFromHeader;
+        console.log('✅ Token CSRF obtido do fallback');
+      }
+      
     } catch (innerError) {
+      console.error('❌ Erro no fallback /auth/me:', innerError);
       if (process.env.NODE_ENV === 'development') {
         console.warn('⚠️ Não foi possível obter token CSRF');
       }
+      console.log('🔒 [ensureCSRFToken] ERRO CRÍTICO - Vai lançar exceção que impede requisição PUT');
+      throw innerError; // Re-throw para debugar
     }
   }
+  
+  // CORREÇÃO: Validar se realmente obtivemos o token
+  if (!csrfToken) {
+    const errorMsg = 'Token CSRF não foi obtido após tentativas';
+    console.error('❌ [ensureCSRFToken] FALHA CRÍTICA:', errorMsg);
+    throw new Error(errorMsg);
+  }
+  
+  console.log('🔒 [ensureCSRFToken] SUCESSO - Token obtido, prosseguindo com requisição');
 };
 
 // SEGURANÇA: Interceptador para cookies HTTP-only seguros + CSRF
@@ -103,18 +138,32 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    // CSRF PROTECTION: Capturar token CSRF mesmo em erros
-    const newCsrfToken = error.response?.headers['x-csrf-token'];
-    if (newCsrfToken && newCsrfToken !== csrfToken) {
-      csrfToken = newCsrfToken;
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔒 CSRF Token atualizado (erro):', csrfToken);
+    console.log('🚨 [INTERCEPTOR] Erro capturado:', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      url: error.config?.url,
+      method: error.config?.method,
+      timestamp: new Date().toISOString()
+    });
+
+    try {
+      // CSRF PROTECTION: Capturar token CSRF mesmo em erros
+      const newCsrfToken = error.response?.headers['x-csrf-token'];
+      if (newCsrfToken && newCsrfToken !== csrfToken) {
+        csrfToken = newCsrfToken;
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🔒 CSRF Token atualizado (erro):', csrfToken);
+        }
       }
+    } catch (tokenError) {
+      console.error('❌ [INTERCEPTOR] Erro ao processar CSRF token:', tokenError);
     }
 
-    // Tratamento automático de erros com notificações baseado nas respostas padronizadas
-    if (error.response?.status === 401) {
-      const errorData = error.response.data;
+    try {
+      // Tratamento automático de erros com notificações baseado nas respostas padronizadas
+      if (error.response?.status === 401) {
+        const errorData = error.response.data;
       
       // Verificar se é especificamente token expirado baseado na resposta padronizada
       const isTokenExpired = errorData?.error?.code === 'AUTH_TOKEN_EXPIRED';
@@ -200,7 +249,15 @@ api.interceptors.response.use(
         context: 'connectivity'
       });
     }
+    } catch (interceptorError) {
+      console.error('❌ [INTERCEPTOR] Erro interno no interceptador:', {
+        originalError: error?.message,
+        interceptorError: interceptorError?.message,
+        timestamp: new Date().toISOString()
+      });
+    }
     
+    console.log('🚨 [INTERCEPTOR] Finalizando com rejeição do erro original');
     return Promise.reject(error);
   }
 );
@@ -284,9 +341,26 @@ export const tasksApi = {
   },
 
   async updateTask(taskId: string, updates: Partial<Task>): Promise<Task> {
-    await ensureCSRFToken();
-    const response = await api.put<ApiResponse<Task>>(`/tasks/${taskId}`, updates);
-    return response.data.data;
+    console.log('🔄 tasksApi.updateTask: INÍCIO', { taskId, updates });
+    
+    try {
+      await ensureCSRFToken();
+      console.log('✅ tasksApi.updateTask: Token CSRF obtido, fazendo requisição...');
+      
+      const response = await api.put<ApiResponse<Task>>(`/tasks/${taskId}`, updates);
+      console.log('✅ tasksApi.updateTask: Sucesso', response.data);
+      return response.data.data;
+    } catch (error: any) {
+      console.error('❌ tasksApi.updateTask: Erro', {
+        taskId,
+        updates,
+        error: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        csrfToken: csrfToken ? 'existe' : 'não existe'
+      });
+      throw error;
+    }
   },
 
   async deleteTask(taskId: string): Promise<void> {
@@ -319,6 +393,11 @@ export const tasksApi = {
 
   async getBombeiroTasks(): Promise<{ todayTasks: Task[]; missedTasks: Task[]; completedTasks: Task[] }> {
     const response = await api.get<ApiResponse<{ todayTasks: Task[]; missedTasks: Task[]; completedTasks: Task[] }>>('/tasks/bombeiro');
+    return response.data.data;
+  },
+
+  async checkCanBePlanned(taskId: string): Promise<{ canBePlanned: boolean; reason?: string }> {
+    const response = await api.get<ApiResponse<{ canBePlanned: boolean; reason?: string }>>(`/tasks/${taskId}/can-be-planned`);
     return response.data.data;
   },
 };

@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { useReminders } from '@/hooks/api/useReminders';
 import { useRemindersStore } from '@/stores/remindersStore';
 import { ReminderCard } from './ReminderCard';
+import type { Reminder } from '@/types/reminder';
 
 type ViewMode = 'grid' | 'list';
 type SortBy = 'created' | 'scheduled' | 'type' | 'entity';
@@ -20,11 +21,11 @@ export function RemindersList() {
   const [sortBy, setSortBy] = useState<SortBy>('scheduled');
   const [filterBy, setFilterBy] = useState<FilterBy>('all');
   
-  const { data: reminders = [], isLoading, error } = useReminders();
-  const { openReminderModal, resetReminderFormData } = useRemindersStore();
+  const { data: reminders = [], isLoading, error } = useReminders() as { data: Reminder[]; isLoading: boolean; error: any };
+  const { openReminderModal, resetReminderForm } = useRemindersStore();
 
   const handleNewReminder = () => {
-    resetReminderFormData();
+    resetReminderForm();
     openReminderModal();
   };
 

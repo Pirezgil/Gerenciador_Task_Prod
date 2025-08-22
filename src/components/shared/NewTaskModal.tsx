@@ -137,7 +137,7 @@ export function NewTaskModal() {
       const taskData = {
         description,
         energyPoints,
-        type: 'task',
+        type: 'task' as const,
         projectId,
         dueDate: dueDate ? new Date(dueDate + 'T00:00:00.000Z').toISOString() : undefined,
         isRecurring,
@@ -154,11 +154,19 @@ export function NewTaskModal() {
             reminderTime: 15, // Default 15 minutes before
           } : undefined,
         comments: comment ? [{
+          id: `temp-comment-${Date.now()}`,
           author: user?.name || 'Usuário',
           content: comment,
+          createdAt: new Date().toISOString()
         }] : [],
-        attachments: attachment ? [attachment] : [],
+        attachments: attachment ? [{
+          ...attachment,
+          id: `temp-${Date.now()}`,
+          size: Number(attachment.size) || 0,
+          uploadedAt: new Date().toISOString()
+        }] : [],
         externalLinks: [],
+        history: [],
       };
       
       console.log('📤 Dados sendo enviados ao backend:', JSON.stringify(taskData, null, 2));

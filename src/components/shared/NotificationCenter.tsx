@@ -23,6 +23,8 @@ export function NotificationCenter({ isOpen, onClose }: NotificationCenterProps)
   const getFilteredReminders = () => {
     const now = new Date();
     
+    if (!Array.isArray(reminders)) return [];
+    
     switch (filter) {
       case 'active':
         return reminders.filter(r => r.isActive);
@@ -44,17 +46,17 @@ export function NotificationCenter({ isOpen, onClose }: NotificationCenterProps)
   };
 
   const filteredReminders = getFilteredReminders();
-  const overdueCount = reminders.filter(r => 
+  const overdueCount = Array.isArray(reminders) ? reminders.filter(r => 
     r.nextScheduledAt && 
     new Date(r.nextScheduledAt) < new Date() && 
     r.isActive
-  ).length;
+  ).length : 0;
 
-  const upcomingCount = reminders.filter(r => 
+  const upcomingCount = Array.isArray(reminders) ? reminders.filter(r => 
     r.nextScheduledAt && 
     new Date(r.nextScheduledAt) > new Date() && 
     r.isActive
-  ).length;
+  ).length : 0;
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
@@ -137,7 +139,7 @@ export function NotificationCenter({ isOpen, onClose }: NotificationCenterProps)
               <FilterButton
                 active={filter === 'all'}
                 onClick={() => setFilter('all')}
-                count={reminders.length}
+                count={Array.isArray(reminders) ? reminders.length : 0}
               >
                 Todos
               </FilterButton>
@@ -163,7 +165,7 @@ export function NotificationCenter({ isOpen, onClose }: NotificationCenterProps)
               <FilterButton
                 active={filter === 'active'}
                 onClick={() => setFilter('active')}
-                count={reminders.filter(r => r.isActive).length}
+                count={Array.isArray(reminders) ? reminders.filter(r => r.isActive).length : 0}
               >
                 Ativos
               </FilterButton>

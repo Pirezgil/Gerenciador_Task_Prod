@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTasks, useTodayTasks, useUpdateTask, useEnergyBudget, usePostponeTask } from '@/hooks/api/useTasks';
 import { useProjects } from '@/hooks/api/useProjects';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
+import { tasksApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { PostponeConfirmModal } from '@/components/shared/PostponeConfirmModal';
 import { useStandardAlert } from '@/components/shared/StandardAlert';
@@ -61,6 +63,43 @@ export function PlanejamentoDiariaPage() {
   const { data: projects = [], isLoading: projectsLoading } = useProjects();
   const updateTaskMutation = useUpdateTask();
   const postponeTaskMutation = usePostponeTask();
+  
+  // Hook para verificar quais tarefas podem ser planejadas
+  const useTaskAvailability = useCallback((taskIds: string[]) => {
+    return useQuery({
+      queryKey: ['task-availability', taskIds],
+      queryFn: async () => {
+        if (taskIds.length === 0) return {};
+        
+        const results = await Promise.allSettled(
+          taskIds.map(async (taskId) => {
+            try {
+              const result = await tasksApi.checkCanBePlanned(taskId);
+              return { taskId, ...result };
+            } catch (error) {
+              console.error(`Erro ao verificar tarefa ${taskId}:`, error);
+              return { taskId, canBePlanned: false, reason: 'Erro de conexão' };
+            }
+          })
+        );
+        
+        const availability: Record<string, { canBePlanned: boolean; reason?: string }> = {};
+        results.forEach((result, index) => {
+          if (result.status === 'fulfilled') {
+            const { taskId, ...data } = result.value;
+            availability[taskId] = data;
+          } else {
+            availability[taskIds[index]] = { canBePlanned: false, reason: 'Erro interno' };
+          }
+        });
+        
+        return availability;
+      },
+      enabled: taskIds.length > 0,
+      staleTime: 30000, // Cache por 30 segundos
+      refetchOnWindowFocus: false,
+    });
+  }, []);
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
   const [postponeModal, setPostponeModal] = useState<{isOpen: boolean; taskId: string; taskDescription: string; postponementCount: number} | null>(null);
   const { showAlert, AlertComponent } = useStandardAlert();
@@ -128,16 +167,16 @@ export function PlanejamentoDiariaPage() {
     allTasks.forEach(task => {
       
       // Verificar se a tarefa foi adiada hoje
-      const wasPostponedToday = (task.status === 'postponed' || task.status === 'POSTPONED') && task.postponedAt && 
+      const wasPostponedToday = ((task.status as string) === 'postponed' || (task.status as string) === 'POSTPONED') && task.postponedAt && 
         new Date(task.postponedAt).toDateString() === new Date().toDateString();
       
       // Incluir tarefas não completadas, mas EXCLUIR tarefas adiadas hoje
-      if ((task.status === 'pending' || ((task.status === 'postponed' || task.status === 'POSTPONED') && !wasPostponedToday)) || task.plannedForToday === true) {
+      if ((task.status === 'pending' || (((task.status as string) === 'postponed' || (task.status as string) === 'POSTPONED') && !wasPostponedToday)) || task.plannedForToday === true) {
         const project = projects.find(p => p.id === task.projectId);
         let source: 'today' | 'project' | 'postponed' = 'project';
         
         // Determinar a origem da tarefa
-        if (task.status === 'postponed' || task.status === 'POSTPONED') {
+        if ((task.status as string) === 'postponed' || (task.status as string) === 'POSTPONED') {
           source = 'postponed';
         } else if (task.dueDate === today || !task.dueDate) {
           source = 'today';
@@ -234,29 +273,59 @@ export function PlanejamentoDiariaPage() {
     };
   }, [allTasks, projects, tasksLoading, projectsLoading, todayTasksLoading]);
 
+  // Verificar disponibilidade das tarefas disponíveis
+  const availableTaskIds = useMemo(() => 
+    availableTasks.map(task => task.id), 
+    [availableTasks]
+  );
+  
+  const taskAvailabilityQuery = useTaskAvailability(availableTaskIds);
+  const taskAvailability = taskAvailabilityQuery.data || {};
 
   // Usar dados de energia direto do backend (sem cálculos no frontend)
 
   const handlePlanTask = async (taskId: string) => {
     const task = availableTasks.find(t => t.id === taskId);
-    if (!task) return;
-
-    // Verificar se não excede o orçamento (usando dados do backend)
-    const totalEnergy = energyBudget.used + task.energyPoints;
-    if (totalEnergy > energyBudget.total) {
-      return; // Não permitir se exceder orçamento
+    if (!task) {
+      console.error('❌ handlePlanTask: Tarefa não encontrada', taskId);
+      return;
     }
 
+    // SEGURANÇA: Remover validação do frontend - deixar apenas no backend
+    // O backend fará toda validação de energia e retornará erro se necessário
+
+    const updateData = {
+      plannedForToday: true,
+      status: 'pending' as const
+    };
+
+    console.log('🔄 handlePlanTask: Enviando atualização', {
+      taskId,
+      taskDescription: task.description,
+      updateData
+    });
+
     try {
-      await updateTaskMutation.mutateAsync({
+      const result = await updateTaskMutation.mutateAsync({
         taskId,
-        updates: {
-          plannedForToday: true,
-          status: 'pending'
-        }
+        updates: updateData
       });
-    } catch (error) {
-      console.error('❌ Erro ao planejar tarefa:', error);
+      console.log('✅ handlePlanTask: Sucesso', result);
+    } catch (error: any) {
+      // Se o backend retornar erro de orçamento, mostrar mensagem específica
+      if (error.response?.status === 400 && error.response?.data?.message?.includes('energia')) {
+        showAlert(
+          'Energia Insuficiente',
+          error.response.data.message || 'Você não tem energia suficiente para adicionar esta tarefa.'
+        );
+      } else {
+        console.error('❌ handlePlanTask: Erro ao planejar tarefa', {
+          taskId,
+          error: error.message,
+          response: error.response?.data,
+          status: error.response?.status
+        });
+      }
     }
   };
 
@@ -851,7 +920,7 @@ export function PlanejamentoDiariaPage() {
               {missedTasks.map((task) => {
                 const isExpanded = expandedTasks.has(task.id);
                 const energyConfig = getEnergyConfig(task.energyPoints);
-                const overdueDays = task.deadline ? getOverdueDays(task.deadline) : (task.missedDaysCount || 0);
+                const overdueDays = task.dueDate ? getOverdueDays(task.dueDate) : (task.missedDaysCount || 0);
 
                 return (
                   <div
@@ -1191,7 +1260,9 @@ export function PlanejamentoDiariaPage() {
               {availableTasks.map((task) => {
                 const isExpanded = expandedTasks.has(task.id);
                 const energyConfig = getEnergyConfig(task.energyPoints);
-                const canPlan = (energyBudget.used + task.energyPoints) <= energyBudget.total;
+                // Verificar se a tarefa pode ser planejada baseado na resposta do backend
+                const availability = taskAvailability[task.id];
+                const canPlan = availability?.canBePlanned ?? true; // Default true enquanto carrega
 
                 return (
                   <div
@@ -1234,15 +1305,25 @@ export function PlanejamentoDiariaPage() {
 
                         {/* Ações Mobile */}
                         <div className="flex space-x-2">
-                          <Button
-                            variant={canPlan ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => handlePlanTask(task.id)}
-                            disabled={!canPlan}
-                            className={`flex-1 min-h-[44px] ${!canPlan ? 'text-red-600 border-red-200 cursor-not-allowed' : ''}`}
-                          >
-                            {canPlan ? 'Atuar Hoje' : 'Energia Insuficiente'}
-                          </Button>
+                          {canPlan ? (
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => handlePlanTask(task.id)}
+                              className="flex-1 min-h-[44px]"
+                            >
+                              Atuar Hoje
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled
+                              className="flex-1 min-h-[44px] text-red-500 border-red-200 cursor-not-allowed"
+                            >
+                              Energia Insuficiente
+                            </Button>
+                          )}
                           
                           <Button
                             onClick={() => toggleTaskExpansion(task.id)}
@@ -1292,15 +1373,25 @@ export function PlanejamentoDiariaPage() {
                         </div>
 
                         <div className="flex items-center space-x-2 ml-4">
-                          <Button
-                            variant={canPlan ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => handlePlanTask(task.id)}
-                            disabled={!canPlan}
-                            className={!canPlan ? 'text-red-600 border-red-200 cursor-not-allowed' : ''}
-                          >
-                            {canPlan ? 'Atuar Hoje' : 'Energia Insuficiente'}
-                          </Button>
+                          {canPlan ? (
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => handlePlanTask(task.id)}
+                              className=""
+                            >
+                              Atuar Hoje
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled
+                              className="text-red-500 border-red-200 cursor-not-allowed"
+                            >
+                              Energia Insuficiente
+                            </Button>
+                          )}
                           
                           <Button
                             onClick={() => toggleTaskExpansion(task.id)}

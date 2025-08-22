@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: gerenciador_backend_ngrok
+    env_file:
+      - .env.ngrok
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      JWT_SECRET: ${JWT_SECRET:-minha_chave_jwt_super_secreta_local_123456789}
+      FRONTEND_URL: https://antelope-leading-deeply.ngrok-free.app
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_EMAIL: ${VAPID_EMAIL:-admin@antelope-leading-deeply.ngrok-free.app}
+    volumes:
+      - uploads_data:/app/uploads
+    ports:
+      - "3001:3001"
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - gerenciador_network
+
+  # Frontend Next.js
+  frontend:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.frontend
+    container_name: gerenciador_frontend_ngrok
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: https://antelope-leading-deeply.ngrok-free.app/api
+      FRONTEND_URL: https://antelope-leading-deeply.ngrok-free.app
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - gerenciador_network
+
+  # Nginx reverse proxy para ngrok
+  nginx:
+    image: nginx:alpine
+    container_name: gerenciador_nginx_ngrok
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.ngrok.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+    networks:
+      - gerenciador_network
+
+volumes:
+  uploads_data:
+
+networks:
+  gerenciador_network:
+    driver: bridge

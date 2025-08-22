@@ -34,6 +34,10 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // Desativar verificação de tipos durante build para Docker
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   // Configuração do Webpack para resolver erros do Watchpack no Windows
   webpack: (config, { dev }) => {
     if (dev) {

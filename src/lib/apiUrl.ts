@@ -6,6 +6,13 @@
 export const getApiUrl = (): string => {
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
+    const protocol = window.location.protocol;
+    
+    // Se for ngrok, usar a própria URL + /api
+    if (hostname.includes('ngrok') || hostname.includes('ngrok-free.app')) {
+      return `${protocol}//${hostname}/api`;
+    }
+    
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
       return 'http://localhost:3001/api';
     } else if (hostname === '192.168.0.252') {
@@ -20,6 +27,13 @@ export const getApiUrl = (): string => {
 export const getApiBaseUrl = (): string => {
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
+    const protocol = window.location.protocol;
+    
+    // Se for ngrok, usar a própria URL
+    if (hostname.includes('ngrok') || hostname.includes('ngrok-free.app')) {
+      return `${protocol}//${hostname}`;
+    }
+    
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
       return 'http://localhost:3001';
     } else if (hostname === '192.168.0.252') {

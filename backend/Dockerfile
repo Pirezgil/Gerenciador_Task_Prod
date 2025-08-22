@@ -1,5 +1,12 @@
-# Build stage
-FROM node:18-alpine AS builder
+# Build stage  
+FROM node:18-slim AS builder
+
+# Install OpenSSL and other dependencies for Prisma
+RUN apt-get update && apt-get install -y \
+    openssl \
+    ca-certificates \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -7,8 +14,8 @@ WORKDIR /app
 COPY package*.json ./
 COPY tsconfig.json ./
 
-# Install dependencies
-RUN npm ci --only=production --silent
+# Install ALL dependencies (including dev dependencies for build)
+RUN npm ci --silent
 
 # Copy source code
 COPY src ./src
@@ -21,13 +28,21 @@ RUN npx prisma generate
 RUN npm run build
 
 # Production stage
-FROM node:18-alpine AS production
+FROM node:18-slim AS production
+
+# Install OpenSSL and other dependencies for Prisma
+RUN apt-get update && apt-get install -y \
+    openssl \
+    ca-certificates \
+    curl \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 # Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S backend -u 1001
+RUN groupadd -g 1001 nodejs && \
+    useradd -r -u 1001 -g nodejs backend
 
 # Copy package files
 COPY package*.json ./
@@ -41,9 +56,9 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/prisma ./prisma
 
-# Set ownership to nodejs user
-RUN chown -R nodejs:nodejs /app
-USER nodejs
+# Set ownership to backend user
+RUN chown -R backend:nodejs /app
+USER backend
 
 # Expose port
 EXPOSE 3001

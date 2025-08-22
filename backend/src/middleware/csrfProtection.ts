@@ -103,8 +103,16 @@ class CSRFProtection {
     } = options;
 
     return (req: Request, res: Response, next: NextFunction): void => {
+      console.log('🔒 CSRF Validation - INÍCIO:', {
+        path: req.path,
+        method: req.method,
+        userId: (req as any).userId,
+        timestamp: new Date().toISOString()
+      });
+
       // Pular validação para métodos seguros se configurado
       if (skipGET && ['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+        console.log('🔒 CSRF - Pulando validação para método seguro:', req.method);
         return next();
       }
 
@@ -115,13 +123,22 @@ class CSRFProtection {
           req.path === '/api/auth/logout' ||
           req.path === '/api/auth/refresh' ||
           req.path.startsWith('/api/auth/google')) {
+        console.log('🔒 CSRF - Pulando validação para endpoint específico:', req.path);
         return next();
       }
 
       // Obter token do header ou body
       const token = req.get(headerName) || req.body[bodyField];
+      console.log('🔒 CSRF - Token obtido:', {
+        hasHeader: !!req.get(headerName),
+        hasBodyField: !!req.body[bodyField],
+        headerName,
+        bodyField,
+        tokenLength: token ? token.length : 0
+      });
       
       if (!token) {
+        console.log('❌ CSRF - Token ausente');
         const response = createErrorResponse(
           ErrorCode.CSRF_TOKEN_MISSING,
           'csrf_validation',
@@ -135,9 +152,15 @@ class CSRFProtection {
 
       // Validar token
       const sessionId = (req as any).userId || (req as any).sessionID || 'anonymous';
+      console.log('🔒 CSRF - Validando token:', {
+        sessionId,
+        tokenPreview: token.substring(0, 20) + '...'
+      });
+      
       const isValid = this.validateToken(token, sessionId);
       
       if (!isValid) {
+        console.log('❌ CSRF - Token inválido ou expirado');
         const response = createErrorResponse(
           ErrorCode.CSRF_TOKEN_INVALID,
           'csrf_validation',
@@ -148,6 +171,8 @@ class CSRFProtection {
         res.status(403).json(response);
         return;
       }
+
+      console.log('✅ CSRF - Token válido, prosseguindo');
 
       next();
     };

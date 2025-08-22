@@ -118,7 +118,6 @@ function CrystallineStructure({ colors, size }: { colors: any; size: string }) {
         style={{
           borderColor: colors.accent,
           borderStyle: 'dashed',
-          borderDashArray: '4 8',
         }}
         animate={{
           rotate: [0, 360],

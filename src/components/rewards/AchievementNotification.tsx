@@ -246,6 +246,7 @@ export function CelebrationOverlay({
       const timer = setTimeout(onClose, 4000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [isVisible, onClose]);
 
   return (

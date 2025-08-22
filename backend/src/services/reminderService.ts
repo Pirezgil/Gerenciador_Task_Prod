@@ -16,6 +16,51 @@ import {
 } from '../lib/errors';
 import { ReminderCalculator } from './reminderCalculator';
 
+// ===== FUNÇÕES AUXILIARES =====
+
+/**
+ * Conta lembretes efetivos para uma entidade, considerando que lembretes intervalados 
+ * devem contar como um só, independente de quantos horários tenham
+ */
+const countEffectiveReminders = async (userId: string, entityId: string): Promise<number> => {
+  const existingReminders = await prisma.reminder.findMany({
+    where: {
+      userId,
+      entityId,
+      isActive: true
+    },
+    select: {
+      id: true,
+      intervalEnabled: true,
+      subType: true,
+      parentReminderId: true
+    }
+  });
+
+  let effectiveCount = 0;
+  const intervalGroups = new Set<string>();
+
+  for (const reminder of existingReminders) {
+    if (reminder.intervalEnabled || reminder.subType === 'interval') {
+      // Lembrete intervalado: agrupar por parentReminderId ou próprio ID
+      const groupId = reminder.parentReminderId || reminder.id;
+      intervalGroups.add(groupId);
+    } else {
+      // Lembrete individual: conta normalmente
+      effectiveCount++;
+    }
+  }
+
+  // Adicionar grupos de lembretes intervalados (cada grupo conta como 1)
+  effectiveCount += intervalGroups.size;
+
+  console.log(`🔍 DEBUG - Lembretes para ${entityId}: ${existingReminders.length} total, ${effectiveCount} efetivos (intervalados agrupados)`);
+  
+  return effectiveCount;
+};
+
+// ===== FUNÇÕES PRINCIPAIS =====
+
 export const getUserReminders = async (userId: string, filters?: ReminderFilter): Promise<ReminderResponse[]> => {
   const whereClause: any = { 
     userId,
@@ -66,6 +111,16 @@ export const getUserReminders = async (userId: string, filters?: ReminderFilter)
 };
 
 export const createReminder = async (userId: string, data: CreateReminderRequest): Promise<ReminderResponse> => {
+  console.log('🔧 DEBUG - createReminder recebeu:', {
+    userId,
+    data: JSON.stringify(data, null, 2),
+    intervalEnabled: data.intervalEnabled,
+    subType: data.subType,
+    intervalMinutes: data.intervalMinutes,
+    intervalStartTime: data.intervalStartTime,
+    intervalEndTime: data.intervalEndTime
+  });
+
   // SECURITY: Rate limiting por usuário - máximo 100 lembretes ativos
   const totalUserReminders = await prisma.reminder.count({
     where: {
@@ -93,18 +148,11 @@ export const createReminder = async (userId: string, data: CreateReminderRequest
   }
 
   // Validar limite de lembretes por entidade (máximo 5)
+  // CORREÇÃO: Lembretes intervalados devem contar como um só
   if (data.entityId) {
-    const existingCount = await prisma.reminder.count({
-      where: {
-        userId,
-        entityId: data.entityId,
-        isActive: true
-      }
-    });
-
-    console.log(`🔍 DEBUG - Lembretes existentes para ${data.entityId}: ${existingCount}`);
+    const effectiveCount = await countEffectiveReminders(userId, data.entityId);
     
-    if (existingCount >= 5) {
+    if (effectiveCount >= 5) {
       console.log('🚫 LIMITE ATINGIDO - Rejeitando criação');
       throw new ReminderLimitError(5, data.entityId);
     }
@@ -189,6 +237,31 @@ export const createReminder = async (userId: string, data: CreateReminderRequest
     }
   }
 
+  // CORREÇÃO: Quando intervalEnabled=true, forçar subType='interval' e ajustar lógica
+  console.log('🔧 DEBUG - Verificando subType:', {
+    intervalEnabled: data.intervalEnabled,
+    subType: data.subType,
+    tipoSubType: typeof data.subType,
+    isUndefined: data.subType === undefined,
+    isNull: data.subType === null,
+    isEmpty: !data.subType
+  });
+  
+  if (data.intervalEnabled && (!data.subType || data.subType === null || data.subType === undefined)) {
+    console.log('🔧 LOGIC - Lembrete intervalado detectado, definindo subType=interval');
+    data.subType = 'interval';
+    console.log('🔧 LOGIC - subType definido como:', data.subType);
+  }
+
+  console.log('🔧 DEBUG - Dados antes do Prisma.create:', {
+    intervalEnabled: data.intervalEnabled,
+    subType: data.subType,
+    intervalMinutes: data.intervalMinutes,
+    intervalStartTime: data.intervalStartTime,
+    intervalEndTime: data.intervalEndTime,
+    parentReminderId: data.parentReminderId
+  });
+
   const reminder = await prisma.reminder.create({
     data: {
       userId,
@@ -209,6 +282,15 @@ export const createReminder = async (userId: string, data: CreateReminderRequest
       parentReminderId: data.parentReminderId,
       nextScheduledAt
     }
+  });
+
+  console.log('🔧 DEBUG - Reminder criado no banco:', {
+    id: reminder.id,
+    intervalEnabled: reminder.intervalEnabled,
+    subType: reminder.subType,
+    intervalMinutes: reminder.intervalMinutes,
+    intervalStartTime: reminder.intervalStartTime,
+    intervalEndTime: reminder.intervalEndTime
   });
 
   return {
@@ -568,23 +650,30 @@ export const createRecurringReminders = async (
 
   const reminders: ReminderResponse[] = [];
 
-  // 1. Criar lembrete principal
-  const mainReminderData: CreateReminderRequest = {
-    entityId,
-    entityType,
-    type: 'recurring',
-    scheduledTime: config.reminderTime,
-    daysOfWeek: config.daysOfWeek,
-    notificationTypes: config.notificationTypes,
-    message: `Lembrete principal para ${entityType}`,
-    isActive: true,
-    subType: 'main'
-  };
+  // CORREÇÃO: Lembretes intervalados e principais são mutuamente exclusivos
+  if (config.intervalEnabled) {
+    // Criar apenas lembrete intervalado
+    console.log('🔧 LOGIC - Criando apenas lembrete intervalado (sem principal)');
+  } else {
+    // Criar apenas lembrete principal
+    console.log('🔧 LOGIC - Criando apenas lembrete principal (sem intervalado)');
+    const mainReminderData: CreateReminderRequest = {
+      entityId,
+      entityType,
+      type: 'recurring',
+      scheduledTime: config.reminderTime,
+      daysOfWeek: config.daysOfWeek,
+      notificationTypes: config.notificationTypes,
+      message: `Lembrete principal para ${entityType}`,
+      isActive: true,
+      subType: 'main'
+    };
 
-  const mainReminder = await createReminder(userId, mainReminderData);
-  reminders.push(mainReminder);
+    const mainReminder = await createReminder(userId, mainReminderData);
+    reminders.push(mainReminder);
+  }
 
-  // 2. Criar lembretes de intervalo se habilitado
+  // Criar lembretes de intervalo se habilitado
   if (config.intervalEnabled) {
     if (!config.intervalStartTime || !config.intervalEndTime || !config.intervalMinutes) {
       throw new ReminderValidationError('Configuração de intervalo incompleta', 'interval');
@@ -603,18 +692,17 @@ export const createRecurringReminders = async (
         config.intervalMinutes
       );
 
-      // Estimar quantos lembretes serão criados
-      const estimatedCount = ReminderCalculator.estimateIntervalRemindersCount(
+      // CORREÇÃO: Lembretes intervalados criam apenas 1 registro no banco
+      // A validação deve verificar se o intervalo é válido, não estimar execuções futuras
+      const slotsPerDay = ReminderCalculator.calculateIntervalSlots(
         config.intervalStartTime,
         config.intervalEndTime,
-        config.intervalMinutes,
-        config.daysOfWeek,
-        30 // próximos 30 dias
+        config.intervalMinutes
       );
 
-      // Limite de segurança para evitar criar muitos lembretes
-      if (estimatedCount > 500) {
-        throw new ReminderLimitError(500, `intervalo de ${config.intervalMinutes} minutos`);
+      // Limite de segurança: máximo 48 slots por dia (a cada 30min = 48 slots em 24h)
+      if (slotsPerDay.totalCount > 48) {
+        throw new ReminderLimitError(48, `slots por dia com intervalo de ${config.intervalMinutes} minutos`);
       }
 
       // Criar um lembrete de intervalo representativo (não individual para cada horário)
@@ -631,8 +719,8 @@ export const createRecurringReminders = async (
         intervalMinutes: config.intervalMinutes,
         intervalStartTime: config.intervalStartTime,
         intervalEndTime: config.intervalEndTime,
-        subType: 'interval',
-        parentReminderId: mainReminder.id
+        subType: 'interval'
+        // CORREÇÃO: Não usar parentReminderId quando não há lembrete principal
       };
 
       const intervalReminder = await createReminder(userId, intervalReminderData);

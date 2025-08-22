@@ -412,6 +412,13 @@ export const updateTask = async (taskId: string, userId: string, data: UpdateTas
   if (data.dueDate !== undefined) updateData.dueDate = data.dueDate ? new Date(data.dueDate) : null;
   if (data.rescheduleDate !== undefined) updateData.rescheduleDate = data.rescheduleDate ? new Date(data.rescheduleDate) : null;
   if (data.plannedForToday !== undefined) {
+    console.log('🔄 updateTask: Processando plannedForToday', {
+      taskId,
+      userId,
+      plannedForToday: data.plannedForToday,
+      existingTask: { id: existingTask.id, energyPoints: existingTask.energyPoints }
+    });
+    
     // Validar limite de energia ao marcar como "atuar hoje"
     if (data.plannedForToday === true) {
       const plannedTasks = await prisma.task.findMany({
@@ -421,10 +428,36 @@ export const updateTask = async (taskId: string, userId: string, data: UpdateTas
           id: { not: taskId }, // Excluir a tarefa atual
           isDeleted: false
         },
-        select: { energyPoints: true }
+        select: { 
+          energyPoints: true,
+          status: true,
+          completedAt: true
+        }
+      });
+
+      // Data de hoje (início do dia)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Aplicar a mesma lógica de getUserEnergyBudget para consistência
+      const tasksForEnergyCalculation = plannedTasks.filter(task => {
+        // EXCLUIR: Tarefas completadas antes de hoje
+        if (task.status === 'completed' && task.completedAt) {
+          const completedDate = new Date(task.completedAt);
+          completedDate.setHours(0, 0, 0, 0);
+          return completedDate.getTime() >= today.getTime();
+        }
+        
+        // EXCLUIR: Tarefas adiadas (POSTPONED) - não consomem energia
+        if (task.status === 'postponed' || task.status === 'POSTPONED') {
+          return false;
+        }
+        
+        // INCLUIR: Apenas tarefas pendentes (pending)
+        return true;
       });
       
-      const currentEnergyUsed = plannedTasks.reduce((sum, task) => sum + task.energyPoints, 0);
+      const currentEnergyUsed = tasksForEnergyCalculation.reduce((sum, task) => sum + task.energyPoints, 0);
       const taskEnergyPoints = data.energyPoints !== undefined ? data.energyPoints : existingTask.energyPoints;
       
       // Buscar orçamento do usuário (padrão 12)
@@ -434,15 +467,34 @@ export const updateTask = async (taskId: string, userId: string, data: UpdateTas
       });
       const dailyBudget = userSettings?.dailyEnergyBudget || 12;
       
+      console.log('⚡ updateTask: Validação de energia', {
+        plannedTasksTotal: plannedTasks.length,
+        tasksForCalculation: tasksForEnergyCalculation.length,
+        currentEnergyUsed,
+        taskEnergyPoints,
+        dailyBudget,
+        totalAfter: currentEnergyUsed + taskEnergyPoints
+      });
+      
       if (currentEnergyUsed + taskEnergyPoints > dailyBudget) {
-        throw new Error(`Limite de energia excedido. Disponível: ${dailyBudget - currentEnergyUsed}, necessário: ${taskEnergyPoints}`);
+        const errorMsg = `Limite de energia excedido. Disponível: ${dailyBudget - currentEnergyUsed}, necessário: ${taskEnergyPoints}`;
+        console.error('❌ updateTask: Limite de energia excedido', {
+          taskId,
+          currentEnergyUsed,
+          taskEnergyPoints,
+          dailyBudget,
+          errorMsg
+        });
+        throw new Error(errorMsg);
       }
 
       // Definir a data que foi planejada (hoje)
       updateData.plannedDate = new Date();
+      console.log('✅ updateTask: Energia OK, definindo plannedDate');
     } else {
       // Se removendo do planejamento, limpar a data planejada
       updateData.plannedDate = null;
+      console.log('🗑️ updateTask: Removendo do planejamento, limpando plannedDate');
     }
     updateData.plannedForToday = data.plannedForToday;
   }
@@ -1019,6 +1071,8 @@ export const addTaskComment = async (taskId: string, userId: string, data: Creat
 };
 
 export const getUserEnergyBudget = async (userId: string): Promise<EnergyBudgetResponse> => {
+  console.log('🔍 [DEBUG] getUserEnergyBudget chamado para userId:', userId);
+  
   // Buscar configurações do usuário
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -1026,6 +1080,7 @@ export const getUserEnergyBudget = async (userId: string): Promise<EnergyBudgetR
   });
 
   const dailyBudget = user?.settings?.dailyEnergyBudget || 12;
+  console.log('🔍 [DEBUG] dailyBudget:', dailyBudget);
 
   // Buscar tarefas planejadas para hoje (independente do status)
   const plannedTasks = await prisma.task.findMany({
@@ -1047,16 +1102,21 @@ export const getUserEnergyBudget = async (userId: string): Promise<EnergyBudgetR
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Filtrar tarefas: excluir as que foram completadas ANTES de hoje
+  // Filtrar tarefas para cálculo de energia: excluir completadas antes de hoje E tarefas adiadas
   const tasksForEnergyCalculation = plannedTasks.filter(task => {
+    // EXCLUIR: Tarefas completadas antes de hoje
     if (task.status === 'completed' && task.completedAt) {
       const completedDate = new Date(task.completedAt);
       completedDate.setHours(0, 0, 0, 0);
-      
-      // Excluir se foi completada antes de hoje
       return completedDate.getTime() >= today.getTime();
     }
-    // Incluir todas as tarefas não completadas (pending, postponed, etc.)
+    
+    // EXCLUIR: Tarefas adiadas (POSTPONED) - não consomem energia
+    if (task.status === 'postponed' || task.status === 'POSTPONED') {
+      return false;
+    }
+    
+    // INCLUIR: Apenas tarefas pendentes (pending)
     return true;
   });
 
@@ -1064,10 +1124,70 @@ export const getUserEnergyBudget = async (userId: string): Promise<EnergyBudgetR
   const remaining = Math.max(0, dailyBudget - usedEnergy);
   const completedCount = tasksForEnergyCalculation.filter(task => task.status === 'completed').length;
 
+  console.log('🔍 [DEBUG] Resultado final:', {
+    plannedTasksTotal: plannedTasks.length,
+    tasksForCalculation: tasksForEnergyCalculation.length,
+    usedEnergy,
+    remaining,
+    dailyBudget,
+    completedCount
+  });
+
   return {
     used: usedEnergy,
     remaining,
     total: dailyBudget,
     completedTasks: completedCount
   };
+};
+
+// Nova função para verificar se uma tarefa específica pode ser planejada
+export const canTaskBePlanned = async (userId: string, taskId: string): Promise<{ canBePlanned: boolean; reason?: string }> => {
+  try {
+    // Buscar a tarefa
+    const task = await prisma.task.findFirst({
+      where: {
+        id: taskId,
+        userId,
+        isDeleted: false
+      },
+      select: {
+        id: true,
+        energyPoints: true,
+        plannedForToday: true,
+        status: true
+      }
+    });
+
+    if (!task) {
+      return { canBePlanned: false, reason: 'Tarefa não encontrada' };
+    }
+
+    // Se já está planejada para hoje, pode ser "desplanejada"
+    if (task.plannedForToday) {
+      return { canBePlanned: true };
+    }
+
+    // Se tarefa já está completada, não pode ser planejada
+    if (task.status === 'completed') {
+      return { canBePlanned: false, reason: 'Tarefa já completada' };
+    }
+
+    // Buscar orçamento de energia atual
+    const energyBudget = await getUserEnergyBudget(userId);
+    
+    // Verificar se há energia suficiente
+    const energyNeeded = task.energyPoints || 0;
+    if (energyNeeded > energyBudget.remaining) {
+      return { 
+        canBePlanned: false, 
+        reason: `Energia insuficiente (necessário: ${energyNeeded}, disponível: ${energyBudget.remaining})` 
+      };
+    }
+
+    return { canBePlanned: true };
+  } catch (error) {
+    console.error('❌ Erro ao verificar se tarefa pode ser planejada:', error);
+    return { canBePlanned: false, reason: 'Erro interno' };
+  }
 };

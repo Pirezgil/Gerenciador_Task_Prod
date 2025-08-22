@@ -84,7 +84,7 @@ export function HabitEditModal({ habit, isOpen, onClose }: HabitEditModalProps) 
           targetCount,
           frequency: {
             type: frequency as any,
-            intervalDays: 1,
+            interval: 1,
             daysOfWeek: frequency === 'daily' ? [] : daysOfWeek
           }
         }
@@ -294,7 +294,7 @@ export function HabitEditModal({ habit, isOpen, onClose }: HabitEditModalProps) 
               </label>
               <select
                 value={frequency}
-                onChange={(e) => setFrequency(e.target.value)}
+                onChange={(e) => setFrequency(e.target.value as "daily" | "weekly" | "custom")}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
               >
                 <option value="daily">Todos os dias</option>

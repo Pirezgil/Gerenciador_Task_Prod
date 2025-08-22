@@ -7,10 +7,10 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useUpdateReminder, useDeleteReminder } from '@/hooks/api/useReminders';
 import { useRemindersStore } from '@/stores/remindersStore';
-import type { ReminderResponse } from '@/types/reminder';
+import type { Reminder } from '@/types/reminder';
 
 interface ReminderCardProps {
-  reminder: ReminderResponse;
+  reminder: Reminder;
   showActions?: boolean;
   compact?: boolean;
 }
@@ -26,23 +26,24 @@ export function ReminderCard({
 
   const handleToggleActive = () => {
     updateReminder({
-      id: reminder.id,
-      data: { isActive: !reminder.isActive }
+      reminderId: reminder.id,
+      updates: { isActive: !reminder.isActive }
     });
   };
 
   const handleEdit = () => {
     setReminderFormData({
-      id: reminder.id,
-      entityId: reminder.entityId,
-      entityType: reminder.entityType,
+      enabled: reminder.isActive,
       type: reminder.type,
-      scheduledTime: reminder.scheduledTime,
-      minutesBefore: reminder.minutesBefore,
+      scheduledTime: reminder.scheduledTime || '',
+      minutesBefore: reminder.minutesBefore || 0,
       daysOfWeek: reminder.daysOfWeek,
       notificationTypes: reminder.notificationTypes,
-      message: reminder.message,
-      isActive: reminder.isActive
+      message: reminder.message || '',
+      intervalEnabled: reminder.intervalEnabled,
+      intervalMinutes: reminder.intervalMinutes || 30,
+      intervalStartTime: reminder.intervalStartTime || '',
+      intervalEndTime: reminder.intervalEndTime || ''
     });
     openReminderModal();
   };

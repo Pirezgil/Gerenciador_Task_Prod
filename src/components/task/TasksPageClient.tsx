@@ -592,8 +592,8 @@ export function TasksPageClient() {
                         
                         {/* Botões Mobile - COMPACTOS */}
                         <div className="flex flex-col gap-3">
-                          {/* Botão principal */}
-                          {task.status?.toLowerCase() === 'completed' ? (
+                          {/* Botão principal - apenas reativar para tarefas completadas */}
+                          {task.status?.toLowerCase() === 'completed' && (
                             <Button
                               variant="outline"
                               onClick={(e) => {
@@ -603,17 +603,6 @@ export function TasksPageClient() {
                               className="w-full min-h-[44px] text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 border-0 shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02]"
                             >
                               🔄 Reativar Tarefa
-                            </Button>
-                          ) : (
-                            <Button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleCompleteTask(task.id);
-                              }}
-                              variant="outline"
-                              className="w-full min-h-[44px] text-sm font-medium text-white bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 border-0 shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02]"
-                            >
-                              ✅ Completar
                             </Button>
                           )}
                           
@@ -769,20 +758,6 @@ export function TasksPageClient() {
                                 className="text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 border-0 shadow-md hover:shadow-lg transition-all duration-200"
                               >
                                 🔄 Reativar
-                              </Button>
-                            )}
-
-                            {task.status?.toLowerCase() !== 'completed' && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleCompleteTask(task.id);
-                                }}
-                                className="text-white bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 border-0 shadow-md hover:shadow-lg transition-all duration-200"
-                              >
-                                ✅ Completar
                               </Button>
                             )}
 

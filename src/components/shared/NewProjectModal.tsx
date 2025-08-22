@@ -120,11 +120,13 @@ export function NewProjectModal() {
           color: '#3B82F6',
           status: 'active',
           backlog: initialTasks.map(task => ({
+            id: `temp-${Date.now()}-${Math.random()}`,
             description: task.description,
             energyPoints: task.energyPoints,
             status: 'pending',
             isRecurring: false,
             isAppointment: false,
+            createdAt: new Date().toISOString(),
             comments: [],
             attachments: [],
             externalLinks: [],

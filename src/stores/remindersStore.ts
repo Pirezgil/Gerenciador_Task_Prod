@@ -42,7 +42,11 @@ const defaultReminderFormData: ReminderFormData = {
   minutesBefore: 15,
   daysOfWeek: [],
   notificationTypes: ['push'],
-  message: ''
+  message: '',
+  intervalEnabled: false,
+  intervalMinutes: 30,
+  intervalStartTime: '09:00',
+  intervalEndTime: '18:00'
 };
 
 export const useRemindersStore = create<RemindersState>((set, get) => ({

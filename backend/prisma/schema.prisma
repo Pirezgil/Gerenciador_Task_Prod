@@ -263,7 +263,7 @@ model HabitFrequency {
 model HabitCompletion {
   id          String   @id @default(cuid())
   habitId     String   @map("habit_id")
-  date        DateTime @db.Date
+  date        DateTime
   completedAt DateTime @default(now()) @map("completed_at")
   count       Int      @default(1)
   notes       String?

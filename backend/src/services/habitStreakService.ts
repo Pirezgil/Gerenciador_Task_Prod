@@ -29,8 +29,8 @@ export class HabitStreakService {
   static async updateHabitStreak(userId: string) {
     try {
       console.log('🚀 HabitStreakService.updateHabitStreak iniciado para userId:', userId);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
       console.log('📅 Data de processamento:', today.toISOString().split('T')[0]);
 
       // Verificar se todos os hábitos do usuário foram completados hoje
@@ -113,8 +113,7 @@ export class HabitStreakService {
         });
       }
 
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
       const lastCompleted = streak.lastCompleted;
 
       if (allHabitsCompleted) {
@@ -197,10 +196,9 @@ export class HabitStreakService {
 
   static async resetStreakIfNeeded(userId: string) {
     try {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+      const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
 
       const streak = await prisma.habitStreak.findUnique({
         where: { userId }

@@ -27,7 +27,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
   // ✅ CORREÇÃO: Só aplicar tema após hidratação estar completa
   useEffect(() => {
-    if (!canApplyTheme || typeof window === 'undefined') return;
+    if (!canApplyTheme || typeof window === 'undefined') return undefined;
     
     // Aplicar tema de forma segura
     try {
@@ -58,7 +58,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     }
     
     // Garantir que sempre retornamos algo (mesmo que undefined)
-    return;
+    return undefined;
   }, [canApplyTheme, currentTheme, applyThemeToDocument]);
 
   return <>{children}</>;

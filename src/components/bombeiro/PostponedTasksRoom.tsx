@@ -24,7 +24,7 @@ export function PostponedTasksRoom() {
   
   // Filtrar apenas tarefas adiadas hoje
   const today = new Date().toISOString().split('T')[0];
-  const postponedTasks = todayTasks.filter(task => task.status === 'postponed' || task.status === 'POSTPONED');
+  const postponedTasks = todayTasks.filter(task => (task.status as string) === 'postponed' || (task.status as string) === 'POSTPONED');
   
   console.log('🔍 PostponedTasksRoom Debug - Tarefas POSTPONED:', postponedTasks.length);
   

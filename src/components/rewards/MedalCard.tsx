@@ -13,7 +13,7 @@ import { MEDAL_CONFIGS } from '@/types/achievement';
 // INTERFACES
 // ============================================================================
 
-interface MedalCardProps extends Omit<MedalProps, 'achievement'> {
+interface MedalCardProps extends Omit<MedalProps, 'achievement' | 'size'> {
   achievement: Achievement;
   size?: 'tiny' | 'small' | 'medium' | 'large';
   showAnimation?: boolean;

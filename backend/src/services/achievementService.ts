@@ -527,8 +527,8 @@ export class AchievementService {
     let tempStreak = 0;
 
     // Calcula streak atual (começando do dia mais recente)
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
     
     for (let i = 0; i < sortedProgress.length; i++) {
       const progressDate = new Date(sortedProgress[i].date);

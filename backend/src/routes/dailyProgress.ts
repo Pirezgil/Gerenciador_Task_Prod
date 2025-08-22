@@ -14,11 +14,11 @@ router.get('/', authenticate, async (req: AuthenticatedRequest, res) => {
     let date: Date;
     if (dateParam) {
       const [year, month, day] = dateParam.split('-').map(Number);
-      date = new Date(year, month - 1, day);
+      date = new Date(year, month - 1, day, 0, 0, 0, 0);
     } else {
-      date = new Date();
+      const now = new Date();
+      date = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
     }
-    date.setHours(0, 0, 0, 0);
     
     const dailyProgress = await prisma.dailyProgress.findUnique({
       where: {
@@ -62,11 +62,11 @@ router.patch('/celebration-shown', authenticate, async (req: AuthenticatedReques
     let date: Date;
     if (dateParam) {
       const [year, month, day] = dateParam.split('-').map(Number);
-      date = new Date(year, month - 1, day);
+      date = new Date(year, month - 1, day, 0, 0, 0, 0);
     } else {
-      date = new Date();
+      const now = new Date();
+      date = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
     }
-    date.setHours(0, 0, 0, 0);
     
     console.log('🎯 Marcando celebração como mostrada:', { userId, date: date.toISOString().split('T')[0] });
     
@@ -113,8 +113,8 @@ router.delete('/test-reset', authenticate, async (req: AuthenticatedRequest, res
     console.log('🗑️ Resetando registros de celebração para teste...', { userId });
     
     // Deletar registros dos últimos 2 dias
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
     

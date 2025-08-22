@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  # Base de dados PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: gerenciador_postgres
+    environment:
+      POSTGRES_DB: gerenciador_task
+      POSTGRES_USER: gerenciador_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    networks:
+      - gerenciador_network
+
+  # Backend API
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: gerenciador_backend
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://gerenciador_user:${POSTGRES_PASSWORD}@postgres:5432/gerenciador_task
+      JWT_SECRET: ${JWT_SECRET}
+      FRONTEND_URL: https://${DOMAIN_NAME}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
+      VAPID_EMAIL: ${VAPID_EMAIL}
+    volumes:
+      - uploads_data:/app/uploads
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    networks:
+      - gerenciador_network
+
+  # Frontend Next.js
+  frontend:
+    build:
+      context: ../
+      dockerfile: deploy/Dockerfile.frontend
+    container_name: gerenciador_frontend
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: https://${DOMAIN_NAME}/api
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - gerenciador_network
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: gerenciador_nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/sites:/etc/nginx/sites-available
+      - ./ssl:/etc/nginx/ssl
+      - uploads_data:/var/www/uploads
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+    networks:
+      - gerenciador_network
+
+volumes:
+  postgres_data:
+  uploads_data:
+
+networks:
+  gerenciador_network:
+    driver: bridge

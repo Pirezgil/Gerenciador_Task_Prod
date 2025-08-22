@@ -39,6 +39,9 @@ router.post('/:id/comments', validate(createTaskCommentSchema), tasksController.
 // Orçamento de energia
 router.get('/energy/budget', tasksController.getEnergyBudget);
 
+// Verificar se tarefa pode ser planejada
+router.get('/:id/can-be-planned', tasksController.checkTaskCanBePlanned);
+
 // ===== NOVOS ENDPOINTS DE LEMBRETES =====
 // Lembretes para tarefas normais/tijolos
 router.post('/:taskId/reminders', createReminderLimit, tasksController.createTaskReminder);

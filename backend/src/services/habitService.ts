@@ -7,6 +7,7 @@ import {
 } from '../types/habit';
 import AchievementService from './achievementService';
 import { HabitStreakService } from './habitStreakService';
+import HabitSequentialCalculator from './habitSequentialCalculator';
 
 export const getUserHabits = async (userId: string): Promise<HabitResponse[]> => {
   console.log('🔍 Buscando hábitos para usuário:', userId);
@@ -115,7 +116,14 @@ export const completeHabit = async (habitId: string, userId: string, data: Compl
   console.log('🔍 Iniciando completação de hábito:', { habitId, userId, data });
   
   const habit = await prisma.habit.findFirst({
-    where: { id: habitId, userId, isActive: true }
+    where: { id: habitId, userId, isActive: true },
+    include: {
+      frequency: true,
+      completions: {
+        orderBy: { date: 'desc' },
+        take: 30 // Para análise de streak
+      }
+    }
   });
 
   if (!habit) {
@@ -131,14 +139,24 @@ export const completeHabit = async (habitId: string, userId: string, data: Compl
     // Se data foi fornecida, usar como string YYYY-MM-DD e converter para data local
     const [year, month, day] = data.date.split('-').map(Number);
     date = new Date(year, month - 1, day); // month é 0-indexed
+    date.setHours(0, 0, 0, 0);
   } else {
-    date = new Date();
+    // Para data atual, criar em timezone local e normalizar
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const day = now.getDate();
+    date = new Date(year, month, day, 0, 0, 0, 0); // Criar data local normalizada
   }
-  date.setHours(0, 0, 0, 0);
   
-  console.log('📅 Data original:', data.date);
-  console.log('📅 Data processada:', date.toISOString());
-  console.log('📅 Data local:', date.toDateString());
+  console.log('🔍 DEBUG TIMEZONE:');
+  console.log('📅 Data original recebida:', data.date);
+  console.log('📅 Data processada (objeto Date):', date);
+  console.log('📅 Data processada (toISOString):', date.toISOString());
+  console.log('📅 Data processada (toDateString):', date.toDateString());
+  console.log('📅 Data processada (toLocaleDateString):', date.toLocaleDateString('pt-BR'));
+  console.log('📅 Data processada (getTime):', date.getTime());
+  console.log('📅 Data processada (timezone offset):', date.getTimezoneOffset());
 
   const existingCompletion = await prisma.habitCompletion.findUnique({
     where: {
@@ -168,6 +186,14 @@ export const completeHabit = async (habitId: string, userId: string, data: Compl
     });
   } else {
     console.log('✨ Criando nova completação');
+    console.log('🔧 Enviando para Prisma:', {
+      habitId,
+      date: date.toISOString(),
+      dateLocal: date.toLocaleDateString('pt-BR'),
+      count: data.count || 1,
+      notes: data.notes
+    });
+    
     completion = await prisma.habitCompletion.create({
       data: {
         habitId,
@@ -177,25 +203,57 @@ export const completeHabit = async (habitId: string, userId: string, data: Compl
       }
     });
     
-    // Atualizar streak apenas para nova conclusão e apenas se for hoje
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    console.log('💾 Salvo no banco:', {
+      id: completion.id,
+      date: completion.date.toISOString(),
+      dateLocal: completion.date.toLocaleDateString('pt-BR'),
+      completedAt: completion.completedAt.toISOString()
+    });
     
-    console.log('📅 Comparando datas - Completion:', date.toDateString(), 'vs Today:', today.toDateString());
+    // 🆕 NOVA LÓGICA SEQUENCIAL - TUDO NO BACKEND
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
     
-    if (date.getTime() === today.getTime()) {
-      console.log('🔥 Atualizando streak - é hoje!');
-      const newStreak = habit.streak + 1;
+    console.log('🧮 Iniciando cálculo de streak sequencial...');
+    
+    // Criar lista completa de completions incluindo a nova
+    const allCompletions = [...habit.completions, completion];
+    
+    // Calcular streak usando a nova lógica sequencial
+    const streakResult = HabitSequentialCalculator.calculateSequentialStreak(
+      {
+        id: habit.id,
+        streak: habit.streak,
+        bestStreak: habit.bestStreak,
+        frequency: habit.frequency
+      },
+      allCompletions,
+      today
+    );
+    
+    console.log('📊 Resultado do cálculo:', streakResult);
+    
+    // Atualizar apenas se for dia obrigatório
+    if (streakResult.isRequiredToday) {
+      const newBestStreak = streakResult.isNewRecord ? 
+        streakResult.currentStreak : 
+        Math.max(habit.bestStreak, streakResult.currentStreak);
+      
       await prisma.habit.update({
         where: { id: habitId },
         data: {
-          streak: newStreak,
-          bestStreak: Math.max(habit.bestStreak, newStreak)
+          streak: streakResult.currentStreak,
+          bestStreak: newBestStreak
         }
       });
-      console.log('✅ Streak atualizado para:', newStreak);
+      
+      console.log(`✅ Streak sequencial atualizado: ${streakResult.currentStreak} (recorde: ${newBestStreak})`);
+      
+      if (streakResult.isNewRecord) {
+        console.log('🏆 NOVO RECORDE DE STREAK!');
+      }
     } else {
-      console.log('🚫 Não é hoje, streak não atualizado');
+      console.log('ℹ️ Hoje não é dia obrigatório para este hábito, streak mantido');
     }
   }
   

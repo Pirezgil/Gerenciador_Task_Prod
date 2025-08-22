@@ -1,7 +1,27 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "WebFetch(domain:localhost)",
+      "Bash(curl:*)",
+      "Bash(npm run dev:*)",
+      "Bash(timeout:*)",
+      "Bash(npm install)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx prisma generate:*)",
+      "Bash(npx next build:*)",
+      "Bash(node:*)",
+      "Bash(rm:*)",
+      "Bash(docker:*)",
+      "Bash(chmod:*)",
+      "Bash(true)",
+      "Bash(npm run test:cleanup)",
+      "Bash(npx prisma:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(git push:*)",
+      "Bash(git remote add:*)"
     ],
     "deny": [],
     "ask": []
