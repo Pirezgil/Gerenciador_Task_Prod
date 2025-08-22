@@ -96,9 +96,32 @@ app.use(helmet({
   xssFilter: true
 }));
 
-// CORS temporariamente permissivo para debug
-app.use(cors({
-  origin: true, // Permitir qualquer origem temporariamente
+// CORS otimizado para produção com ngrok
+const corsOptions: cors.CorsOptions = {
+  origin: (origin, callback) => {
+    // Lista de origens permitidas baseada no ambiente
+    const allowedOrigins = [
+      env.FRONTEND_URL,
+      'http://localhost:3000',
+      'http://127.0.0.1:3000'
+    ];
+    
+    // Se há uma variável de ambiente com origens permitidas
+    if (process.env.ALLOWED_ORIGINS) {
+      allowedOrigins.push(...process.env.ALLOWED_ORIGINS.split(','));
+    }
+    
+    // Para ngrok, permitir qualquer subdomínio ngrok
+    const isNgrok = origin && (origin.includes('ngrok-free.app') || origin.includes('ngrok.io'));
+    
+    // Permitir se não há origin (requisições do servidor) ou se está na lista ou é ngrok
+    if (!origin || allowedOrigins.includes(origin) || isNgrok) {
+      callback(null, true);
+    } else {
+      console.warn('🚨 CORS: Origem bloqueada:', origin);
+      callback(new Error('Não permitido pelo CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: [
@@ -112,7 +135,9 @@ app.use(cors({
   exposedHeaders: ['X-CSRF-Token', 'Set-Cookie'],
   optionsSuccessStatus: 200,
   preflightContinue: false
-}));
+};
+
+app.use(cors(corsOptions));
 
 app.use(cookieParser()); // Necessário para cookies HTTP-only
 

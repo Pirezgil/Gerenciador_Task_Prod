@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/providers/AuthProvider';
 import { useStandardAlert } from '@/components/shared/StandardAlert';
 import { useCreateAttachment, useDeleteAttachment } from '@/hooks/api/useAttachments';
+import { getApiUrl } from '@/lib/apiUrl';
 
 interface Attachment {
   id: string;
@@ -70,7 +71,7 @@ export function AttachmentManager({
     
     try {
       // Usar endpoint específico para anexos com autenticação por cookies
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://192.168.0.12:3001/api'}/tasks/${taskId}/attachments`, {
+      const response = await fetch(`${getApiUrl()}/tasks/${taskId}/attachments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -102,7 +103,7 @@ export function AttachmentManager({
     
     try {
       // Usar endpoint específico para remoção com autenticação por cookies
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://192.168.0.12:3001/api'}/tasks/${taskId}/attachments/${attachmentId}`, {
+      const response = await fetch(`${getApiUrl()}/tasks/${taskId}/attachments/${attachmentId}`, {
         method: 'DELETE',
         credentials: 'include' // Para enviar cookies automaticamente
       });

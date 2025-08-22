@@ -38,6 +38,15 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Proxy reverso para API - redireciona /api para backend:3001
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://localhost:3001/api/:path*',
+      },
+    ];
+  },
   // Configuração do Webpack para resolver erros do Watchpack no Windows
   webpack: (config, { dev }) => {
     if (dev) {
