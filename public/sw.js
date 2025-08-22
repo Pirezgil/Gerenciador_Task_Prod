@@ -3,7 +3,32 @@
 // ============================================================================
 
 const CACHE_NAME = 'gerenciador-task-v1';
-const API_BASE_URL = 'http://localhost:3001/api';
+// Detectar URL da API baseada no hostname atual
+function getApiBaseUrl() {
+  if (typeof self !== 'undefined' && self.location) {
+    const hostname = self.location.hostname;
+    
+    // Se for ngrok
+    if (hostname.includes('ngrok') || hostname.includes('ngrok-free.app')) {
+      return `${self.location.protocol}//${hostname}/api`;
+    }
+    
+    // Se for IP específico
+    if (hostname === '192.168.0.12') {
+      return 'http://192.168.0.12:3001/api';
+    }
+    
+    // Fallback para localhost em desenvolvimento
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:3001/api';
+    }
+  }
+  
+  // Fallback final
+  return 'http://192.168.0.12:3001/api';
+}
+
+const API_BASE_URL = getApiBaseUrl();
 
 // Armazenamento em memória para token (fallback)
 let currentAuthToken = null;

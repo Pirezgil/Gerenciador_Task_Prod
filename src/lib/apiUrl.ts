@@ -17,10 +17,12 @@ export const getApiUrl = (): string => {
       return 'http://localhost:3001/api';
     } else if (hostname === '192.168.0.252') {
       return 'http://192.168.0.252:3001/api';
+    } else if (hostname === '192.168.0.12') {
+      return 'http://192.168.0.12:3001/api';
     }
   }
-  // Fallback para a variável de ambiente ou localhost
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+  // Fallback para a variável de ambiente
+  return process.env.NEXT_PUBLIC_API_URL || 'http://192.168.0.12:3001/api';
 };
 
 // Versão que retorna apenas a base (sem /api) - útil para alguns casos
@@ -38,8 +40,10 @@ export const getApiBaseUrl = (): string => {
       return 'http://localhost:3001';
     } else if (hostname === '192.168.0.252') {
       return 'http://192.168.0.252:3001';
+    } else if (hostname === '192.168.0.12') {
+      return 'http://192.168.0.12:3001';
     }
   }
   // Fallback
-  return (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace('/api', '');
+  return (process.env.NEXT_PUBLIC_API_URL || 'http://192.168.0.12:3001/api').replace('/api', '');
 };

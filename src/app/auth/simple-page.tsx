@@ -68,7 +68,7 @@ export default function SimpleAuthPage() {
             
             console.log('Tentando login:', { email, password });
             
-            fetch('http://localhost:3001/api/auth/login', {
+            fetch('http://192.168.0.12:3001/api/auth/login', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
